@@ -23,6 +23,8 @@ tauri-plugin-shell = "2.0.0-alpha"
 serde_json = "1.0"
 serde = "1.0.193"
 hysteria-rs = { git = "https://github.com/hezhaozhao-git/hysteria-rs.git", version = "0.1.0" }
+rusqlite = "0.30.0"
+
 
 [features]
 # this feature is used for production builds or when `devPath` points to the filesystem
