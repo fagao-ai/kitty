@@ -61,6 +61,9 @@ name = "anyhow"
 version = "1.0.75"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a4668cab20f66d8d020e1fbc0ebe47217433c1b6c8f2040faf858554e394ace6"
+dependencies = [
+ "backtrace",
+]
 
 [[package]]
 name = "async-broadcast"
@@ -1544,6 +1547,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "hysteria-rs"
+version = "0.1.0"
+source = "git+https://github.com/hezhaozhao-git/hysteria-rs.git#01781a61b847ba7e0bd809851a5e0c5f7abe73a2"
+dependencies = [
+ "anyhow",
+]
+
+[[package]]
 name = "iana-time-zone"
 version = "0.1.58"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1774,6 +1785,8 @@ dependencies = [
 name = "kitty"
 version = "0.0.0"
 dependencies = [
+ "hysteria-rs",
+ "serde",
  "serde_json",
  "tauri",
  "tauri-build",
