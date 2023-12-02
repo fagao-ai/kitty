@@ -11,7 +11,7 @@
 			</div>
 		</div>
 		<div class="h-1/8 flex flex-center flex-col">
-			<div class="text-primay text-lg">Kitty 版本</div>
+			<div class="text-primay text-lg">Kitty Version</div>
 			<div class="text-primay">0.0.1.beta</div>
 		</div>
 	</div>
@@ -32,7 +32,7 @@ const menuOptions: MenuOption[] = [
 						name: 'proxy',
 					},
 				},
-				{ default: () => '代理' },
+				{ default: () => 'proxies' },
 			),
 		key: 'proxy',
 	},

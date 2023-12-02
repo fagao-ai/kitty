@@ -1,9 +1,9 @@
 <template>
 	<div class="flex flex-col w-full h-full">
 		<div class="h-16 flex justify-between items-center">
-			<div class="text-primay text-2xl">代理</div>
+			<div class="text-primay text-2xl">proies</div>
 			<div>
-				<n-button @click="onClickInsertButton">添加</n-button>
+				<n-button @click="onClickInsertButton">add</n-button>
 			</div>
 		</div>
 		<div

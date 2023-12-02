@@ -8,6 +8,7 @@ const CURRENT_DB_VERSION: u32 = 1;
 /// if it's out of date.
 pub fn initialize_database(app_handle: &AppHandle) -> Result<Connection, rusqlite::Error> {
     let app_dir = app_handle.path().app_local_data_dir().expect("The app data directory should exist.");
+    println!("{:?}", app_dir);
     fs::create_dir_all(&app_dir).expect("The app data directory should be created.");
     let sqlite_path = app_dir.join("MyApp.sqlite");
 
@@ -33,8 +34,9 @@ pub fn upgrade_database_if_needed(db: &mut Connection, existing_version: u32) ->
 
     tx.execute_batch(
       "
-      CREATE TABLE items (
-        title TEXT NOT NULL
+      CREATE TABLE proxies (
+        id INTEGER PRIMARY KEY,
+        proxy TEXT NOT NULL
       );"
     )?;
 
