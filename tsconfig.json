@@ -15,7 +15,9 @@
       "DOM"
     ],
     "skipLibCheck": true,
-    "types": [],
+    "types": [
+      "naive-ui/volar"
+    ],
     "baseUrl": "./",
     "paths": {
       "@/*": [

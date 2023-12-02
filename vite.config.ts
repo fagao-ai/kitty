@@ -1,5 +1,6 @@
-import { defineConfig } from "vite";
-import vue from "@vitejs/plugin-vue";;
+import { defineConfig } from "vite"
+import vue from "@vitejs/plugin-vue"
+import { resolve } from "path"
 import { internalIpV4 } from "internal-ip";
 
 // @ts-expect-error process is a nodejs global
@@ -20,10 +21,15 @@ export default defineConfig(async () => ({
     host: mobile ? "0.0.0.0" : false,
     hmr: mobile
       ? {
-          protocol: "ws",
-          host: await internalIpV4(),
-          port: 1421,
-        }
+        protocol: "ws",
+        host: await internalIpV4(),
+        port: 1421,
+      }
       : undefined,
-  }
+  },
+  resolve: {
+    alias: {
+      "@": resolve(__dirname, "./src"),
+    },
+  },
 }));

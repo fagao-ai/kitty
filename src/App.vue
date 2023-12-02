@@ -1,24 +1,22 @@
 <script setup lang="ts">
-// This starter template is using Vue 3 <script setup> SFCs
-// Check out https://vuejs.org/api/sfc-script-setup.html#script-setup
-import Greet from "./components/Greet.vue";
+import { NConfigProvider } from 'naive-ui'
+import { useTheme } from '@/utils/theme'
+import MenuView from '@/views/menu/Index.vue'
+
+const { theme, themeOverrides } = useTheme()
 </script>
 
 <template>
-  <div class="flex w-full h-full">
-    <div class="w-1/4 bg-slate-300"></div>
-    <div class="flex-1 bg-orange-100">
+  <n-config-provider
+    :theme="theme"
+    :theme-overrides="themeOverrides"
+    class="flex w-full h-full bg-[#fdfdfd] dark:bg-black"
+  >
+    <div class="w-48">
+      <menu-view />
+    </div>
+    <div class="flex-1 p-4 h-full w-full">
       <router-view />
     </div>
-  </div>
+  </n-config-provider>
 </template>
-
-<style scoped>
-.logo.vite:hover {
-  filter: drop-shadow(0 0 2em #747bff);
-}
-
-.logo.vue:hover {
-  filter: drop-shadow(0 0 2em #249b73);
-}
-</style>
