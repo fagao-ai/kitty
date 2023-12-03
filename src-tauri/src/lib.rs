@@ -5,6 +5,8 @@ mod utils;
 
 use hysteria::HyConfig;
 use hysteria_rs::start_from_json;
+use tauri::tray::TrayIconBuilder;
+
 
 use state::{AppState, ServiceAccess};
 use tauri::{AppHandle, Manager, State};
@@ -85,6 +87,7 @@ fn setup<'a>(app: &'a mut tauri::App) -> Result<(), Box<dyn std::error::Error>> 
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+  // TrayIconBuilder::new()
     tauri::Builder::default()
         .manage(AppState {
             db: Default::default(),
