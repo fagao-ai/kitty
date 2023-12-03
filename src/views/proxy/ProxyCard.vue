@@ -1,5 +1,5 @@
 <template>
-	<div class="w-[130px] h-[110px] shadow-2xl bg-white py-3 px-2 flex flex-col gap-[2px]">
+	<div class="w-[130px] h-[110px] shadow-2xl bg-white py-3 px-2 flex flex-col gap-[2px] rounded-md">
 		<div class="h-6">
 			<n-tag
 				:type="tagType"
