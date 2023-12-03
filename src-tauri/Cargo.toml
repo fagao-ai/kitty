@@ -25,6 +25,9 @@ serde = "1.0.193"
 hysteria-rs = { git = "https://github.com/hezhaozhao-git/hysteria-rs.git", version = "0.1.0" }
 rusqlite = "0.30.0"
 sea-orm = { version = "0.12", features = ["sqlx-sqlite", "runtime-tokio-rustls", "macros" ] }
+entity = { path = "./entity" }
+migration = { path = "./migration" }
+tokio = {version="1.34.0", features=["full"]}
 
 
 [workspace]

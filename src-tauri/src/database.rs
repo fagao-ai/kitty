@@ -1,10 +1,9 @@
-use rusqlite::{named_params, Connection};
-use sea_orm::{Database, DatabaseConnection, DbErr};
-use std::{fs, path::PathBuf};
-use tauri::{AppHandle, Manager};
-
-/// Initializes the database connection, creating the .sqlite file if needed, and upgrading the database
-/// if it's out of date.
+use entity::{cake, hysteria};
+use sea_orm::EntityTrait;
+use sea_orm::{entity::*, error::*, query::*, DbConn, FromQueryResult};
+use sea_orm::{ActiveModelTrait, Database, DatabaseConnection, DbErr};
+use serde_json::Value;
+use std::path::PathBuf;
 
 pub async fn init_db(app_dir: PathBuf) -> Result<DatabaseConnection, DbErr> {
     let sqlite_path = app_dir.join("MyApp.sqlite");
@@ -14,22 +13,51 @@ pub async fn init_db(app_dir: PathBuf) -> Result<DatabaseConnection, DbErr> {
     Ok(db)
 }
 
-// pub fn add_item(title: &str, db: &Connection) -> Result<(), rusqlite::Error> {
-//     let mut statement = db.prepare("INSERT INTO items (title) VALUES (@title)")?;
-//     statement.execute(named_params! { "@title": title })?;
+async fn add_hysteria_item(
+    db: &DatabaseConnection,
+    record: hysteria::Model,
+) -> Result<hysteria::Model, DbErr> {
+    let json_value: Value = serde_json::to_value(record).unwrap();
 
-//     Ok(())
-// }
+    let hysteria_record = hysteria::ActiveModel::from_json(json_value)?;
+    // hysteria_record.set(hysteria::Model::id, None);
+    let hysteria_res = hysteria_record.insert(db).await;
+    hysteria_res
+}
 
-// pub fn get_all(db: &Connection) -> Result<Vec<String>, rusqlite::Error> {
-//     let mut statement = db.prepare("SELECT * FROM items")?;
-//     let mut rows = statement.query([])?;
-//     let mut items = Vec::new();
-//     while let Some(row) = rows.next()? {
-//       let title: String = row.get("title")?;
+async fn get_all_hysteria_item(db: &DatabaseConnection) -> Result<Vec<hysteria::Model>, DbErr> {
+    let hysterias = hysteria::Entity::find().all(db).await?;
+    Ok(hysterias)
+}
 
-//       items.push(title);
-//     }
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::utils::setup_schema;
+    use hysteria;
+    #[tokio::test]
+    async fn test_add_hysteria_item() {
+        let config_str = r#"{
+          "server": "ip:port",
+          "auth": "password",
+          "bandwidth": {
+            "up": "10 mbps",
+            "down": "100 mbps"
+          },
+          "tls": {
+            "sni": "bing.com",
+            "insecure": true
+          }
+        }"#;
+        let hy_record: hysteria::Model = serde_json::from_str(&config_str).unwrap();
+        let db = Database::connect("sqlite::memory:").await.unwrap();
 
-//     Ok(items)
-// }
+        // Setup database schema
+        setup_schema(&db, hysteria::Entity).await;
+
+        add_hysteria_item(&db, hy_record).await.unwrap();
+        let hysterias = get_all_hysteria_item(&db).await.unwrap();
+        assert_eq!(hysterias[0].id, 1);
+
+    }
+}

@@ -1,6 +1,7 @@
 mod database;
 mod hysteria;
 mod state;
+mod utils;
 
 use hysteria::HyConfig;
 use hysteria_rs::start_from_json;

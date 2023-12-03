@@ -1,10 +1,12 @@
 use sea_orm::{entity::prelude::*, FromJsonQueryResult};
+
 use serde::{Deserialize, Serialize};
 
-#[derive(Clone, Debug, PartialEq, Eq, DeriveEntityModel)]
-#[sea_orm(table_name = "hysteria")]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, DeriveEntityModel)]
+#[sea_orm(table_name = "hysterias")]
 pub struct Model {
     #[sea_orm(primary_key, auto_increment = true)]
+    #[serde(skip)]
     pub id: i32,
     pub server: String,
     pub auth: String,
@@ -18,6 +20,7 @@ pub struct Model {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, FromJsonQueryResult)]
+
 struct Tls {
     sni: String,
     insecure: bool,
@@ -36,3 +39,4 @@ struct Bandwidth {
 pub enum Relation {}
 
 impl ActiveModelBehavior for ActiveModel {}
+
