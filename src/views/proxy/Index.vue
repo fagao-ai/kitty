@@ -9,20 +9,20 @@
 				>add</n-button>
 			</div>
 		</div>
-		<div
-			class="flex-1 w-full h-full grid grid-cols-5 gap-4 xl:grid-cols-6 xxl:grid-cols-7 xxxl:grid-cols-8 tv:grid-cols-10"
-		>
-			<template
-				v-for="card, index in cards"
-				:key="index"
-			>
-				<proxy-card
-					:name="card.name"
-					:delay="card.delay"
-					:tag="card.tag"
-					:protocol="card.protocol"
-				/>
-			</template>
+		<div class="flex-1 w-full">
+			<div class="grid grid-cols-5 auto-rows-fr gap-4 xl:grid-cols-6 xxl:grid-cols-7 xxxl:grid-cols-8 tv:grid-cols-10">
+				<template
+					v-for="card, index in cards"
+					:key="index"
+				>
+					<proxy-card
+						:name="card.name"
+						:delay="card.delay"
+						:tag="card.tag"
+						:protocol="card.protocol"
+					/>
+				</template>
+			</div>
 		</div>
 	</div>
 	<add-proxy-modal
