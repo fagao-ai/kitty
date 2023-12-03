@@ -12,13 +12,14 @@ use tauri::{AppHandle, Manager, State};
 #[tauri::command]
 fn greet(app_handle: AppHandle, name: &str) -> String {
     // Should handle errors instead of unwrapping here
-    app_handle.db(|db| database::add_item(name, db)).unwrap();
+    // app_handle.db(|db| database::add_item(name, db)).unwrap();
 
-    let items = app_handle.db(|db| database::get_all(db)).unwrap();
+    // let items = app_handle.db(|db| database::get_all(db)).unwrap();
 
-    let items_string = items.join(" | ");
+    // let items_string = items.join(" | ");
 
-    format!("Your name log: {}", items_string)
+    // format!("Your name log: {}", items_string)
+    "".to_string()
 }
 #[tauri::command]
 fn start_hy(hy_config: HyConfig) {
@@ -55,24 +56,39 @@ mod tests {
     }
 }
 
+fn setup<'a>(app: &'a mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
+    let handle = app.handle();
+
+    let app_dir = handle
+        .path()
+        .app_local_data_dir()
+        .expect("The app data directory should exist.");
+    println!("{:?}", app_dir);
+
+    let app_state: State<AppState> = handle.state();
+    let db = tauri::async_runtime::block_on(async move {
+        let db = database::init_db(app_dir).await;
+        match db {
+            Ok(db) => {
+                println!("Local Server is running");
+                db
+            }
+            Err(err) => {
+                panic!("Error: {}", err);
+            }
+        }
+    });
+    *app_state.db.lock().unwrap() = Some(db);
+    Ok(())
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
         .manage(AppState {
             db: Default::default(),
         })
-        .setup(|app| {
-            let handle = app.handle();
-            let aa = handle.path().app_local_data_dir();
-            println!("{:?}", aa);
-
-            let app_state: State<AppState> = handle.state();
-            let db =
-                database::initialize_database(&handle).expect("Database initialize should succeed");
-            *app_state.db.lock().unwrap() = Some(db);
-
-            Ok(())
-        })
+        .setup(setup)
         .plugin(tauri_plugin_window::init())
         .plugin(tauri_plugin_shell::init())
         .invoke_handler(tauri::generate_handler![greet])
