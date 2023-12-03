@@ -6,13 +6,15 @@ import { NConfigProvider, GlobalThemeOverrides, useOsTheme } from 'naive-ui'
 const useTheme = () => {
     const osThemeRef = useOsTheme()
     const theme = ref<BuiltInGlobalTheme | null>(null)
-
+    const primaryColor = '#5352ed'
     const themeOverrides: GlobalThemeOverrides = {
         common: {
-            primaryColor: '#5352ed'
+            primaryColor: primaryColor,
+            primaryColorHover: primaryColor
         },
         Button: {
-            textColor: '#5352ed'
+            textColorPrimary: primaryColor,
+            textColor: primaryColor
         }
     }
 

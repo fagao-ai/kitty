@@ -1,9 +1,12 @@
 <template>
 	<div class="flex flex-col w-full h-full">
 		<div class="h-16 flex justify-between items-center">
-			<div class="text-primay text-2xl">proies</div>
+			<div class="text-primay text-2xl">proxies</div>
 			<div>
-				<n-button @click="onClickInsertButton">add</n-button>
+				<n-button
+					round
+					@click="onClickInsertButton"
+				>add</n-button>
 			</div>
 		</div>
 		<div
@@ -22,157 +25,106 @@
 			</template>
 		</div>
 	</div>
-	<n-modal
-		v-model:show="showInsertModal"
-		class="w-1/2 h-1/2"
-		:mask-closable="false"
-		preset="card"
-		title="添加代理"
-		size="huge"
-		:bordered="false"
-		:segmented="true"
-	>
-		<n-form
-			:model="formValue"
-			size="medium"
-		><n-form-item
-				label="姓名"
-				path="user.name"
-			>
-				<n-input
-					v-model:value="formValue.user.name"
-					placeholder="输入姓名"
-				/>
-			</n-form-item>
-			<n-form-item
-				label="年龄"
-				path="user.age"
-			>
-				<n-input
-					v-model:value="formValue.user.age"
-					placeholder="输入年龄"
-				/>
-			</n-form-item>
-			<n-form-item
-				label="电话号码"
-				path="phone"
-			>
-				<n-input
-					v-model:value="formValue.phone"
-					placeholder="电话号码"
-				/>
-			</n-form-item>
-			<n-form-item>
-				<n-button
-					attr-type="button"
-					@click="() => { }"
-				>
-					验证
-				</n-button>
-			</n-form-item>
-		</n-form>
-		<template #footer>
-			<n-button @click="onCancelInsert">
-				取消
-			</n-button>
-			<n-button
-				type="primary"
-				@click="onInsertSubmit"
-			>
-				提交
-			</n-button>
-		</template>
-	</n-modal>
+	<add-proxy-modal
+		:form-data="formValue"
+		v-model:showModal="showInsertModal"
+	/>
 </template>
 
 <script setup lang="ts">
-import { NForm, NFormItem, NInput, NButton } from 'naive-ui'
+import { NButton } from 'naive-ui'
 import { reactive, ref } from 'vue'
 import ProxyCard from './ProxyCard.vue'
-import type { ProxyCard as Card } from '@/types/proxy'
+import type { ProxyCard as Card, HysteriaProxy } from '@/types/proxy'
+import AddProxyModal from '@/views/proxy/AddProxyModal.vue'
 
 const showInsertModal = ref(false)
 
-const onInsertSubmit = () => {
-	console.log('onInsertSubmit')
-}
 
-const onCancelInsert = () => {
-	showInsertModal.value = false
-}
 
 const onClickInsertButton = () => {
 	showInsertModal.value = true
 }
 
-const formValue = reactive({
-	user: {
-		name: '召召',
-		age: '18'
+const formValue = reactive<HysteriaProxy>({
+	serverAddress: "ip:port",
+	auth: "password",
+	bandWidth: {
+		up: "10 mbps",
+		down: "100 mbps"
 	},
-	phone: '110'
+	tls: {
+		sni: "bing.com",
+		insecure: true
+	},
+	socks5: {
+		listen: "127.0.0.1:1080"
+	},
+	http: {
+		listen: "127.0.0.1:8080"
+	}
 })
 
 const cards: Card[] = [
 	{
-		tag: 'tag1',
-		name: 'name1',
-		delay: 'delay1',
-		protocol: 'protocol1'
+		tag: 'Vmess',
+		name: '美国硅谷',
+		delay: 144,
+		protocol: 'TCP'
 	},
 	{
 		tag: 'tag2',
 		name: 'name2',
-		delay: 'delay2',
-		protocol: 'protocol2'
+		delay: 143,
+		protocol: 'UDP'
 	},
 	{
 		tag: 'tag3',
 		name: 'name3',
-		delay: 'delay3',
-		protocol: 'protocol3'
+		delay: 142,
+		protocol: 'TCP'
 	},
 	{
 		tag: 'tag4',
 		name: 'name4',
-		delay: 'delay4',
-		protocol: 'protocol4'
+		delay: 141,
+		protocol: 'UDP'
 	},
 	{
 		tag: 'tag5',
 		name: 'name5',
-		delay: 'delay5',
-		protocol: 'protocol5'
+		delay: 140,
+		protocol: 'UDP'
 	},
 	{
 		tag: 'tag6',
 		name: 'name6',
-		delay: 'delay6',
-		protocol: 'protocol6'
+		delay: 139,
+		protocol: 'TCP'
 	},
 	{
 		tag: 'tag7',
 		name: 'name7',
-		delay: 'delay7',
-		protocol: 'protocol7'
+		delay: 138,
+		protocol: 'UDP'
 	},
 	{
 		tag: 'tag8',
 		name: 'name8',
-		delay: 'delay8',
-		protocol: 'protocol8'
+		delay: 500,
+		protocol: 'UDP'
 	},
 	{
 		tag: 'tag9',
 		name: 'name9',
-		delay: 'delay9',
-		protocol: 'protocol9'
+		delay: 666,
+		protocol: 'TCP'
 	},
 	{
 		tag: 'tag10',
 		name: 'name10',
-		delay: 'delay10',
-		protocol: 'protocol10'
+		delay: 1428,
+		protocol: 'UDP'
 	},
 ]
 </script>
