@@ -1475,6 +1475,7 @@ checksum = "da0290714b38af9b4a7b094b8a37086d1b4e61f2df9122c3cad2577669145335"
 dependencies = [
  "futures-channel",
  "futures-core",
+ "futures-executor",
  "futures-io",
  "futures-sink",
  "futures-task",
@@ -2327,6 +2328,7 @@ name = "kitty"
 version = "0.0.0"
 dependencies = [
  "entity",
+ "futures",
  "hysteria-rs",
  "migration",
  "rusqlite",
@@ -5050,9 +5052,7 @@ dependencies = [
  "libc",
  "mio",
  "num_cpus",
- "parking_lot",
  "pin-project-lite",
- "signal-hook-registry",
  "socket2 0.5.5",
  "tokio-macros",
  "windows-sys 0.48.0",

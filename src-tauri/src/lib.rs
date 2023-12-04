@@ -3,33 +3,26 @@ mod hysteria;
 mod state;
 mod utils;
 
-use std::{fs, env};
+use std::{env, pin::Pin, time::Duration};
 
+use futures::{
+    future::{self, AbortHandle, Abortable},
+    stream::AbortRegistration,
+    Future,
+};
 use hysteria::HyConfig;
 use hysteria_rs::start_from_json;
 use tauri::{
     menu::{MenuBuilder, MenuItemBuilder},
-    tray::{ClickType, TrayIconBuilder}, Icon,
+    tray::{ClickType, TrayIconBuilder},
+    Icon,
 };
-
-
 
 use state::{AppState, ServiceAccess};
 use tauri::{AppHandle, Manager, State};
+use tokio::time;
 
 // Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
-#[tauri::command]
-fn greet(app_handle: AppHandle, name: &str) -> String {
-    // Should handle errors instead of unwrapping here
-    // app_handle.db(|db| database::add_item(name, db)).unwrap();
-
-    // let items = app_handle.db(|db| database::get_all(db)).unwrap();
-
-    // let items_string = items.join(" | ");
-
-    // format!("Your name log: {}", items_string)
-    "".to_string()
-}
 #[tauri::command]
 fn start_hy(hy_config: HyConfig) {
     let serialized_hy_config = serde_json::to_string(&hy_config).unwrap();
@@ -43,8 +36,8 @@ mod tests {
     #[test]
     fn it_works() {
         let config_str = r#"{
-            "server": "ip:port",
-            "auth": "password",
+            "server": "129.153.56.56:8887",
+            "auth": "h19951218",
             "bandwidth": {
               "up": "10 mbps",
               "down": "100 mbps"
@@ -62,11 +55,11 @@ mod tests {
           }"#;
         let hy_config: HyConfig = serde_json::from_str(&config_str).unwrap();
         start_hy(hy_config);
+        println!("start hy from hy_config !!!");
     }
 }
 
-
-fn set_system_tray<'a>(app: &'a mut tauri::App) ->  Result<(), Box<dyn std::error::Error>>{
+fn set_system_tray<'a>(app: &'a mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
     let toggle = MenuItemBuilder::with_id("toggle", "Toggle").build(app);
     let menu = MenuBuilder::new(app).items(&[&toggle]).build()?;
     let parent_dir = env::current_dir()?.parent().unwrap().to_owned();
@@ -85,8 +78,8 @@ fn set_system_tray<'a>(app: &'a mut tauri::App) ->  Result<(), Box<dyn std::erro
             if event.click_type == ClickType::Left {
                 let app = tray.app_handle();
                 if let Some(window) = app.get_window("main") {
-                let _ = window.show();
-                let _ = window.set_focus();
+                    let _ = window.show();
+                    let _ = window.set_focus();
                 }
             }
         })
@@ -111,22 +104,64 @@ fn setup<'a>(app: &'a mut tauri::App) -> Result<(), Box<dyn std::error::Error>> 
                 db
             }
             Err(err) => {
-                panic!("Error: {}" , err);
+                panic!("Error: {}", err);
             }
         }
     });
     *app_state.db.lock().unwrap() = Some(db);
     let _ = set_system_tray(app);
-    
+
     Ok(())
+}
+
+struct HysteriaTask<T> {
+    abort_handle: AbortHandle,
+    create_task: Abortable<T>,
+    abort_task: tokio::task::JoinHandle<()>,
+}
+
+impl HysteriaTask<T> {
+    fn new<T>(
+        create_task: tokio::task::JoinHandle<()>,
+        abort_task: tokio::task::JoinHandle<()>,
+    ) -> Self
+    where
+        T: Future<Output = ()> + Send + 'static,
+    {
+        let (abort_handle, _abort_registration) = AbortHandle::new_pair();
+        Self {
+            abort_handle,
+            create_task: create_task,
+            abort_task: abort_task,
+        }
+    }
+
+    fn start_task(&self) {
+        tokio::spawn(self.create_task);
+    }
+
+    fn stop_task(&self) {
+        self.abort_handle.abort();
+        tokio::spawn(self.abort_task);
+    }
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-  // TrayIconBuilder::new()
-//   let tray_menu = SystemTrayMenu::new(); // insert the menu items here
-//   let system_tray = SystemTray::new()
-//     .with_menu(tray_menu);
+    let create_s = async {
+        // time::delay_for(Duration::from_millis(200)).await;
+        // time::sleep(Duration::from_secs(5));
+        loop {
+            println!("Creating {} done", "create_s");
+            time::sleep(Duration::from_secs(1)).await;
+        }
+    };
+    let (abort_handle, abort_registration) = AbortHandle::new_pair();
+    let create_s = Abortable::new(create_s, abort_registration);
+    let abort_s = async move {
+        // time::delay_for(Duration::from_millis(100)).await;
+        time::sleep(Duration::from_secs(5)).await;
+    };
     tauri::Builder::default()
         .manage(AppState {
             db: Default::default(),
@@ -134,7 +169,6 @@ pub fn run() {
         .setup(setup)
         .plugin(tauri_plugin_window::init())
         .plugin(tauri_plugin_shell::init())
-        .invoke_handler(tauri::generate_handler![greet])
         .invoke_handler(tauri::generate_handler![start_hy])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
