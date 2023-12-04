@@ -3,9 +3,15 @@ mod hysteria;
 mod state;
 mod utils;
 
+use std::fs;
+
 use hysteria::HyConfig;
 use hysteria_rs::start_from_json;
-use tauri::tray::TrayIconBuilder;
+use tauri::{
+    menu::{MenuBuilder, MenuItemBuilder},
+    tray::{ClickType, TrayIconBuilder},
+};
+
 
 
 use state::{AppState, ServiceAccess};
@@ -59,6 +65,46 @@ mod tests {
     }
 }
 
+fn load_icon(path: &std::path::Path) -> tray_icon::Icon {
+    let (icon_rgba, icon_width, icon_height) = {
+        let image = image::open(path)
+            .expect("Failed to open icon path")
+            .into_rgba8();
+        let (width, height) = image.dimensions();
+        let rgba = image.into_raw();
+        (rgba, width, height)
+    };
+    tray_icon::Icon::from_rgba(icon_rgba, icon_width, icon_height).expect("Failed to open icon")
+}
+
+
+fn set_system_tray<'a>(app: &'a mut tauri::App) ->  Result<(), Box<dyn std::error::Error>>{
+    let toggle = MenuItemBuilder::with_id("toggle", "Toggle").build(app);
+    let menu = MenuBuilder::new(app).items(&[&toggle]).build()?;
+    let path = concat!(, "/examples/icon.png");
+    let icon = load_icon(std::path::Path::new(path));
+    let tray = TrayIconBuilder::new()
+        .menu(&menu)
+        .icon(icon)
+        .on_menu_event(move |app, event| match event.id().as_ref() {
+            "toggle" => {
+                println!("toggle clicked");
+            }
+            _ => (),
+        })
+        .on_tray_icon_event(|tray, event| {
+            if event.click_type == ClickType::Left {
+                let app = tray.app_handle();
+                if let Some(window) = app.get_window("main") {
+                let _ = window.show();
+                let _ = window.set_focus();
+                }
+            }
+        })
+        .build(app)?;
+    Ok(())
+}
+
 fn setup<'a>(app: &'a mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
     let handle = app.handle();
 
@@ -67,7 +113,6 @@ fn setup<'a>(app: &'a mut tauri::App) -> Result<(), Box<dyn std::error::Error>> 
         .app_local_data_dir()
         .expect("The app data directory should exist.");
     println!("{:?}", app_dir);
-
     let app_state: State<AppState> = handle.state();
     let db = tauri::async_runtime::block_on(async move {
         let db = database::init_db(app_dir).await;
@@ -77,17 +122,22 @@ fn setup<'a>(app: &'a mut tauri::App) -> Result<(), Box<dyn std::error::Error>> 
                 db
             }
             Err(err) => {
-                panic!("Error: {}", err);
+                panic!("Error: {}" , err);
             }
         }
     });
     *app_state.db.lock().unwrap() = Some(db);
+    let _ = set_system_tray(app);
+    
     Ok(())
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
   // TrayIconBuilder::new()
+//   let tray_menu = SystemTrayMenu::new(); // insert the menu items here
+//   let system_tray = SystemTray::new()
+//     .with_menu(tray_menu);
     tauri::Builder::default()
         .manage(AppState {
             db: Default::default(),

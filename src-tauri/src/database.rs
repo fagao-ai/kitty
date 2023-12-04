@@ -7,8 +7,8 @@ use std::path::PathBuf;
 
 pub async fn init_db(app_dir: PathBuf) -> Result<DatabaseConnection, DbErr> {
     let sqlite_path = app_dir.join("MyApp.sqlite");
-    let sqlite_url = format!("sqlite://{}", sqlite_path.to_string_lossy());
-    let db: DatabaseConnection = Database::connect(sqlite_url).await?;
+    let sqlite_url = format!("sqlite://{}?mode=rwc", sqlite_path.to_string_lossy());
+    let db: DatabaseConnection = Database::connect(&sqlite_url).await?;
     // Migrator::up(&connection, None).await?;
     Ok(db)
 }
