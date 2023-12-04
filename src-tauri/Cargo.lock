@@ -4734,6 +4734,8 @@ dependencies = [
  "gtk",
  "heck",
  "http",
+ "ico",
+ "infer",
  "jni",
  "libc",
  "log",

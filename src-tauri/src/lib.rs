@@ -3,13 +3,13 @@ mod hysteria;
 mod state;
 mod utils;
 
-use std::fs;
+use std::{fs, env};
 
 use hysteria::HyConfig;
 use hysteria_rs::start_from_json;
 use tauri::{
     menu::{MenuBuilder, MenuItemBuilder},
-    tray::{ClickType, TrayIconBuilder},
+    tray::{ClickType, TrayIconBuilder}, Icon,
 };
 
 
@@ -65,28 +65,17 @@ mod tests {
     }
 }
 
-fn load_icon(path: &std::path::Path) -> tray_icon::Icon {
-    let (icon_rgba, icon_width, icon_height) = {
-        let image = image::open(path)
-            .expect("Failed to open icon path")
-            .into_rgba8();
-        let (width, height) = image.dimensions();
-        let rgba = image.into_raw();
-        (rgba, width, height)
-    };
-    tray_icon::Icon::from_rgba(icon_rgba, icon_width, icon_height).expect("Failed to open icon")
-}
-
 
 fn set_system_tray<'a>(app: &'a mut tauri::App) ->  Result<(), Box<dyn std::error::Error>>{
     let toggle = MenuItemBuilder::with_id("toggle", "Toggle").build(app);
     let menu = MenuBuilder::new(app).items(&[&toggle]).build()?;
-    let path = concat!(, "/examples/icon.png");
-    let icon = load_icon(std::path::Path::new(path));
-    let tray = TrayIconBuilder::new()
+    let parent_dir = env::current_dir()?.parent().unwrap().to_owned();
+    let icon_path = parent_dir.join("icons").join("32x32.png");
+    let icon = Icon::File(icon_path);
+    let _tray = TrayIconBuilder::new()
         .menu(&menu)
         .icon(icon)
-        .on_menu_event(move |app, event| match event.id().as_ref() {
+        .on_menu_event(move |_app, event| match event.id().as_ref() {
             "toggle" => {
                 println!("toggle clicked");
             }
