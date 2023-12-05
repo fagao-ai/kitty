@@ -3,17 +3,16 @@
 		<div class="flex-1 flex flex-col">
 			<div class="text-5xl font-bold h-1/6 flex flex-center text-primay">Kitty</div>
 			<div class="flex-1 text-white text-lg">
-				<n-menu
-					default-value="proxy"
-					:options="menuOptions"
-					class="rounded-full"
-				/>
+				<n-menu default-value="proxy" :options="menuOptions" class="rounded-full" />
 			</div>
 		</div>
 		<div class="h-1/8 flex flex-center flex-col">
 			<div class="text-primay text-lg">Kitty Version</div>
 			<div class="text-primay">0.0.1.beta</div>
 		</div>
+
+		<button @click="start_hy">start</button>
+		<button @click="stop_hy">stop</button>
 	</div>
 </template>
 <script setup lang="ts">
@@ -21,6 +20,10 @@ import { h } from 'vue'
 import { NMenu } from 'naive-ui'
 import type { MenuOption } from 'naive-ui'
 import { RouterLink } from 'vue-router'
+import { invoke } from "@tauri-apps/api/primitives";
+
+
+
 
 const menuOptions: MenuOption[] = [
 	{
@@ -37,6 +40,14 @@ const menuOptions: MenuOption[] = [
 		key: 'proxy',
 	},
 ]
+
+async function start_hy() {
+	await invoke("start_hy");
+}
+
+async function stop_hy() {
+	await invoke("stop_hy");
+}
 </script>
 
 <style scoped lang="scss">

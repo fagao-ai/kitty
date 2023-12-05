@@ -2330,6 +2330,7 @@ dependencies = [
  "entity",
  "futures",
  "hysteria-rs",
+ "libc",
  "migration",
  "rusqlite",
  "sea-orm",

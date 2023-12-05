@@ -29,6 +29,7 @@ entity = { path = "./entity" }
 migration = { path = "./migration" }
 tokio = {version="1.34.0", features= ["macros"] }
 futures = "0.3.29"
+libc = "0.2.150"
 
 
 [workspace]

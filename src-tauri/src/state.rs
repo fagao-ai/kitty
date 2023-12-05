@@ -3,6 +3,7 @@ use tauri::{AppHandle, State, Manager};
 
 pub struct AppState {
   pub db: std::sync::Mutex<Option<DatabaseConnection>>,
+  pub thread_id: std::sync::Mutex<Option<u64>>,
 }
 
 pub trait ServiceAccess {

@@ -10,13 +10,14 @@
     "tauri": "tauri"
   },
   "dependencies": {
-    "@tauri-apps/api": "^2.0.0-alpha.11",
     "@tauri-apps/plugin-shell": "^2.0.0-alpha.3",
     "@vueuse/core": "^10.6.1",
+    "@tauri-apps/api": "2.0.0-alpha.12",
     "vue": "^3.3.4",
     "vue-router": "^4.2.5"
   },
   "devDependencies": {
+    "@tauri-apps/api": "2.0.0-alpha.12",
     "@tauri-apps/cli": "^2.0.0-alpha.17",
     "@types/node": "18.14.0",
     "@vitejs/plugin-vue": "^4.2.3",
