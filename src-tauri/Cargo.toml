@@ -30,6 +30,8 @@ sea-orm = { version = "0.12", features = ["sqlx-sqlite", "runtime-tokio-rustls",
 entity = { path = "./entity" }
 migration = { path = "./migration" }
 tokio = {version="1.34.0", features= ["macros"] }
+tauri-plugin-process = "2.0.0-alpha"
+
 
 
 [workspace]

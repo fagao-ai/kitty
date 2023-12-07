@@ -21,8 +21,12 @@
         "icons/128x128@2x.png",
         "icons/icon.icns",
         "icons/icon.ico"
+      ],
+      "externalBin": [
+        "binaries/hysteria"
       ]
     },
+    
     "security": {
       "csp": null
     },
@@ -39,6 +43,14 @@
   "plugins": {
     "shell": {
       "open": true
-    }
+    },
+    "sidecar": true,
+    "scope": [
+      {
+        "name": "hysteria",
+        "cmd":  "binaries/hysteria",
+        "args": ["commit", "-m", { "validator": "\\S+" }]
+      }
+    ]
   }
 }

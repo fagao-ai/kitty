@@ -24,7 +24,7 @@ pub struct Model {
 struct Tls {
     sni: String,
     insecure: bool,
-    // #[serde(rename = "pinSHA256")]
+    #[serde(rename = "pinSHA256")]
     pin_sha256: Option<String>,
     ca: Option<String>,
 }
