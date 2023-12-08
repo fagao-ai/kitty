@@ -1,22 +1,22 @@
 /** @type {import('tailwindcss').Config} */
-import { Config } from "tailwindcss"
+import type { Config } from 'tailwindcss'
 
 const tailwindConfig: Config = {
-  darkMode: "class",
+  darkMode: 'class',
   content: [
-    "./index.html",
-    "./src/**/*.{js,ts,jsx,tsx,vue}",
+    './index.html',
+    './src/**/*.{js,ts,jsx,tsx,vue}',
   ],
   theme: {
     extend: {
       colors: {
-        primay: "#5352ed",
+        primay: '#5352ed',
       },
       screens: {
-        xl: "1200px",
-        xxl: "1400px",
-        xxxl: "1500px",
-        tv: "1700px",
+        xl: '1200px',
+        xxl: '1400px',
+        xxxl: '1500px',
+        tv: '1700px',
       },
     },
   },

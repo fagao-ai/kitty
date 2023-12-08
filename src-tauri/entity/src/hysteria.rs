@@ -21,7 +21,7 @@ pub struct Model {
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, FromJsonQueryResult)]
 
-struct Tls {
+pub struct Tls {
     sni: String,
     insecure: bool,
     #[serde(rename = "pinSHA256")]
@@ -30,7 +30,7 @@ struct Tls {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, FromJsonQueryResult)]
-struct Bandwidth {
+pub struct Bandwidth {
     up: String,
     down: String,
 }

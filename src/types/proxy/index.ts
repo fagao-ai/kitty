@@ -1,34 +1,34 @@
 export interface ProxyCard {
-    tag: string
-    name: string
-    delay: number
-    protocol: string
+  tag: string
+  name: string
+  delay: number
+  protocol: string
 }
 
 interface BandWidth {
-    up: string
-    down: string
+  up: string
+  down: string
 }
 
 interface TLS {
-    sni: string
-    insecure: boolean
+  sni: string
+  insecure: boolean
 }
 
 interface Listener {
-    listen: string
+  listen: string
 }
 
 export interface HysteriaProxy {
-    serverAddress: string
-    auth: string
-    bandWidth: BandWidth
-    tls: TLS
-    socks5: Listener
-    http: Listener
+  serverAddress: string
+  auth: string
+  bandWidth: BandWidth
+  tls: TLS
+  socks5: Listener
+  http: Listener
 }
 
 export interface ProxyAdd {
-    showModal: boolean
-    formData: HysteriaProxy
+  showModal: boolean
+  formData: HysteriaProxy
 }

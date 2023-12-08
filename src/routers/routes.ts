@@ -1,7 +1,7 @@
 export const routes = [
-    {
-        path: "/",
-        name: "proxy",
-        component: () => import("@/views/proxy/Index.vue"),
-    },
+  {
+    path: '/',
+    name: 'proxy',
+    component: async () => await import('@/views/proxy/ProxyView.vue'),
+  },
 ]
