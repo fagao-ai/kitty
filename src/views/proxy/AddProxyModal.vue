@@ -17,6 +17,7 @@ function onInsertSubmit() {
 function onCancelInsert() {
   showInsertModal.value = false
 }
+// sube
 </script>
 
 <template>
@@ -30,79 +31,79 @@ function onCancelInsert() {
     :bordered="false"
     :segmented="true"
   >
-    <NForm
+    <n-form
       :model="form"
       size="medium"
       label-placement="left"
       label-width="auto"
     >
-      <NFormItem
+      <n-form-item
         label="服务地址"
         path="serverAddress"
       >
-        <NInput v-model:value="form.serverAddress" />
-      </NFormItem>
-      <NFormItem
+        <n-input v-model:value="form.serverAddress" />
+      </n-form-item>
+      <n-form-item
         label="认证"
         path="auth"
       >
-        <NInput
+        <n-input
           v-model:value="form.auth"
           placeholder="认证密码"
         />
-      </NFormItem>
-      <NFormItem
+      </n-form-item>
+      <n-form-item
         label="上行"
         path="bandWidth.up"
       >
-        <NInput v-model:value="form.bandWidth.up" />
-      </NFormItem>
-      <NFormItem
+        <n-input v-model:value="form.bandWidth.up" />
+      </n-form-item>
+      <n-form-item
         label="下行"
         path="bandWidth.down"
       >
-        <NInput v-model:value="form.bandWidth.down" />
-      </NFormItem>
-      <NFormItem
+        <n-input v-model:value="form.bandWidth.down" />
+      </n-form-item>
+      <n-form-item
         label="sni"
         path="tls.sni"
       >
-        <NInput v-model:value="form.tls.sni" />
-      </NFormItem>
-      <NFormItem
+        <n-input v-model:value="form.tls.sni" />
+      </n-form-item>
+      <n-form-item
         label="安全连接"
         path="tls.insecure"
       >
         <n-switch v-model:value="form.tls.insecure" />
-      </NFormItem>
-      <NFormItem
+      </n-form-item>
+      <n-form-item
         label="socks5"
         path="socks5.listen"
       >
-        <NInput v-model:value="form.socks5.listen" />
-      </NFormItem>
-      <NFormItem
+        <n-input v-model:value="form.socks5.listen" />
+      </n-form-item>
+      <n-form-item
         label="http"
         path="http.listen"
       >
-        <NInput v-model:value="form.http.listen" />
-      </NFormItem>
-    </NForm>
+        <n-input v-model:value="form.http.listen" />
+      </n-form-item>
+    </n-form>
     <template #footer>
       <div class="w-full flex flex-center gap-16">
-        <NButton
+        <n-button
           round
           @click="onCancelInsert"
         >
           取消
-        </NButton>
-        <NButton
+        </n-button>
+        <n-button
           round
           type="primary"
           @click="onInsertSubmit"
         >
           提交
-        </NButton>
+        </n-button>
       </div>
     </template>
   </n-modal>

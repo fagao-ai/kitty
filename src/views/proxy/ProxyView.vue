@@ -101,12 +101,12 @@ const cards: Card[] = [
         proxies
       </div>
       <div>
-        <NButton
+        <n-button
           round
           @click="onClickInsertButton"
         >
           add
-        </NButton>
+        </n-button>
       </div>
     </div>
     <div class="flex-1 w-full">
@@ -115,7 +115,7 @@ const cards: Card[] = [
           v-for="card, index in cards"
           :key="index"
         >
-          <ProxyCard
+          <proxy-card
             :name="card.name"
             :delay="card.delay"
             :tag="card.tag"
@@ -125,7 +125,7 @@ const cards: Card[] = [
       </div>
     </div>
   </div>
-  <AddProxyModal
+  <add-proxy-modal
     v-model:showModal="showInsertModal"
     :form-data="formValue"
   />

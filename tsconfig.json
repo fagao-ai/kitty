@@ -35,6 +35,10 @@
     "src/**/*.d.ts",
     "src/**/*.tsx",
     "src/**/*.vue",
+    "src/**/**/*.vue",
+    "src/**/**/*.ts",
+    "src/*.vue",
+    "src/*.ts",
     "tailwind.config.ts",
     "./vite.config.ts"
   ],

@@ -22,10 +22,24 @@ export default antfu(
     // `.eslintignore` is no longer supported in Flat config, use `ignores` instead
     ignores: [
       './fixtures',
-      // ...globs
+      'node_modules/',
+      'dist/',
+      '.vscode/',
+      '.idea/',
+      ' src-tauri/',
+      '.cargo',
+      'public/',
     ],
   },
-  {},
+  {
+    files: ['src/*.vue', 'src/**/*.vue', 'src/**/**/*.vue'],
+    rules: {
+      'vue/component-name-in-template-casing': ['error', 'kebab-case', {
+        registeredComponentsOnly: true,
+        ignores: [],
+      }],
+    },
+  },
   {
     rules: {
       'no-tabs': ['error', { allowIndentationTabs: true }],

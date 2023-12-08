@@ -37,7 +37,7 @@ async function stopHy() {
         Kitty
       </div>
       <div class="flex-1 text-white text-lg">
-        <NMenu
+        <n-menu
           default-value="proxy"
           :options="menuOptions"
           class="rounded-full"

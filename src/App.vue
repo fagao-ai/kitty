@@ -7,16 +7,16 @@ const { theme, themeOverrides } = useTheme()
 </script>
 
 <template>
-  <NConfigProvider
+  <n-config-provider
     :theme="theme"
     :theme-overrides="themeOverrides"
     class="flex w-full h-full bg-[#fdfdfd] dark:bg-[#373839]"
   >
     <div class="w-48">
-      <MenuView />
+      <menu-view />
     </div>
     <div class="flex-1 p-4 h-full w-full">
       <router-view />
     </div>
-  </NConfigProvider>
+  </n-config-provider>
 </template>
