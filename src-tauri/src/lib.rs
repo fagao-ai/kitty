@@ -1,11 +1,13 @@
 mod database;
+mod process_manager;
 mod state;
 mod types;
 mod utils;
 
-use std::{env, sync::atomic::AtomicBool};
+use std::{env, ffi::OsStr, fs, io::Write, os::fd::AsFd, path::PathBuf, sync::atomic::AtomicBool};
 
-use entity::hysteria;
+use crate::process_manager::ProcessManager;
+use entity::hysteria::{self, Model};
 use tauri::{
     menu::{MenuBuilder, MenuItemBuilder},
     tray::{ClickType, TrayIconBuilder},
@@ -14,9 +16,10 @@ use tauri::{
 
 use database::{add_hysteria_item, get_all_hysteria_item};
 
-use state::{AppState, ServiceAccess};
+use state::AppState;
 use tauri::{AppHandle, Manager, State, StateManager};
 use tauri_plugin_shell::ShellExt;
+use tempfile::Builder;
 
 // Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
 #[tauri::command]
@@ -30,42 +33,66 @@ fn stop_hy(app_handle: AppHandle) {
     println!("alread stop!!!")
 }
 
+fn get_hysteria_tmp_config_path(
+    app_tmp_dir: &PathBuf,
+    hyteria_config: &hysteria::Model,
+) -> Result<String, Box<dyn std::error::Error>> {
+    let temp_dir = Builder::new()
+        .prefix("hysteria_")
+        .tempdir_in(app_tmp_dir)
+        .expect("Failed to create temporary directory");
+    let temp_json_file = temp_dir.path().join("config.json");
+    let mut file = std::fs::File::create(&temp_json_file).expect("Failed to create temporary file");
+    let config_str = serde_json::to_string(&hyteria_config)?;
+    let config_bytes = config_str.as_bytes();
+    file.write_all(config_bytes)?;
+    let os_string = temp_json_file.into_os_string();
+    let temp_json_file_string = os_string
+        .into_string()
+        .expect("Failed to convert to String");
+    Ok(temp_json_file_string)
+}
+
 #[tauri::command]
-async fn start_hysteria<'a>(app_handle: AppHandle, hyteria_config: hysteria::Model) -> Result<(), Box<dyn std::error::Error>> {
-    let commmand = app_handle
+async fn start_hysteria<'a>(
+    app: &'a mut tauri::App,
+    state: State<'_, AppState>,
+) -> Result<(), Box<dyn std::error::Error>> {
+    let commmand = app
         .shell()
         .sidecar("hysteria")
         .expect("failed to create `hysteria` binary command ");
-    let items: Vec<Model> = app_handle.db(|db| {
-        get_all_hysteria_item(db).await?;
-    });
-    let app_tmp_dir = app_handle.app_handle().path().temp_dir()?;
-    if items.len() > 0 {
-        let temp_dir = Builder::new()
-            .prefix("hysteria_")
-            .tempdir_in(app_tmp_dir)
-            .expect("Failed to create temporary directory");
-        let mut temp_json_file = temp_dir_path.join("config.json");
-        let mut file =
-            std::fs::File::create(&temp_json_file).expect("Failed to create temporary file");
-        file.write_all(b"Hello, world!")
-            .expect("Failed to write to temporary file");
-    }
-    let responses = if items.len() == 0 {
-        types::KittyResponse {
-            data: None,
-            code: 100,
-            msg: "hyteria config is empty".to_string(),
-        }
-    } else {
-        types::KittyResponse {
-            data: items,
-            code: 0,
-            msg: "".to_string(),
-        }
-    };
+    let conn = state.db.lock().unwrap();
 
-    commmand.arg("client").arg("/config.json");
+    let db = conn.as_ref().unwrap();
+    let items = get_all_hysteria_item(db).await?;
+    let config_path = if items.len() > 0 {
+        let app_tmp_dir = app.path().temp_dir()?;
+        let aa = get_hysteria_tmp_config_path(&app_tmp_dir, &(items[0]))?;
+        Some(aa)
+    } else {
+        None
+    };
+    match config_path {
+        Some(file) => {
+            let (receiver, child) = commmand.arg("client").arg(file).spawn()?;
+            let process_manager = state.process_manager.lock().unwrap();
+            process_manager.add_child("hysteria", child)
+        }
+        None => (),
+    }
+
+    // match config_path {
+    //     Some()
+    // }
+
+    // let config_path = match items.get(0){
+    //     Some(hysteria_config) => {
+
+    //     }
+    //     None => String::from("value")
+    // };
+    // commmand.arg("client").arg("/config.json");
 
     Ok(())
 }
@@ -130,6 +157,7 @@ pub fn run() {
     tauri::Builder::default()
         .manage(AppState {
             db: Default::default(),
+            process_manager: std::sync::Mutex::new(ProcessManager::new()),
         })
         .plugin(tauri_plugin_window::init())
         .plugin(tauri_plugin_shell::init())

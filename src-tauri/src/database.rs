@@ -1,4 +1,4 @@
-use entity::{cake, hysteria};
+use entity::hysteria;
 use sea_orm::EntityTrait;
 use sea_orm::{entity::*, error::*, query::*, DbConn, FromQueryResult};
 use sea_orm::{ActiveModelTrait, Database, DatabaseConnection, DbErr};

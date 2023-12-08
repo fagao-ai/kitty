@@ -1,72 +1,41 @@
-use std::process::{Command, Child};
-use std::io::{self, Write};
-use std::thread;
-use std::time::Duration;
+use std::collections::HashMap;
+use tauri_plugin_shell::CommandChild;
 
-struct ProcessManager {
-    child: Option<Child>,
+pub struct ProcessManager {
+    childs: HashMap<String, CommandChild>,
 }
 
 impl ProcessManager {
-    fn new() -> Self {
-        ProcessManager {
-            child: None,
+    pub fn new() -> Self {
+        Self {
+            childs: HashMap::new(),
         }
     }
 
-    fn spawn(&mut self, command: &str, args: &[&str]) -> Result<(), io::Error> {
-        let child = Command::new(command).args(args).spawn()?;
-        self.child = Some(child);
+    pub fn add_child(&self, process_name: &str, child: CommandChild) {
+        self.childs.insert(process_name.to_string(), child);
+    }
+
+    fn kill(&mut self, process_name: &str) -> Result<(), std::io::Error> {
+        let child = self.childs.get_mut(process_name).unwrap();
+        child.kill()?;
         Ok(())
     }
 
-    fn kill(&mut self) -> Result<(), io::Error> {
-        if let Some(child) = self.child.as_mut() {
-            child.kill()?;
-            self.child = None;
-        }
-        Ok(())
-    }
-
-    fn check(&mut self) -> Result<(), io::Error> {
-        if let Some(child) = self.child.as_mut() {
-            match child.try_wait()? {
-                Some(status) => {
-                    if status.success() {
-                        println!("Child process exited successfully.");
-                    } else {
-                        println!("Child process exited with an error: {:?}", status);
-                    }
-                }
-                None => {
-                    println!("Child process is still running.");
+    fn check(&mut self, process_name: &str) -> Result<(), std::io::Error> {
+        let child = self.childs.get_mut(process_name).unwrap();
+        match child.try_wait()? {
+            Some(status) => {
+                if status.success() {
+                    println!("Child process exited successfully.");
+                } else {
+                    println!("Child process exited with an error: {:?}", status);
                 }
             }
-        } else {
-            println!("No child process is running.");
+            None => {
+                println!("Child process is still running.");
+            }
         }
         Ok(())
-    }
-}
-
-fn main() {
-    let mut process_manager = ProcessManager::new();
-
-    // 创建子进程
-    if let Err(err) = process_manager.spawn("ls", &["-l"]) {
-        eprintln!("Failed to spawn child process: {}", err);
-    }
-
-    // 等待一段时间
-    thread::sleep(Duration::from_secs(5));
-
-    // 关闭子进程
-    if let Err(err) = process_manager.kill() {
-        eprintln!("Failed to kill child process: {}", err);
-    }
-
-    // 检查子进程
-    if let Err(err) = process_manager.check() {
-        eprintln!("Failed to check child process: {}", err);
     }
 }

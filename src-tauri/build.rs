@@ -34,11 +34,8 @@ fn build_hysteria() -> Result<()> {
         eprintln!("Command failed with error:\n{}", stderr);
     }
 
-    
     Ok(())
 }
-
-
 
 fn main() {
     tauri_build::build()
