@@ -31,6 +31,7 @@ entity = { path = "./entity" }
 migration = { path = "./migration" }
 tokio = {version="1.34.0", features= ["macros"] }
 tauri-plugin-process = "2.0.0-alpha"
+tempfile = "3.8.1"
 
 
 

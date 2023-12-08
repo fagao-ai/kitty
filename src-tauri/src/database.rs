@@ -13,7 +13,7 @@ pub async fn init_db(app_dir: PathBuf) -> Result<DatabaseConnection, DbErr> {
     Ok(db)
 }
 
-async fn add_hysteria_item(
+pub async fn add_hysteria_item(
     db: &DatabaseConnection,
     record: hysteria::Model,
 ) -> Result<hysteria::Model, DbErr> {
@@ -25,7 +25,7 @@ async fn add_hysteria_item(
     hysteria_res
 }
 
-async fn get_all_hysteria_item(db: &DatabaseConnection) -> Result<Vec<hysteria::Model>, DbErr> {
+pub async fn get_all_hysteria_item(db: &DatabaseConnection) -> Result<Vec<hysteria::Model>, DbErr> {
     let hysterias = hysteria::Entity::find().all(db).await?;
     Ok(hysterias)
 }
