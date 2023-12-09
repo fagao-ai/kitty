@@ -4,10 +4,11 @@ mod state;
 mod types;
 mod utils;
 
-use std::{env, ffi::OsStr, fs, io::Write, os::fd::AsFd, path::PathBuf, sync::atomic::AtomicBool};
+use anyhow::Result;
+use std::{env, io::Write, path::PathBuf};
 
 use crate::process_manager::ProcessManager;
-use entity::hysteria::{self, Model};
+use entity::hysteria::{self};
 use tauri::{
     menu::{MenuBuilder, MenuItemBuilder},
     tray::{ClickType, TrayIconBuilder},
@@ -17,10 +18,10 @@ use tauri::{
 use database::{add_hysteria_item, get_all_hysteria_item};
 
 use state::AppState;
-use tauri::{AppHandle, Manager, State, StateManager};
+use tauri::{AppHandle, Manager, State};
 use tauri_plugin_shell::ShellExt;
 use tempfile::Builder;
-use types::KittyResponse;
+use types::{CommandResult, KittyResponse};
 
 // Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
 #[tauri::command]
@@ -28,16 +29,10 @@ fn start_hy(app_handle: AppHandle) {
     println!("start_hy called!!!");
 }
 
-#[tauri::command]
-fn stop_hy(app_handle: AppHandle) {
-    println!("stop_hy called!!!");
-    println!("alread stop!!!")
-}
-
 fn get_hysteria_tmp_config_path(
     app_tmp_dir: &PathBuf,
     hyteria_config: &hysteria::Model,
-) -> Result<String, Box<dyn std::error::Error>> {
+) -> Result<String> {
     let temp_dir = Builder::new()
         .prefix("hysteria_")
         .tempdir_in(app_tmp_dir)
@@ -54,12 +49,13 @@ fn get_hysteria_tmp_config_path(
     Ok(temp_json_file_string)
 }
 
-#[tauri::command]
+// #[tauri::command]  // todo；
 async fn start_hysteria<'a>(
-    app: &'a mut tauri::App,
-    state: State<'_, AppState>,
-) -> Result<KittyResponse<hysteria::Model>, Box<dyn std::error::Error>> {
-    let shell = app.shell();
+    app_handle: AppHandle,
+    // app: &'a mut tauri::App,
+    state: State<'a, AppState>,
+) -> CommandResult<KittyResponse<hysteria::Model>> {
+    let shell = app_handle.shell();
 
     let commmand = shell
         .sidecar("hysteria")
@@ -67,18 +63,19 @@ async fn start_hysteria<'a>(
     let conn = state.db.lock().unwrap();
 
     let db = conn.as_ref().unwrap();
-    let items = get_all_hysteria_item(db).await?;
+    let db_clone = db.clone();
+    let items = get_all_hysteria_item(&db_clone).await?;
     let config_path = if items.len() > 0 {
-        let app_tmp_dir = app.path().temp_dir()?;
-        let aa = get_hysteria_tmp_config_path(&app_tmp_dir, &(items[0]))?;
-        Some(aa)
+        let app_tmp_dir = app_handle.path().temp_dir()?;
+        let config_path: String = get_hysteria_tmp_config_path(&app_tmp_dir, &(items[0]))?;
+        Some(config_path)
     } else {
         None
     };
     let response: KittyResponse<_> = match config_path {
         Some(file) => {
             let (_receiver, child) = commmand.arg("client").arg(file).spawn()?;
-            let process_manager = state.process_manager.lock().unwrap();
+            let mut process_manager = state.process_manager.lock().unwrap();
             process_manager.add_child("hysteria", child);
             KittyResponse::default()
         }
@@ -88,7 +85,7 @@ async fn start_hysteria<'a>(
     Ok(response)
 }
 
-fn set_system_tray<'a>(app: &'a mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
+fn set_system_tray<'a>(app: &'a mut tauri::App) -> Result<()> {
     let toggle = MenuItemBuilder::with_id("toggle", "Toggle").build(app);
     let menu = MenuBuilder::new(app).items(&[&toggle]).build()?;
     let parent_dir = env::current_dir()?.parent().unwrap().to_owned();
@@ -153,7 +150,10 @@ pub fn run() {
         .plugin(tauri_plugin_window::init())
         .plugin(tauri_plugin_shell::init())
         .setup(setup)
-        .invoke_handler(tauri::generate_handler![start_hy, stop_hy])
+        .invoke_handler(tauri::generate_handler![
+            start_hy,
+            // start_hysteria
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

@@ -39,4 +39,3 @@ pub struct Bandwidth {
 pub enum Relation {}
 
 impl ActiveModelBehavior for ActiveModel {}
-

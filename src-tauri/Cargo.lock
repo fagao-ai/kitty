@@ -2358,6 +2358,7 @@ dependencies = [
  "tauri-plugin-shell",
  "tauri-plugin-window",
  "tempfile",
+ "thiserror",
  "tokio",
 ]
 
