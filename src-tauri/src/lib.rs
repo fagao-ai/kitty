@@ -20,6 +20,7 @@ use state::AppState;
 use tauri::{AppHandle, Manager, State, StateManager};
 use tauri_plugin_shell::ShellExt;
 use tempfile::Builder;
+use types::KittyResponse;
 
 // Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
 #[tauri::command]
@@ -57,9 +58,10 @@ fn get_hysteria_tmp_config_path(
 async fn start_hysteria<'a>(
     app: &'a mut tauri::App,
     state: State<'_, AppState>,
-) -> Result<(), Box<dyn std::error::Error>> {
-    let commmand = app
-        .shell()
+) -> Result<KittyResponse<hysteria::Model>, Box<dyn std::error::Error>> {
+    let shell = app.shell();
+
+    let commmand = shell
         .sidecar("hysteria")
         .expect("failed to create `hysteria` binary command ");
     let conn = state.db.lock().unwrap();
@@ -73,28 +75,17 @@ async fn start_hysteria<'a>(
     } else {
         None
     };
-    match config_path {
+    let response: KittyResponse<_> = match config_path {
         Some(file) => {
-            let (receiver, child) = commmand.arg("client").arg(file).spawn()?;
+            let (_receiver, child) = commmand.arg("client").arg(file).spawn()?;
             let process_manager = state.process_manager.lock().unwrap();
-            process_manager.add_child("hysteria", child)
+            process_manager.add_child("hysteria", child);
+            KittyResponse::default()
         }
-        None => (),
-    }
+        None => KittyResponse::<hysteria::Model>::from_msg(0, "hysteria config is empty."),
+    };
 
-    // match config_path {
-    //     Some()
-    // }
-
-    // let config_path = match items.get(0){
-    //     Some(hysteria_config) => {
-
-    //     }
-    //     None => String::from("value")
-    // };
-    // commmand.arg("client").arg("/config.json");
-
-    Ok(())
+    Ok(response)
 }
 
 fn set_system_tray<'a>(app: &'a mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {

@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-use tauri_plugin_shell::CommandChild;
+use tauri_plugin_shell::process::CommandChild;
 
 pub struct ProcessManager {
     childs: HashMap<String, CommandChild>,
@@ -18,24 +18,25 @@ impl ProcessManager {
 
     fn kill(&mut self, process_name: &str) -> Result<(), std::io::Error> {
         let child = self.childs.get_mut(process_name).unwrap();
-        child.kill()?;
+        child.kill();
         Ok(())
     }
 
-    fn check(&mut self, process_name: &str) -> Result<(), std::io::Error> {
-        let child = self.childs.get_mut(process_name).unwrap();
-        match child.try_wait()? {
-            Some(status) => {
-                if status.success() {
-                    println!("Child process exited successfully.");
-                } else {
-                    println!("Child process exited with an error: {:?}", status);
-                }
-            }
-            None => {
-                println!("Child process is still running.");
-            }
-        }
-        Ok(())
-    }
+    // fn check(&mut self, process_name: &str) -> Result<(), std::io::Error> {
+    //     let child = self.childs.get_mut(process_name).unwrap();
+    //     child.inner().
+    //     match child.try_wait() {
+    //         Some(status) => {
+    //             if status.success() {
+    //                 println!("Child process exited successfully.");
+    //             } else {
+    //                 println!("Child process exited with an error: {:?}", status);
+    //             }
+    //         }
+    //         None => {
+    //             println!("Child process is still running.");
+    //         }
+    //     }
+    //     Ok(())
+    // }
 }
