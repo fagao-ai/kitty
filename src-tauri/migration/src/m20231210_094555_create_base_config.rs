@@ -22,7 +22,18 @@ impl MigrationTrait for Migration {
                     .col(ColumnDef::new(BaseConfig::SocksPort).string().not_null())
                     .to_owned(),
             )
-            .await
+            .await;
+        let insert = Query::insert()
+            .into_table(BaseConfig::Table)
+            .columns([BaseConfig::SocksPort])
+            .values_panic([10086.into()])
+            .columns([BaseConfig::HttpPort])
+            .values_panic([10087.into()])
+            .to_owned();
+
+        manager.exec_stmt(insert).await?;
+
+        Ok(())
     }
 
     async fn down(&self, manager: &SchemaManager) -> Result<(), DbErr> {
