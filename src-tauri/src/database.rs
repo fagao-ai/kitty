@@ -1,6 +1,5 @@
 use entity::hysteria;
 use sea_orm::EntityTrait;
-use sea_orm::{entity::*, error::*, query::*, DbConn, FromQueryResult};
 use sea_orm::{ActiveModelTrait, Database, DatabaseConnection, DbErr};
 use serde_json::Value;
 use std::path::PathBuf;
@@ -9,6 +8,7 @@ pub async fn init_db(app_dir: PathBuf) -> Result<DatabaseConnection, DbErr> {
     let sqlite_path = app_dir.join("MyApp.sqlite");
     let sqlite_url = format!("sqlite://{}?mode=rwc", sqlite_path.to_string_lossy());
     let db: DatabaseConnection = Database::connect(&sqlite_url).await?;
+    // let db_pool = db.get_sqlite_connection_pool();
     // Migrator::up(&connection, None).await?;
     Ok(db)
 }
@@ -58,6 +58,5 @@ mod tests {
         add_hysteria_item(&db, hy_record).await.unwrap();
         let hysterias = get_all_hysteria_item(&db).await.unwrap();
         assert_eq!(hysterias[0].id, 1);
-
     }
 }

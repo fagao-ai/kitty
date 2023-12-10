@@ -49,7 +49,7 @@ fn get_hysteria_tmp_config_path(
     Ok(temp_json_file_string)
 }
 
-// #[tauri::command]  // todo；
+#[tauri::command] // todo；
 async fn start_hysteria<'a>(
     app_handle: AppHandle,
     // app: &'a mut tauri::App,
@@ -60,11 +60,8 @@ async fn start_hysteria<'a>(
     let commmand = shell
         .sidecar("hysteria")
         .expect("failed to create `hysteria` binary command ");
-    let conn = state.db.lock().unwrap();
-
-    let db = conn.as_ref().unwrap();
-    let db_clone = db.clone();
-    let items = get_all_hysteria_item(&db_clone).await?;
+    let db = state.get_db();
+    let items = get_all_hysteria_item(&db).await?;
     let config_path = if items.len() > 0 {
         let app_tmp_dir = app_handle.path().temp_dir()?;
         let config_path: String = get_hysteria_tmp_config_path(&app_tmp_dir, &(items[0]))?;
@@ -150,10 +147,7 @@ pub fn run() {
         .plugin(tauri_plugin_window::init())
         .plugin(tauri_plugin_shell::init())
         .setup(setup)
-        .invoke_handler(tauri::generate_handler![
-            start_hy,
-            // start_hysteria
-        ])
+        .invoke_handler(tauri::generate_handler![start_hy, start_hysteria])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
