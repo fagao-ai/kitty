@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { NButton } from 'naive-ui'
 import { reactive, ref } from 'vue'
+import { invoke } from '@tauri-apps/api/primitives'
 import ProxyCard from './ProxyCard.vue'
 import type { ProxyCard as Card, HysteriaProxy } from '@/types/proxy'
 import AddProxyModal from '@/views/proxy/AddProxyModal.vue'
@@ -92,36 +93,68 @@ const cards: Card[] = [
     protocol: 'UDP',
   },
 ]
+
+const proxyStatus = ref(false)
+const proxyLoading = ref(false)
+async function handleSwitchProxy(value: boolean) {
+  proxyLoading.value = true
+  try {
+    if (value)
+      await invoke('start_hysteria')
+    else
+      await invoke('stop_hy')
+  }
+  finally {
+    proxyLoading.value = false
+  }
+}
 </script>
 
 <template>
   <div class="flex flex-col w-full h-full">
-    <div class="h-16 flex justify-between items-center">
-      <div class="text-primay text-2xl">
-        proxies
+    <div class="h-1/5 flex flex-col">
+      <div class="h-16 flex justify-between items-center ">
+        <div class="text-primay text-2xl">
+          Settings
+        </div>
       </div>
-      <div>
-        <n-button
-          round
-          @click="onClickInsertButton"
-        >
-          add
-        </n-button>
+      <div class="flex-1 flex gap-3">
+        Proxy: <n-switch
+          v-model="proxyStatus"
+          size="large"
+          :loading="proxyLoading"
+          @update:value="handleSwitchProxy"
+        />
       </div>
     </div>
-    <div class="flex-1 w-full">
-      <div class="grid grid-cols-5 auto-rows-fr gap-4 xl:grid-cols-6 xxl:grid-cols-7 xxxl:grid-cols-8 tv:grid-cols-10">
-        <template
-          v-for="card, index in cards"
-          :key="index"
-        >
-          <proxy-card
-            :name="card.name"
-            :delay="card.delay"
-            :tag="card.tag"
-            :protocol="card.protocol"
-          />
-        </template>
+    <div class="flex-1">
+      <div class="h-16 flex justify-between items-center">
+        <div class="text-primay text-2xl">
+          Proxies
+        </div>
+        <div>
+          <n-button
+            round
+            @click="onClickInsertButton"
+          >
+            add
+          </n-button>
+        </div>
+      </div>
+      <div class="flex-1 w-full">
+        <div class="grid grid-cols-5 auto-rows-fr gap-4 xl:grid-cols-6 xxl:grid-cols-7 xxxl:grid-cols-8 tv:grid-cols-10">
+          <template
+            v-for="card, index in cards"
+            :key="index"
+          >
+            <proxy-card
+              :name="card.name"
+              :delay="card.delay"
+              :tag="card.tag"
+              :protocol="card.protocol"
+            />
+          </template>
+        </div>
       </div>
     </div>
   </div>

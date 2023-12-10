@@ -102,7 +102,7 @@ function onCancelInsert() {
           type="primary"
           @click="onInsertSubmit"
         >
-          提交
+          添加
         </n-button>
       </div>
     </template>

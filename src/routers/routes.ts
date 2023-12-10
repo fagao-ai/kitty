@@ -2,6 +2,11 @@ export const routes = [
   {
     path: '/',
     name: 'proxy',
-    component: async () => await import('@/views/proxy/ProxyView.vue'),
+    component: () => import('@/views/proxy/ProxyView.vue'),
+  },
+  {
+    path: '/setting',
+    name: 'setting',
+    component: () => import('@/views/setting/SettingView.vue'),
   },
 ]

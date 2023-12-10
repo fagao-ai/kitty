@@ -3,7 +3,6 @@ import { h } from 'vue'
 import { NMenu } from 'naive-ui'
 import type { MenuOption } from 'naive-ui'
 import { RouterLink } from 'vue-router'
-import { invoke } from '@tauri-apps/api/primitives'
 
 const menuOptions: MenuOption[] = [
   {
@@ -15,19 +14,24 @@ const menuOptions: MenuOption[] = [
             name: 'proxy',
           },
         },
-        { default: () => 'proxies' },
+        { default: () => 'Proxies' },
       ),
     key: 'proxy',
   },
+  {
+    label: () =>
+      h(
+        RouterLink,
+        {
+          to: {
+            name: 'setting',
+          },
+        },
+        { default: () => 'Settings' },
+      ),
+    key: 'setting',
+  },
 ]
-
-async function startHy() {
-  await invoke('start_hysteria')
-}
-
-async function stopHy() {
-  await invoke('stop_hy')
-}
 </script>
 
 <template>
@@ -52,13 +56,6 @@ async function stopHy() {
         0.0.1.beta
       </div>
     </div>
-
-    <button @click="startHy">
-      start
-    </button>
-    <button @click="stopHy">
-      stop
-    </button>
   </div>
 </template>
 
@@ -67,9 +64,10 @@ async function stopHy() {
   --n-item-color-active: #5352ed !important;
   --n-item-color-active-hover: #5352ed !important;
 
-  .n-menu-item-content--selected::before {
-    @apply rounded-full;
-    // background-color: aqua
+  .n-menu-item-content--selected {
+    &::before {
+      border-radius: 9999px !important;
+    }
   }
 
   .n-menu-item-content {
@@ -78,11 +76,9 @@ async function stopHy() {
     padding-right: 0 !important;
   }
 
-  .n-menu-item-content-header {
-    & a {
-      font-size: 18px;
-      color: white !important;
-    }
+  .router-link-active {
+    font-size: 18px;
+    color: white !important;
   }
 }
 </style>
