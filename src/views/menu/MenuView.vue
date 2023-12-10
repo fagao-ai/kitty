@@ -44,7 +44,6 @@ const menuOptions: MenuOption[] = [
         <n-menu
           default-value="proxy"
           :options="menuOptions"
-          class="rounded-full"
         />
       </div>
     </div>
@@ -60,13 +59,25 @@ const menuOptions: MenuOption[] = [
 </template>
 
 <style scoped lang="scss">
+@keyframes roundAnimation {
+  0% {
+    border-radius: 0;
+  }
+
+  100% {
+    border-radius: 999px;
+  }
+}
+
 :deep(.n-menu) {
   --n-item-color-active: #5352ed !important;
   --n-item-color-active-hover: #5352ed !important;
 
   .n-menu-item-content--selected {
     &::before {
-      border-radius: 9999px !important;
+      animation-name: roundAnimation;
+      animation-duration: 15s;
+      animation-fill-mode: forwards;
     }
   }
 
