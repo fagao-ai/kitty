@@ -126,15 +126,11 @@ fn setup<'a>(app: &'a mut tauri::App) -> Result<(), Box<dyn std::error::Error>> 
         .path()
         .app_local_data_dir()
         .expect("The app data directory should exist.");
-    println!("{:?}", app_dir);
     let app_state: State<AppState> = handle.state();
     let db = tauri::async_runtime::block_on(async move {
         let db = database::init_db(app_dir).await;
         match db {
-            Ok(db) => {
-                println!("Local Server is running");
-                db
-            }
+            Ok(db) => db,
             Err(err) => {
                 panic!("Error: {}", err);
             }

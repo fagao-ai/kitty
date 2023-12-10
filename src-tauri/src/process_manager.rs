@@ -1,6 +1,5 @@
 use std::{collections::HashMap, sync::Mutex};
 use tauri_plugin_shell::process::CommandChild;
-use tauri_plugin_shell::Shell;
 
 pub struct ProcessManager {
     childs: HashMap<String, Mutex<CommandChild>>,
