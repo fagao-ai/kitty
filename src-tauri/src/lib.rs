@@ -25,8 +25,18 @@ use types::{CommandResult, KittyResponse};
 
 // Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
 #[tauri::command]
-fn start_hy(app_handle: AppHandle) {
-    println!("start_hy called!!!");
+fn stop_hysteria(app_handle: AppHandle) {
+    println!("stop_hy called!!!");
+}
+
+#[tauri::command]
+async fn add_hy_item<'a>(
+    state: State<'a, AppState>,
+    hysteria_config: hysteria::Model,
+) -> CommandResult<()> {
+    let db = state.get_db();
+    add_hysteria_item(&db, hysteria_config).await?;
+    Ok(())
 }
 
 fn get_hysteria_tmp_config_path(
@@ -55,9 +65,8 @@ async fn start_hysteria<'a>(
     // app: &'a mut tauri::App,
     state: State<'a, AppState>,
 ) -> CommandResult<KittyResponse<hysteria::Model>> {
-    let shell = app_handle.shell();
-
-    let commmand = shell
+    let commmand = app_handle
+        .shell()
         .sidecar("hysteria")
         .expect("failed to create `hysteria` binary command ");
     let db = state.get_db();
@@ -147,7 +156,11 @@ pub fn run() {
         .plugin(tauri_plugin_window::init())
         .plugin(tauri_plugin_shell::init())
         .setup(setup)
-        .invoke_handler(tauri::generate_handler![start_hy, start_hysteria])
+        .invoke_handler(tauri::generate_handler![
+            stop_hysteria,
+            start_hysteria,
+            add_hy_item,
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

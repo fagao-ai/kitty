@@ -22,7 +22,7 @@ const menuOptions: MenuOption[] = [
 ]
 
 async function startHy() {
-  await invoke('start_hy')
+  await invoke('start_hysteria')
 }
 
 async function stopHy() {

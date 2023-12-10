@@ -1,4 +1,5 @@
 use entity::hysteria;
+use migration::{Migrator, MigratorTrait};
 use sea_orm::EntityTrait;
 use sea_orm::{ActiveModelTrait, Database, DatabaseConnection, DbErr};
 use serde_json::Value;
@@ -9,7 +10,11 @@ pub async fn init_db(app_dir: PathBuf) -> Result<DatabaseConnection, DbErr> {
     let sqlite_url = format!("sqlite://{}?mode=rwc", sqlite_path.to_string_lossy());
     let db: DatabaseConnection = Database::connect(&sqlite_url).await?;
     // let db_pool = db.get_sqlite_connection_pool();
-    // Migrator::up(&connection, None).await?;
+    println!("Migrator called!!!");
+    Migrator::up(&db, Some(1)).await?;
+    let migrations = Migrator::get_applied_migrations(&db).await?;
+    assert_eq!(migrations.len(), 1);
+
     Ok(db)
 }
 
@@ -26,6 +31,7 @@ pub async fn add_hysteria_item(
 }
 
 pub async fn get_all_hysteria_item(db: &DatabaseConnection) -> Result<Vec<hysteria::Model>, DbErr> {
+    println!("get_all_hysteria_item called!!");
     let hysterias = hysteria::Entity::find().all(db).await?;
     Ok(hysterias)
 }

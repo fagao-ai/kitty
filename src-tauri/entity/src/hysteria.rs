@@ -3,7 +3,7 @@ use sea_orm::{entity::prelude::*, FromJsonQueryResult};
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, DeriveEntityModel)]
-#[sea_orm(table_name = "hysterias")]
+#[sea_orm(table_name = "hysteria")]
 pub struct Model {
     #[sea_orm(primary_key, auto_increment = true)]
     #[serde(skip)]
