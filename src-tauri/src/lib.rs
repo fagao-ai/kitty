@@ -8,20 +8,23 @@ use anyhow::Result;
 use std::{env, io::Write, path::PathBuf};
 
 use crate::process_manager::ProcessManager;
-use entity::hysteria::{self};
+use entity::{
+    base_config,
+    hysteria::{self},
+};
 use tauri::{
     menu::{MenuBuilder, MenuItemBuilder},
     tray::{ClickType, TrayIconBuilder},
     Icon,
 };
 
-use database::{add_hysteria_item, get_all_hysteria_item};
+use database::{add_base_config, add_hysteria_item, get_all_hysteria_item, get_base_config};
 
 use state::AppState;
 use tauri::{AppHandle, Manager, State};
 use tauri_plugin_shell::ShellExt;
 use tempfile::Builder;
-use types::{CommandResult, KittyResponse};
+use types::{CommandResult, KittyResponse, ResponseItem};
 
 // Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
 #[tauri::command]
@@ -59,7 +62,7 @@ fn get_hysteria_tmp_config_path(
     Ok(temp_json_file_string)
 }
 
-#[tauri::command] // todo；
+#[tauri::command]
 async fn start_hysteria<'a>(
     app_handle: AppHandle,
     // app: &'a mut tauri::App,
@@ -88,6 +91,33 @@ async fn start_hysteria<'a>(
         None => KittyResponse::<hysteria::Model>::from_msg(0, "hysteria config is empty."),
     };
 
+    Ok(response)
+}
+
+#[tauri::command]
+async fn incre_base_config<'a>(
+    state: State<'a, AppState>,
+    record: base_config::Model,
+) -> CommandResult<KittyResponse<base_config::Model>> {
+    let db = state.get_db();
+    let added_record = add_base_config(&db, record).await?;
+    let response =
+        KittyResponse::<base_config::Model>::new(0, ResponseItem::Single(added_record), "success");
+    Ok(response)
+}
+
+#[tauri::command]
+async fn query_base_config<'a>(
+    state: State<'a, AppState>,
+) -> CommandResult<KittyResponse<base_config::Model>> {
+    let db = state.get_db();
+    let record = get_base_config(&db).await?;
+    let response = match record {
+        Some(record) => {
+            KittyResponse::<base_config::Model>::new(0, ResponseItem::Single(record), "success")
+        }
+        None => KittyResponse::from_msg(101, "base_config not exists"),
+    };
     Ok(response)
 }
 
@@ -156,6 +186,8 @@ pub fn run() {
             stop_hysteria,
             start_hysteria,
             add_hy_item,
+            incre_base_config,
+            query_base_config,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

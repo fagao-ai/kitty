@@ -13,8 +13,12 @@ pub struct KittyResponse<T> {
 }
 
 impl<T> KittyResponse<T> {
-    pub fn new(code: i8, data: Option<ResponseItem<T>>, msg: Option<String>) -> Self {
-        Self { code, data, msg }
+    pub fn new(code: i8, data: ResponseItem<T>, msg: &str) -> Self {
+        Self {
+            code,
+            data: Some(data),
+            msg: Some(msg.to_string()),
+        }
     }
 
     pub fn from_msg(code: i8, msg: &str) -> Self {

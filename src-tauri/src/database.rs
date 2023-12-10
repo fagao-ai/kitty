@@ -1,4 +1,4 @@
-use entity::hysteria;
+use entity::{base_config, hysteria};
 use migration::{Migrator, MigratorTrait};
 use sea_orm::EntityTrait;
 use sea_orm::{ActiveModelTrait, Database, DatabaseConnection, DbErr};
@@ -22,7 +22,6 @@ pub async fn add_hysteria_item(
     let json_value: Value = serde_json::to_value(record).unwrap();
 
     let hysteria_record = hysteria::ActiveModel::from_json(json_value)?;
-    // hysteria_record.set(hysteria::Model::id, None);
     let hysteria_res = hysteria_record.insert(db).await;
     hysteria_res
 }
@@ -32,6 +31,20 @@ pub async fn get_all_hysteria_item(db: &DatabaseConnection) -> Result<Vec<hyster
     Ok(hysterias)
 }
 
+pub async fn add_base_config(
+    db: &DatabaseConnection,
+    record: base_config::Model,
+) -> Result<base_config::Model, DbErr> {
+    let json_value: Value = serde_json::to_value(record).unwrap();
+    let base_config_record = base_config::ActiveModel::from_json(json_value)?;
+    let base_config_res = base_config_record.insert(db).await;
+    base_config_res
+}
+
+pub async fn get_base_config(db: &DatabaseConnection) -> Result<Option<base_config::Model>, DbErr> {
+    let base_config_record = base_config::Entity::find().one(db).await;
+    base_config_record
+}
 #[cfg(test)]
 mod tests {
     use super::*;
