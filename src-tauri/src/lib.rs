@@ -34,7 +34,7 @@ fn stop_hysteria(app_handle: AppHandle) {
     println!("stop_hy called!!!");
 }
 
-#[tauri::command]
+#[tauri::command(rename_all = "snake_case")]
 async fn add_hy_item<'a>(
     state: State<'a, AppState>,
     hysteria_config: hysteria::Model,
@@ -60,14 +60,10 @@ where
 }
 
 fn merge_hysteria_config(
-    hysteria_config: Option<&hysteria::Model>,
+    hysteria_config: &hysteria::Model,
     base_config: Option<&base_config::Model>,
 ) -> HashMap<String, Value> {
-    let mut hashmap = match hysteria_config {
-        Some(config) => get_hashmap_from_struct(config),
-        None => HashMap::new(),
-    };
-
+    let mut hashmap = get_hashmap_from_struct(hysteria_config);
     let base_config_hashmap = match base_config {
         Some(config) => get_hashmap_from_struct(config),
         None => HashMap::new(),
@@ -79,7 +75,7 @@ fn merge_hysteria_config(
 fn get_hysteria_tmp_config_path(
     app_tmp_dir: &PathBuf,
     hyteria_config: &hysteria::Model,
-    // base_config: &base_config::Model,
+    base_config: Option<&base_config::Model>,
 ) -> Result<String> {
     let temp_dir = Builder::new()
         .prefix("hysteria_")
@@ -87,7 +83,8 @@ fn get_hysteria_tmp_config_path(
         .expect("Failed to create temporary directory");
     let temp_json_file = temp_dir.path().join("config.json");
     let mut file = std::fs::File::create(&temp_json_file).expect("Failed to create temporary file");
-    let config_str = serde_json::to_string(&hyteria_config)?;
+    let config_hashmap = merge_hysteria_config(hyteria_config, base_config);
+    let config_str = serde_json::to_string(&config_hashmap)?;
     let config_bytes = config_str.as_bytes();
     file.write_all(config_bytes)?;
     let os_string = temp_json_file.into_os_string();
@@ -109,9 +106,11 @@ async fn start_hysteria<'a>(
         .expect("failed to create `hysteria` binary command ");
     let db = state.get_db();
     let items = get_all_hysteria_item(&db).await?;
+    let base_config = get_base_config(&db).await?.unwrap();
     let config_path = if items.len() > 0 {
         let app_tmp_dir = app_handle.path().temp_dir()?;
-        let config_path: String = get_hysteria_tmp_config_path(&app_tmp_dir, &(items[0]))?;
+        let config_path: String =
+            get_hysteria_tmp_config_path(&app_tmp_dir, &(items[0]), Some(&base_config))?;
         Some(config_path)
     } else {
         None
