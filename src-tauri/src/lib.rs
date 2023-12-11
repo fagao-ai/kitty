@@ -5,7 +5,9 @@ mod types;
 mod utils;
 
 use anyhow::Result;
-use std::{env, io::Write, path::PathBuf};
+use serde::{Deserialize, Serialize};
+use serde_json::Value;
+use std::{collections::HashMap, env, io::Write, path::PathBuf};
 
 use crate::process_manager::ProcessManager;
 use entity::{
@@ -42,9 +44,42 @@ async fn add_hy_item<'a>(
     Ok(())
 }
 
+fn get_hashmap_from_struct<'a, T>(input_struct: &T) -> HashMap<String, Value>
+where
+    T: Deserialize<'a> + Serialize,
+{
+    let main_config_json_string = serde_json::to_string(&input_struct).unwrap();
+    let json_value: Value = serde_json::from_str(&main_config_json_string).unwrap();
+    let mapping = json_value.as_object().unwrap().to_owned();
+    let hashmap: HashMap<String, Value> = mapping
+        .iter()
+        .map(|(k, v)| (k.clone(), v.clone()))
+        .collect();
+
+    hashmap
+}
+
+fn merge_hysteria_config(
+    hysteria_config: Option<&hysteria::Model>,
+    base_config: Option<&base_config::Model>,
+) -> HashMap<String, Value> {
+    let mut hashmap = match hysteria_config {
+        Some(config) => get_hashmap_from_struct(config),
+        None => HashMap::new(),
+    };
+
+    let base_config_hashmap = match base_config {
+        Some(config) => get_hashmap_from_struct(config),
+        None => HashMap::new(),
+    };
+    hashmap.extend(base_config_hashmap);
+    hashmap
+}
+
 fn get_hysteria_tmp_config_path(
     app_tmp_dir: &PathBuf,
     hyteria_config: &hysteria::Model,
+    // base_config: &base_config::Model,
 ) -> Result<String> {
     let temp_dir = Builder::new()
         .prefix("hysteria_")

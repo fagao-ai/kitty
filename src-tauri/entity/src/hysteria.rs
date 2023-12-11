@@ -14,9 +14,6 @@ pub struct Model {
     tls: Tls,
     #[sea_orm(column_type = "Text")]
     bandwidth: Bandwidth,
-    // // JSON column defined in custom struct
-    // pub json_value: KeyValue,
-    // pub json_value_opt: Option<KeyValue>,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, FromJsonQueryResult)]
