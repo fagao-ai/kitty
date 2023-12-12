@@ -22,13 +22,13 @@ export default antfu(
     // `.eslintignore` is no longer supported in Flat config, use `ignores` instead
     ignores: [
       './fixtures',
-      'node_modules/',
-      'dist/',
+      './node_modules/',
+      './dist/',
       '.vscode/',
       '.idea/',
-      'src-tauri/',
+      './src-tauri/',
       '.cargo',
-      'public/',
+      './public/',
     ],
   },
   {
