@@ -1,11 +1,8 @@
 <script setup lang="ts">
-import { invoke } from '@tauri-apps/api/primitives'
-
-
 import { NButton, NForm, NFormItem, NInput } from 'naive-ui'
 import { useVModel } from '@vueuse/core'
 import type { ProxyAdd } from '@/types/proxy'
-
+import { invoke } from '@/utils/invoke'
 
 const props = withDefaults(defineProps<ProxyAdd>(), { showModal: false })
 
@@ -16,7 +13,6 @@ const form = useVModel(props, 'formData')
 async function onInsertSubmit() {
   // eslint-disable-next-line no-console
   console.log('onInsertSubmit', form.value)
-  console.log(invoke)
   await invoke('add_hy_item', { hysteria_config: form.value })
 }
 
@@ -27,8 +23,10 @@ function onCancelInsert() {
 </script>
 
 <template>
-  <n-modal v-model:show="showInsertModal" class="w-1/2 h-1/2" :mask-closable="false" preset="card" title="添加代理"
-    size="huge" :bordered="false" :segmented="true">
+  <n-modal
+    v-model:show="showInsertModal" class="w-1/2 h-1/2" :mask-closable="false" preset="card" title="添加代理"
+    size="huge" :bordered="false" :segmented="true"
+  >
     <n-form :model="form" size="medium" label-placement="left" label-width="auto">
       <n-form-item label="服务地址" path="server">
         <n-input v-model:value="form.server" />

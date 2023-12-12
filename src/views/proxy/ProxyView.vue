@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { NButton } from 'naive-ui'
 import { reactive, ref } from 'vue'
-import { invoke } from '@tauri-apps/api/primitives'
-import ProxyCard from './ProxyCard.vue'
+import ProxyCard from '@/views/proxy/ProxyCard.vue'
 import type { ProxyCard as Card, HysteriaProxy } from '@/types/proxy'
 import AddProxyModal from '@/views/proxy/AddProxyModal.vue'
+import { invoke } from '@/utils/invoke'
 
 const showInsertModal = ref(false)
 
