@@ -13,21 +13,15 @@ function onClickInsertButton() {
 }
 
 const formValue = reactive<HysteriaProxy>({
-  serverAddress: 'ip:port',
+  server: 'ip:port',
   auth: 'password',
-  bandWidth: {
+  bandwidth: {
     up: '10 mbps',
     down: '100 mbps',
   },
   tls: {
     sni: 'bing.com',
     insecure: true,
-  },
-  socks5: {
-    listen: '127.0.0.1:1080',
-  },
-  http: {
-    listen: '127.0.0.1:8080',
   },
 })
 

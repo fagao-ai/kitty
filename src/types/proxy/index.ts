@@ -5,7 +5,7 @@ export interface ProxyCard {
   protocol: string
 }
 
-interface BandWidth {
+interface Bandwidth {
   up: string
   down: string
 }
@@ -20,12 +20,10 @@ interface Listener {
 }
 
 export interface HysteriaProxy {
-  serverAddress: string
+  server: string
   auth: string
-  bandWidth: BandWidth
+  bandwidth: Bandwidth
   tls: TLS
-  socks5: Listener
-  http: Listener
 }
 
 export interface ProxyAdd {

@@ -30,17 +30,17 @@ function onCancelInsert() {
   <n-modal v-model:show="showInsertModal" class="w-1/2 h-1/2" :mask-closable="false" preset="card" title="添加代理"
     size="huge" :bordered="false" :segmented="true">
     <n-form :model="form" size="medium" label-placement="left" label-width="auto">
-      <n-form-item label="服务地址" path="serverAddress">
-        <n-input v-model:value="form.serverAddress" />
+      <n-form-item label="服务地址" path="server">
+        <n-input v-model:value="form.server" />
       </n-form-item>
       <n-form-item label="认证" path="auth">
         <n-input v-model:value="form.auth" placeholder="认证密码" />
       </n-form-item>
-      <n-form-item label="上行" path="bandWidth.up">
-        <n-input v-model:value="form.bandWidth.up" />
+      <n-form-item label="上行" path="bandwidth.up">
+        <n-input v-model:value="form.bandwidth.up" />
       </n-form-item>
-      <n-form-item label="下行" path="bandWidth.down">
-        <n-input v-model:value="form.bandWidth.down" />
+      <n-form-item label="下行" path="bandwidth.down">
+        <n-input v-model:value="form.bandwidth.down" />
       </n-form-item>
       <n-form-item label="sni" path="tls.sni">
         <n-input v-model:value="form.tls.sni" />

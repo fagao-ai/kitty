@@ -25,10 +25,8 @@ impl MigrationTrait for Migration {
             .await;
         let insert = Query::insert()
             .into_table(BaseConfig::Table)
-            .columns([BaseConfig::SocksPort])
-            .values_panic([10086.into()])
-            .columns([BaseConfig::HttpPort])
-            .values_panic([10087.into()])
+            .columns([BaseConfig::SocksPort, BaseConfig::HttpPort])
+            .values_panic([10086.into(), 10087.into()])
             .to_owned();
 
         manager.exec_stmt(insert).await?;

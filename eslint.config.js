@@ -26,7 +26,7 @@ export default antfu(
       'dist/',
       '.vscode/',
       '.idea/',
-      ' src-tauri/',
+      'src-tauri/',
       '.cargo',
       'public/',
     ],

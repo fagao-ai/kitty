@@ -7,7 +7,7 @@ mod utils;
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use std::{collections::HashMap, env, io::Write, path::PathBuf};
+use std::{collections::HashMap, env, fs, io::Write, path::PathBuf};
 
 use crate::process_manager::ProcessManager;
 use entity::{
@@ -39,6 +39,7 @@ async fn add_hy_item<'a>(
     state: State<'a, AppState>,
     hysteria_config: hysteria::Model,
 ) -> CommandResult<()> {
+    println!("{:?}", &hysteria_config);
     let db = state.get_db();
     add_hysteria_item(&db, hysteria_config).await?;
     Ok(())
@@ -88,10 +89,10 @@ fn get_hysteria_tmp_config_path(
     let config_bytes = config_str.as_bytes();
     file.write_all(config_bytes)?;
     let os_string = temp_json_file.into_os_string();
-    let temp_json_file_string = os_string
+    let temp_json_file = os_string
         .into_string()
-        .expect("Failed to convert to String");
-    Ok(temp_json_file_string)
+        .expect("Failed temp_json_file convert to String");
+    Ok(temp_json_file)
 }
 
 #[tauri::command]
@@ -190,6 +191,9 @@ fn setup<'a>(app: &'a mut tauri::App) -> Result<(), Box<dyn std::error::Error>> 
         .path()
         .app_local_data_dir()
         .expect("The app data directory should exist.");
+    if !app_dir.exists() {
+        fs::create_dir_all(&app_dir)?;
+    }
     let app_state: State<AppState> = handle.state();
     let db = tauri::async_runtime::block_on(async move {
         let db = database::init_db(app_dir).await;
