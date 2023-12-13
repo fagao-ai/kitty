@@ -5,7 +5,7 @@ pub struct ProcessManager {
     childs: HashMap<String, Mutex<CommandChild>>,
 }
 
-impl<'a> ProcessManager {
+impl ProcessManager {
     pub fn new() -> Self {
         Self {
             childs: HashMap::new(),
@@ -13,8 +13,7 @@ impl<'a> ProcessManager {
     }
 
     pub fn add_child(&mut self, process_name: &str, child: CommandChild) {
-        self.childs
-            .insert(process_name.to_string(), Mutex::new(child));
+        self.childs.insert(process_name.to_string(), Mutex::new(child));
     }
 
     // fn kill(&mut self, process_name: &str) -> Result<(), std::io::Error> {

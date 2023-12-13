@@ -24,7 +24,7 @@ use database::{add_base_config, add_hysteria_item, get_all_hysteria_item, get_ba
 
 use state::AppState;
 use tauri::{AppHandle, Manager, State};
-use tauri_plugin_shell::ShellExt;
+use tauri_plugin_shell::{ShellExt, process::CommandEvent};
 use uuid::Uuid;
 
 use types::{CommandResult, KittyResponse, ResponseItem};
@@ -141,9 +141,38 @@ async fn start_hysteria<'a>(
     println!("config_path: {:?}", &config_path);
     let response: KittyResponse<_> = match config_path {
         Some(file) => {
-            let (_receiver, child) = commmand.arg("client").arg("--config").arg(file).spawn()?;
-            let mut process_manager = state.process_manager.lock().unwrap();
-            process_manager.add_child("hysteria", child);
+            let (mut receiver, mut _child) = commmand.arg("client").arg("--config").arg(file).spawn()?;
+
+            while let Some(event) = receiver.recv().await {
+                match event {
+                    CommandEvent::Terminated(payload) => {
+                        assert_eq!(payload.code, Some(1));
+                    }
+                    CommandEvent::Stderr(line) => {
+                        print!("strerr: {}", String::from_utf8(line).unwrap());
+                    }
+                    CommandEvent::Stdout(line) => {
+                        print!("strout: {}", String::from_utf8(line).unwrap());
+                    }
+                    _ => {}
+                }
+            }
+            // println!("aa: {:?}", aa);
+            // 检查子进程是否启动
+            // let (_receiver, child) = ;
+            // if output.status.success() {
+            //     let stdout = String::from_utf8_lossy(&output.stdout);
+            //     println!("Command executed successfully:\n{}", stdout);
+            // } else {
+            //     let stderr = String::from_utf8_lossy(&output.stderr);
+            //     eprintln!("Command failed:\n{}", stderr);
+            // }
+            // let mut process_manager = state.process_manager.lock().unwrap();
+            // let child_pid = child.pid();
+            // println!("child_pid: {}", child_pid);
+            // process_manager.add_child("hysteria", child);
+            
+            
             KittyResponse::default()
         }
         None => KittyResponse::<hysteria::Model>::from_msg(0, "hysteria config is empty."),

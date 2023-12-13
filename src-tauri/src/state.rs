@@ -12,4 +12,10 @@ impl AppState {
         let db_clone = db.clone().unwrap();
         db_clone
     }
+
+    // pub fn get_process_manager(&self) -> ProcessManager {
+    //     let process_manager = self.process_manager.lock().unwrap();
+    //     let process_manager_clone = process_manager.clone().unwrap();
+    //     process_manager
+    // }
 }
