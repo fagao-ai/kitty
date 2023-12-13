@@ -11,15 +11,13 @@ const showInsertModal = useVModel(props, 'showModal')
 const form = useVModel(props, 'formData')
 
 async function onInsertSubmit() {
-  // eslint-disable-next-line no-console
-  console.log('onInsertSubmit', form.value)
   await invoke('add_hy_item', { hysteria_config: form.value })
+  showInsertModal.value = false
 }
 
 function onCancelInsert() {
   showInsertModal.value = false
 }
-// sube
 </script>
 
 <template>

@@ -4,7 +4,6 @@ import { reactive, ref } from 'vue'
 import ProxyCard from '@/views/proxy/ProxyCard.vue'
 import type { ProxyCard as Card, HysteriaProxy } from '@/types/proxy'
 import AddProxyModal from '@/views/proxy/AddProxyModal.vue'
-import { invoke } from '@/utils/invoke'
 
 const showInsertModal = ref(false)
 
@@ -87,39 +86,17 @@ const cards: Card[] = [
     protocol: 'UDP',
   },
 ]
-
-const proxyStatus = ref(false)
-const proxyLoading = ref(false)
-async function handleSwitchProxy(value: boolean) {
-  proxyLoading.value = true
-  try {
-    if (value)
-      await invoke('start_hysteria')
-    else
-      await invoke('stop_hy')
-  }
-  finally {
-    proxyLoading.value = false
-  }
-}
 </script>
 
 <template>
   <div class="flex flex-col w-full h-full">
-    <div class="h-1/5 flex flex-col">
+    <div v-if="false" class="h-1/5 flex flex-col">
       <div class="h-16 flex justify-between items-center ">
         <div class="text-primay text-2xl">
           Settings
         </div>
       </div>
-      <div class="flex-1 flex gap-3">
-        Proxy: <n-switch
-          v-model="proxyStatus"
-          size="large"
-          :loading="proxyLoading"
-          @update:value="handleSwitchProxy"
-        />
-      </div>
+      <div class="flex-1 flex gap-3" />
     </div>
     <div class="flex-1">
       <div class="h-16 flex justify-between items-center">
