@@ -42,8 +42,8 @@ pub async fn add_base_config(
 }
 
 pub async fn get_base_config(db: &DatabaseConnection) -> Result<Option<base_config::Model>, DbErr> {
-    let base_config_record = base_config::Entity::find().one(db).await;
-    base_config_record
+    let base_config_record = base_config::Entity::find().one(db).await?;
+    Ok(base_config_record)
 }
 #[cfg(test)]
 mod tests {
@@ -66,9 +66,12 @@ mod tests {
         }"#;
         let hy_record: hysteria::Model = serde_json::from_str(&config_str).unwrap();
         let db = Database::connect("sqlite::memory:").await.unwrap();
+        
 
         // Setup database schema
         setup_schema(&db, hysteria::Entity).await;
+        setup_schema(&db, base_config::Entity).await;
+        
 
         add_hysteria_item(&db, hy_record).await.unwrap();
         let hysterias = get_all_hysteria_item(&db).await.unwrap();

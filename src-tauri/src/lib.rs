@@ -25,7 +25,9 @@ use database::{add_base_config, add_hysteria_item, get_all_hysteria_item, get_ba
 use state::AppState;
 use tauri::{AppHandle, Manager, State};
 use tauri_plugin_shell::ShellExt;
+use tempfile::NamedTempFile;
 use tempfile::Builder;
+
 use types::{CommandResult, KittyResponse, ResponseItem};
 
 // Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
@@ -78,11 +80,12 @@ fn get_hysteria_tmp_config_path(
     hyteria_config: &hysteria::Model,
     base_config: Option<&base_config::Model>,
 ) -> Result<String> {
-    let temp_dir = Builder::new()
-        .prefix("hysteria_")
-        .tempdir_in(app_tmp_dir)
+    let temp_dir = NamedTempFile::with_prefix_in("hysteria_", app_tmp_dir)
         .expect("Failed to create temporary directory");
     let temp_json_file = temp_dir.path().join("config.json");
+    println!("temp_json_file: {:?}", temp_json_file);
+    fs::create_dir_all(temp_json_file.parent().unwrap())?;
+    println!("temp_json_file.as_path( {:?}", temp_json_file.as_path());
     let mut file = std::fs::File::create(&temp_json_file).expect("Failed to create temporary file");
     let config_hashmap = merge_hysteria_config(hyteria_config, base_config);
     let config_str = serde_json::to_string(&config_hashmap)?;
@@ -107,18 +110,24 @@ async fn start_hysteria<'a>(
         .expect("failed to create `hysteria` binary command ");
     let db = state.get_db();
     let items = get_all_hysteria_item(&db).await?;
-    let base_config = get_base_config(&db).await?.unwrap();
+    let base_config = get_base_config(&db).await?;
+    let base_config = base_config.unwrap();
     let config_path = if items.len() > 0 {
-        let app_tmp_dir = app_handle.path().temp_dir()?;
+        let app_cache_dir = app_handle.path().app_cache_dir()?;
+        if !app_cache_dir.exists() {
+            fs::create_dir_all(&app_cache_dir).unwrap();
+        }
+        println!("app_tmp_dir: {:?}", app_cache_dir);
         let config_path: String =
-            get_hysteria_tmp_config_path(&app_tmp_dir, &(items[0]), Some(&base_config))?;
+            get_hysteria_tmp_config_path(&app_cache_dir, &(items[0]), Some(&base_config))?;
         Some(config_path)
     } else {
         None
     };
+    println!("config_path: {:?}", &config_path);
     let response: KittyResponse<_> = match config_path {
         Some(file) => {
-            let (_receiver, child) = commmand.arg("client").arg(file).spawn()?;
+            let (_receiver, child) = commmand.arg("client").arg("--config").arg(file).spawn()?;
             let mut process_manager = state.process_manager.lock().unwrap();
             process_manager.add_child("hysteria", child);
             KittyResponse::default()
@@ -194,6 +203,7 @@ fn setup<'a>(app: &'a mut tauri::App) -> Result<(), Box<dyn std::error::Error>> 
     if !app_dir.exists() {
         fs::create_dir_all(&app_dir)?;
     }
+    println!("app_dir: {:?}", app_dir);
     let app_state: State<AppState> = handle.state();
     let db = tauri::async_runtime::block_on(async move {
         let db = database::init_db(app_dir).await;
