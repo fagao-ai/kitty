@@ -25,8 +25,7 @@ use database::{add_base_config, add_hysteria_item, get_all_hysteria_item, get_ba
 use state::AppState;
 use tauri::{AppHandle, Manager, State};
 use tauri_plugin_shell::ShellExt;
-use tempfile::NamedTempFile;
-use tempfile::Builder;
+use uuid::Uuid;
 
 use types::{CommandResult, KittyResponse, ResponseItem};
 
@@ -68,7 +67,22 @@ fn merge_hysteria_config(
 ) -> HashMap<String, Value> {
     let mut hashmap = get_hashmap_from_struct(hysteria_config);
     let base_config_hashmap = match base_config {
-        Some(config) => get_hashmap_from_struct(config),
+        Some(config) => {
+            let base_config = get_hashmap_from_struct(config);
+            let mut new_base_config = HashMap::new();
+            for (k, v) in base_config.into_iter() {
+                if k.to_string().eq("http_port") | k.to_string().eq("socks_port") {
+                    let mut tmp_hash_map = HashMap::new();
+                    tmp_hash_map.insert("listen", format!("127.0.0.1:{}", v));
+                    let json_value: Value = serde_json::to_value(tmp_hash_map).expect("Failed to convert to JSON");
+                    let new_k = if k.eq("http_port") {"http"} else {"socks5"};
+                    new_base_config.insert(new_k.to_string(), json_value);
+                } else {
+                    new_base_config.insert(k, v);
+                }
+            }
+            new_base_config
+        }
         None => HashMap::new(),
     };
     hashmap.extend(base_config_hashmap);
@@ -80,12 +94,12 @@ fn get_hysteria_tmp_config_path(
     hyteria_config: &hysteria::Model,
     base_config: Option<&base_config::Model>,
 ) -> Result<String> {
-    let temp_dir = NamedTempFile::with_prefix_in("hysteria_", app_tmp_dir)
-        .expect("Failed to create temporary directory");
-    let temp_json_file = temp_dir.path().join("config.json");
-    println!("temp_json_file: {:?}", temp_json_file);
+    let uuid = Uuid::new_v4();
+    let uuid_string: String = uuid.to_string();
+
+    let temp_json_file = app_tmp_dir.join(format!("{}/hysteria_config.json", uuid_string));
     fs::create_dir_all(temp_json_file.parent().unwrap())?;
-    println!("temp_json_file.as_path( {:?}", temp_json_file.as_path());
+    println!("temp_json_file {:?}", temp_json_file);
     let mut file = std::fs::File::create(&temp_json_file).expect("Failed to create temporary file");
     let config_hashmap = merge_hysteria_config(hyteria_config, base_config);
     let config_str = serde_json::to_string(&config_hashmap)?;

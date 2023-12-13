@@ -2357,9 +2357,9 @@ dependencies = [
  "tauri-plugin-process",
  "tauri-plugin-shell",
  "tauri-plugin-window",
- "tempfile",
  "thiserror",
  "tokio",
+ "uuid",
 ]
 
 [[package]]
