@@ -24,15 +24,18 @@ use database::{add_base_config, add_hysteria_item, get_all_hysteria_item, get_ba
 
 use state::AppState;
 use tauri::{AppHandle, Manager, State};
-use tauri_plugin_shell::{ShellExt, process::CommandEvent};
+use tauri_plugin_shell::{process::CommandEvent, ShellExt};
 use uuid::Uuid;
 
 use types::{CommandResult, KittyResponse, ResponseItem};
 
 // Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
 #[tauri::command]
-fn stop_hysteria(app_handle: AppHandle) {
+fn stop_hysteria<'a>(app_handle: AppHandle, state: State<'a, AppState>) -> CommandResult<()> {
+    let mut process_manager = state.process_manager.lock().unwrap();
+    let _kill_result = process_manager.kill("hysteria")?;
     println!("stop_hy called!!!");
+    Ok(())
 }
 
 #[tauri::command(rename_all = "snake_case")]
@@ -74,8 +77,9 @@ fn merge_hysteria_config(
                 if k.to_string().eq("http_port") | k.to_string().eq("socks_port") {
                     let mut tmp_hash_map = HashMap::new();
                     tmp_hash_map.insert("listen", format!("127.0.0.1:{}", v));
-                    let json_value: Value = serde_json::to_value(tmp_hash_map).expect("Failed to convert to JSON");
-                    let new_k = if k.eq("http_port") {"http"} else {"socks5"};
+                    let json_value: Value =
+                        serde_json::to_value(tmp_hash_map).expect("Failed to convert to JSON");
+                    let new_k = if k.eq("http_port") { "http" } else { "socks5" };
                     new_base_config.insert(new_k.to_string(), json_value);
                 } else {
                     new_base_config.insert(k, v);
@@ -141,23 +145,45 @@ async fn start_hysteria<'a>(
     println!("config_path: {:?}", &config_path);
     let response: KittyResponse<_> = match config_path {
         Some(file) => {
-            let (mut receiver, mut _child) = commmand.arg("client").arg("--config").arg(file).spawn().expect("command start failed.");
+            let (mut receiver, child) = commmand
+                .arg("client")
+                .arg("--config")
+                .arg(file)
+                .spawn()
+                .expect("command start failed.");
+            let child_pid = child.pid();
 
             while let Some(event) = receiver.recv().await {
                 match event {
-                    CommandEvent::Terminated(payload) => {
-                        assert_eq!(payload.code, Some(1));
-                    }
+                    CommandEvent::Terminated(payload) => {}
                     CommandEvent::Stderr(line) => {
-                        print!("strerr: {}", String::from_utf8(line).unwrap());
+                        let line = String::from_utf8(line).unwrap();
+                        if line.contains("server listening") {
+                            let mut process_manager = state.process_manager.lock().unwrap();
+                            process_manager.add_child("hysteria", child_pid);
+                            break;
+                        }
+                        print!("stderr: {}", line);
                     }
                     CommandEvent::Stdout(line) => {
-                        print!("strout: {}", String::from_utf8(line).unwrap());
+                        print!("stdout: {}", String::from_utf8(line).unwrap());
                     }
                     _ => {}
                 }
             }
-            
+            println!("started hysteria!!!");
+            tauri::async_runtime::spawn(async move {
+                while let Some(event) = receiver.recv().await {
+                    match event {
+                        CommandEvent::Terminated(payload) => {
+                            println!("stop hysteria!!");
+                            println!("{:?}", payload);
+                        }
+                        _ => {}
+                    }
+                }
+            });
+
             KittyResponse::default()
         }
         None => KittyResponse::<hysteria::Model>::from_msg(0, "hysteria config is empty."),

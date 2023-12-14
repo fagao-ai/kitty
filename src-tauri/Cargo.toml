@@ -38,6 +38,7 @@ tauri-plugin-process = "2.0.0-alpha"
 thiserror = "1.0.50"
 anyhow = "1"
 uuid = {version = "1.6.1", features = ["v4"] }
+libc = "0.2.151"
 
 
 [workspace]

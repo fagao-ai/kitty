@@ -1,8 +1,8 @@
-use std::{collections::HashMap, sync::Mutex};
-use tauri_plugin_shell::process::CommandChild;
+use libc::{c_int, kill};
+use std::collections::HashMap;
 
 pub struct ProcessManager {
-    childs: HashMap<String, Mutex<CommandChild>>,
+    childs: HashMap<String, u32>,
 }
 
 impl ProcessManager {
@@ -12,32 +12,22 @@ impl ProcessManager {
         }
     }
 
-    pub fn add_child(&mut self, process_name: &str, child: CommandChild) {
-        self.childs.insert(process_name.to_string(), Mutex::new(child));
+    pub fn add_child(&mut self, process_name: &str, child_pid: u32) {
+        self.childs.insert(process_name.to_string(), child_pid);
     }
 
-    // fn kill(&mut self, process_name: &str) -> Result<(), std::io::Error> {
-    //     // let aa = self.childs.get(process_name);
-    //     let child = self.childs.get(process_name).unwrap();
-    //     child.lock().unwrap().kill();
-    //     Ok(())
-    // }
+    pub fn kill(&mut self, process_name: &str) -> Result<(), anyhow::Error> {
+        let child_pid = self.childs.get(process_name).unwrap();
 
-    // fn check(&mut self, process_name: &str) -> Result<(), std::io::Error> {
-    //     let child = self.childs.get_mut(process_name).unwrap();
-    //     child.inner().
-    //     match child.try_wait() {
-    //         Some(status) => {
-    //             if status.success() {
-    //                 println!("Child process exited successfully.");
-    //             } else {
-    //                 println!("Child process exited with an error: {:?}", status);
-    //             }
-    //         }
-    //         None => {
-    //             println!("Child process is still running.");
-    //         }
-    //     }
-    //     Ok(())
-    // }
+        let result = unsafe { kill(child_pid.clone() as i32, libc::SIGTERM as c_int) };
+
+        if result == -1 {
+            
+            println!("无法发送信号");
+        } else {
+            self.childs.remove(process_name);
+            println!("信号已发送");
+        }
+        Ok(())
+    }
 }

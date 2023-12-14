@@ -11,7 +11,7 @@ async function handleSwitchProxy(value: boolean) {
     if (value)
       await invoke('start_hysteria')
     else
-      await invoke('stop_hy')
+      await invoke('stop_hysteria')
   }
   finally {
     proxyLoading.value = false
@@ -49,12 +49,7 @@ const onlyAllowNumber = (value: string) => !value || /^\d+$/.test(value)
             系统代理
           </div>
           <div class="font-medium">
-            <n-switch
-              v-model="proxyStatus"
-              :loading="proxyLoading"
-              size="medium"
-              @update:value="handleSwitchProxy"
-            />
+            <n-switch v-model="proxyStatus" :loading="proxyLoading" size="medium" @update:value="handleSwitchProxy" />
           </div>
         </div>
         <div class="flex justify-between">
@@ -80,12 +75,7 @@ const onlyAllowNumber = (value: string) => !value || /^\d+$/.test(value)
             Socks5代理端口
           </div>
           <div class="font-medium w-20">
-            <n-input
-              type="text"
-              value="10086"
-              :disabled="true"
-              :allow-input="onlyAllowNumber"
-            />
+            <n-input type="text" value="10086" :disabled="true" :allow-input="onlyAllowNumber" />
           </div>
         </div>
         <div class="flex justify-between">
@@ -93,12 +83,7 @@ const onlyAllowNumber = (value: string) => !value || /^\d+$/.test(value)
             HTTP代理端口
           </div>
           <div class="font-medium w-20">
-            <n-input
-              type="text"
-              value="10086"
-              :disabled="true"
-              :allow-input="onlyAllowNumber"
-            />
+            <n-input type="text" value="10086" :disabled="true" :allow-input="onlyAllowNumber" />
           </div>
         </div>
       </div>
