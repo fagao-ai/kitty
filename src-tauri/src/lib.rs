@@ -141,7 +141,7 @@ async fn start_hysteria<'a>(
     println!("config_path: {:?}", &config_path);
     let response: KittyResponse<_> = match config_path {
         Some(file) => {
-            let (mut receiver, mut _child) = commmand.arg("client").arg("--config").arg(file).spawn()?;
+            let (mut receiver, mut _child) = commmand.arg("client").arg("--config").arg(file).spawn().expect("command start failed.");
 
             while let Some(event) = receiver.recv().await {
                 match event {
@@ -157,21 +157,6 @@ async fn start_hysteria<'a>(
                     _ => {}
                 }
             }
-            // println!("aa: {:?}", aa);
-            // 检查子进程是否启动
-            // let (_receiver, child) = ;
-            // if output.status.success() {
-            //     let stdout = String::from_utf8_lossy(&output.stdout);
-            //     println!("Command executed successfully:\n{}", stdout);
-            // } else {
-            //     let stderr = String::from_utf8_lossy(&output.stderr);
-            //     eprintln!("Command failed:\n{}", stderr);
-            // }
-            // let mut process_manager = state.process_manager.lock().unwrap();
-            // let child_pid = child.pid();
-            // println!("child_pid: {}", child_pid);
-            // process_manager.add_child("hysteria", child);
-            
             
             KittyResponse::default()
         }
