@@ -17,17 +17,20 @@ impl ProcessManager {
     }
 
     pub fn kill(&mut self, process_name: &str) -> Result<(), anyhow::Error> {
-        let child_pid = self.childs.get(process_name).unwrap();
-
-        let result = unsafe { kill(child_pid.clone() as i32, libc::SIGTERM as c_int) };
-
-        if result == -1 {
-            
-            println!("无法发送信号");
-        } else {
-            self.childs.remove(process_name);
-            println!("信号已发送");
+        let child_pid = self.childs.get(process_name);
+        match child_pid {
+            Some(child_pid) => {
+                let result = unsafe { kill(child_pid.clone() as i32, libc::SIGTERM as c_int) };
+                if result == -1 {
+                    println!("无法发送信号");
+                } else {
+                    self.childs.remove(process_name);
+                    println!("信号已发送");
+                }
+            }
+            None => (),
         }
+
         Ok(())
     }
 }
