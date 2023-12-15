@@ -19,6 +19,7 @@ use tauri::{
     tray::{ClickType, TrayIconBuilder},
     Icon,
 };
+use sysproxy::Sysproxy;
 
 use database::{add_base_config, add_hysteria_item, get_all_hysteria_item, get_base_config};
 
@@ -161,6 +162,18 @@ async fn start_hysteria<'a>(
                         if line.contains("server listening") {
                             let mut process_manager = state.process_manager.lock().unwrap();
                             process_manager.add_child("hysteria", child_pid);
+
+                            let mut sysproxy = Sysproxy {
+                                enable: true,
+                                host: "127.0.0.1".into(),
+                                port: 10086,
+                                #[cfg(target_os = "windows")]
+                                bypass: "localhost;127.*".into(),
+                                #[cfg(not(target_os = "windows"))]
+                                bypass: "localhost,127.0.0.1/8".into(),
+                            };
+                            sysproxy.set_system_proxy();
+                            print!("stderr: {}", line);
                             break;
                         }
                         print!("stderr: {}", line);
