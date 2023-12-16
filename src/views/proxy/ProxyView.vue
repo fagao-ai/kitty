@@ -4,12 +4,9 @@ import { reactive, ref } from 'vue'
 import ProxyCard from '@/views/proxy/ProxyCard.vue'
 import type { ProxyCard as Card, HysteriaProxy } from '@/types/proxy'
 import AddProxyModal from '@/views/proxy/AddProxyModal.vue'
+import { invoke } from '@/utils/invoke'
 
 const showInsertModal = ref(false)
-
-function onClickInsertButton() {
-  showInsertModal.value = true
-}
 
 const formValue = reactive<HysteriaProxy>({
   server: 'ip:port',
@@ -86,11 +83,21 @@ const cards: Card[] = [
     protocol: 'UDP',
   },
 ]
+
+async function batchGetProxy() {
+  await invoke<Card[]>('get_all_proxies')
+  // console.log(res.data)
+}
+
+batchGetProxy()
 </script>
 
 <template>
   <div class="flex flex-col w-full h-full">
-    <div v-if="false" class="h-1/5 flex flex-col">
+    <div
+      v-if="false"
+      class="h-1/5 flex flex-col"
+    >
       <div class="h-16 flex justify-between items-center ">
         <div class="text-primay text-2xl">
           Settings
@@ -106,7 +113,7 @@ const cards: Card[] = [
         <div>
           <n-button
             round
-            @click="onClickInsertButton"
+            @click="showInsertModal = true"
           >
             add
           </n-button>
@@ -132,5 +139,6 @@ const cards: Card[] = [
   <add-proxy-modal
     v-model:showModal="showInsertModal"
     :form-data="formValue"
+    :on-insert-submit="batchGetProxy"
   />
 </template>

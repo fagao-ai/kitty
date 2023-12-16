@@ -8,6 +8,7 @@ pub struct Model {
     #[sea_orm(primary_key, auto_increment = true)]
     #[serde(skip)]
     pub id: i32,
+    pub name: String,
     pub server: String,
     pub auth: String,
     #[sea_orm(column_type = "Text")]
