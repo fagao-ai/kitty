@@ -1,7 +1,6 @@
 use entity::{base_config, hysteria};
 use migration::{Migrator, MigratorTrait};
 use sea_orm::EntityTrait;
-use sea_orm::{entity::*, query::QuerySelect};
 use sea_orm::{ActiveModelTrait, Database, DatabaseConnection, DbErr};
 use serde_json::Value;
 use std::path::PathBuf;
@@ -29,20 +28,8 @@ pub async fn add_hysteria_item(
 
 pub async fn get_all_hysteria_item(
     db: &DatabaseConnection,
-    delete_name: bool,
 ) -> Result<Vec<hysteria::Model>, DbErr> {
-    let query = if delete_name {
-        hysteria::Entity::find()
-            .select_only()
-            .columns(hysteria::Column::iter().filter(|col| match col {
-                hysteria::Column::Name => false,
-                _ => true,
-            }))
-            .all(db)
-    } else {
-        hysteria::Entity::find().all(db)
-    };
-    let hysterias = query.await?;
+    let hysterias = hysteria::Entity::find().all(db).await?;
     Ok(hysterias)
 }
 
@@ -87,7 +74,7 @@ mod tests {
         setup_schema(&db, base_config::Entity).await;
 
         add_hysteria_item(&db, hy_record).await.unwrap();
-        let hysterias = get_all_hysteria_item(&db, true).await.unwrap();
+        let hysterias = get_all_hysteria_item(&db).await.unwrap();
         assert_eq!(hysterias[0].id, 1);
     }
 }

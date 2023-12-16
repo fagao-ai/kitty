@@ -14,6 +14,7 @@ use crate::{process_manager::ProcessManager, proxy::system_proxy::clear_system_p
 use entity::{
     base_config,
     hysteria::{self},
+    hysteria::HysteriaModelWithoutName,
 };
 use tauri::{
     menu::{MenuBuilder, MenuItemBuilder},
@@ -58,7 +59,7 @@ async fn get_all_proxies<'a>(
     state: State<'a, AppState>,
 ) -> CommandResult<KittyResponse<hysteria::Model>> {
     let db = state.get_db();
-    let hy_proxies = get_all_hysteria_item(&db, false).await?;
+    let hy_proxies = get_all_hysteria_item(&db).await?;
     let data = ResponseItem::Multiple(hy_proxies);
     Ok(KittyResponse::new(0, data, "success"))
 }
@@ -82,7 +83,8 @@ fn merge_hysteria_config(
     hysteria_config: &hysteria::Model,
     base_config: Option<&base_config::Model>,
 ) -> HashMap<String, Value> {
-    let mut hashmap = get_hashmap_from_struct(hysteria_config);
+    let hysteria_config = HysteriaModelWithoutName::from(hysteria_config);
+    let mut hashmap = get_hashmap_from_struct(&hysteria_config);
     let base_config_hashmap = match base_config {
         Some(config) => {
             let base_config = get_hashmap_from_struct(config);
@@ -142,7 +144,7 @@ async fn start_hysteria<'a>(
         .sidecar("hysteria")
         .expect("failed to create `hysteria` binary command ");
     let db = state.get_db();
-    let items = get_all_hysteria_item(&db, true).await?;
+    let items = get_all_hysteria_item(&db).await?;
     let base_config = get_base_config(&db).await?;
     let base_config = base_config.unwrap();
     let config_path = if items.len() > 0 {

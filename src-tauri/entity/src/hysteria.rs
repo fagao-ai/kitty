@@ -37,3 +37,33 @@ pub struct Bandwidth {
 pub enum Relation {}
 
 impl ActiveModelBehavior for ActiveModel {}
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub struct HysteriaModelWithoutName {
+    #[serde(skip)]
+    pub name: String,
+    pub server: String,
+    pub auth: String,
+    tls: Tls,
+    bandwidth: Bandwidth,
+}
+
+impl<'a> From<&'a Model> for HysteriaModelWithoutName {
+    fn from(source: &'a Model) -> Self {
+        HysteriaModelWithoutName {
+            name: source.name.clone(),
+            server: source.server.clone(),
+            auth: source.auth.clone(),
+            tls: source.tls.clone(),
+            bandwidth: source.bandwidth.clone(),
+        }
+    }
+}
+
+impl Model {
+    fn serde_string(&self) -> Result<String, serde_json::Error> {
+        let tmp_struct = HysteriaModelWithoutName::from(self);
+        let value = serde_json::to_string(&tmp_struct);
+        value
+    }
+}
