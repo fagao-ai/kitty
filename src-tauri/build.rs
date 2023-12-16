@@ -1,4 +1,4 @@
-use git2::{Error, Repository};
+use git2::Repository;
 
 use anyhow::{Context, Result};
 use std::env;
@@ -7,12 +7,12 @@ use std::process::Command;
 fn build_hysteria() -> Result<()> {
     let repo_url = "https://github.com/apernet/hysteria.git";
     let repo_path = env::var("OUT_DIR").unwrap();
-    let repo = match Repository::clone(repo_url, &repo_path) {
+    let _repo = match Repository::clone(repo_url, &repo_path) {
         Ok(repo) => repo,
         Err(e) => panic!("Failed to clone repository: {}", e),
     };
     env::set_current_dir(&repo_path).unwrap();
-    let platform = env::var("CARGO_CFG_TARGET_OS").unwrap();
+    let _platform = env::var("CARGO_CFG_TARGET_OS").unwrap();
     let mut command = Command::new("python");
     command
         .arg("hyperbole.py")

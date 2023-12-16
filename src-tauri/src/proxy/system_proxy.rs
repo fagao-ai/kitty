@@ -16,7 +16,7 @@ pub fn set_system_proxy(host: &str, socks_port: u16, http_port: Option<u16>) {
 
 #[cfg(target_os = "linux")]
 pub fn set_system_proxy(host: &str, socks_port: u16, http_port: Option<u16>) -> Result<()> {
-    let mut socks_sysproxy = Sysproxy {
+    let socks_sysproxy = Sysproxy {
         enable: true,
         host: host.into(),
         port: socks_port,
@@ -26,7 +26,7 @@ pub fn set_system_proxy(host: &str, socks_port: u16, http_port: Option<u16>) -> 
     let _ = socks_sysproxy.set_socks();
     match http_port {
         Some(http_port) => {
-            let mut socks_sysproxy = Sysproxy {
+            let socks_sysproxy = Sysproxy {
                 enable: true,
                 host: host.into(),
                 port: http_port,
@@ -87,23 +87,6 @@ pub fn clear_system_proxy() -> Result<()> {
         .args(["set", CMD_KEY, "mode", "none"])
         .status()?;
     Ok(())
-}
-
-#[warn(dead_code)]
-enum ProxyType {
-    HTTP,
-    HTTPS,
-    SOCKS,
-}
-
-impl ProxyType {
-    fn to_target(&self) -> &'static str {
-        match self {
-            ProxyType::HTTP => "webproxy",
-            ProxyType::HTTPS => "securewebproxy",
-            ProxyType::SOCKS => "socksfirewallproxy",
-        }
-    }
 }
 
 #[cfg(target_os = "macos")]

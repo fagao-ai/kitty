@@ -47,6 +47,7 @@ anyhow = "1"
 uuid = { version = "1.6.1", features = [ "v4" ] }
 libc = "0.2.151"
 sysproxy = "0.3.0"
+tun2socks = "0.1.1"
 
 [workspace]
 members = [
