@@ -18,8 +18,8 @@ const form = useVModel(props, 'formData')
 
 async function onInsertSubmit() {
   await invoke('add_hy_item', { hysteria_config: form.value })
-  showInsertModal.value = false
   emits('insertSubmit')
+  showInsertModal.value = false
 }
 
 function onCancelInsert() {
@@ -44,6 +44,12 @@ function onCancelInsert() {
       label-placement="left"
       label-width="auto"
     >
+      <n-form-item
+        label="代理名称"
+        path="name"
+      >
+        <n-input v-model:value="form.name" />
+      </n-form-item>
       <n-form-item
         label="服务地址"
         path="server"

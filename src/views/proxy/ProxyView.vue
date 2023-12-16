@@ -9,6 +9,7 @@ import { invoke } from '@/utils/invoke'
 const showInsertModal = ref(false)
 
 const formValue = reactive<HysteriaProxy>({
+  name: '名称',
   server: 'ip:port',
   auth: 'password',
   bandwidth: {
@@ -95,6 +96,6 @@ batchGetProxy()
   <add-proxy-modal
     v-model:showModal="showInsertModal"
     :form-data="formValue"
-    :on-insert-submit="batchGetProxy"
+    @insert-submit="batchGetProxy"
   />
 </template>

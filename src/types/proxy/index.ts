@@ -15,11 +15,12 @@ interface TLS {
   insecure: boolean
 }
 
-interface Listener {
-  listen: string
-}
+// interface Listener {
+//   listen: string
+// }
 
 export interface HysteriaProxy {
+  name: string
   server: string
   auth: string
   bandwidth: Bandwidth
