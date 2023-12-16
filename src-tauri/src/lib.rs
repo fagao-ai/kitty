@@ -126,6 +126,7 @@ async fn start_hysteria<'a>(
     // app: &'a mut tauri::App,
     state: State<'a, AppState>,
 ) -> CommandResult<KittyResponse<hysteria::Model>> {
+    println!("start_hysteria!!!");
     let commmand = app_handle
         .shell()
         .sidecar("hysteria")

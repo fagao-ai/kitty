@@ -42,13 +42,14 @@ pub fn set_system_proxy(host: &str, socks_port: u16, http_port: Option<u16>) -> 
 
 #[cfg(target_os = "macos")]
 pub fn set_system_proxy(host: &str, socks_port: u16, http_port: Option<u16>) {
+    let service = "Wi-Fi";
     let mut socks_sysproxy = Sysproxy {
         enable: true,
         host: host.into(),
         port: socks_port,
         bypass: "localhost,127.0.0.1/8".into(),
     };
-    let _ = socks_sysproxy.set_socks();
+    let _ = socks_sysproxy.set_socks("0x10");
     match http_port {
         Some(http_port) => {
             let mut socks_sysproxy = Sysproxy {
@@ -57,8 +58,8 @@ pub fn set_system_proxy(host: &str, socks_port: u16, http_port: Option<u16>) {
                 port: http_port,
                 bypass: "localhost,127.0.0.1/8".into(),
             };
-            let _ = socks_sysproxy.set_http();
-            let _ = socks_sysproxy.set_https();
+            let _ = socks_sysproxy.set_http(service);
+            let _ = socks_sysproxy.set_https(service);
         }
         None => (),
     }
@@ -88,11 +89,30 @@ pub fn clear_system_proxy() -> Result<()> {
     Ok(())
 }
 
+#[warn(dead_code)]
+enum ProxyType {
+    HTTP,
+    HTTPS,
+    SOCKS,
+}
+
+impl ProxyType {
+    fn to_target(&self) -> &'static str {
+        match self {
+            ProxyType::HTTP => "webproxy",
+            ProxyType::HTTPS => "securewebproxy",
+            ProxyType::SOCKS => "socksfirewallproxy",
+        }
+    }
+}
+
 #[cfg(target_os = "macos")]
-pub fn clear_system_proxy() {
+pub fn clear_system_proxy() -> Result<()> {
     use std::process::Command;
+    let service = "Wi-Fi";
+    let target_state = format!("-set{}state", ProxyType::HTTP.to_target());
     Command::new("networksetup")
-        .args([target_state.as_str(), service, enable])
+        .args([target_state.as_str(), service, "off"])
         .status()?;
     Ok(())
 }
