@@ -89,6 +89,23 @@ pub fn clear_system_proxy() -> Result<()> {
     Ok(())
 }
 
+#[warn(dead_code)]
+enum ProxyType {
+    HTTP,
+    HTTPS,
+    SOCKS,
+}
+
+impl ProxyType {
+    fn to_target(&self) -> &'static str {
+        match self {
+            ProxyType::HTTP => "webproxy",
+            ProxyType::HTTPS => "securewebproxy",
+            ProxyType::SOCKS => "socksfirewallproxy",
+        }
+    }
+}
+
 #[cfg(target_os = "macos")]
 pub fn clear_system_proxy() -> Result<()> {
     use std::process::Command;
