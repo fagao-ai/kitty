@@ -27,15 +27,22 @@ pub async fn add_hysteria_item(
     hysteria_res
 }
 
-pub async fn get_all_hysteria_item(db: &DatabaseConnection) -> Result<Vec<hysteria::Model>, DbErr> {
-    let hysterias = hysteria::Entity::find()
-        .select_only()
-        .columns(hysteria::Column::iter().filter(|col| match col {
-            hysteria::Column::Name => false,
-            _ => true,
-        }))
-        .all(db)
-        .await?;
+pub async fn get_all_hysteria_item(
+    db: &DatabaseConnection,
+    delete_name: bool,
+) -> Result<Vec<hysteria::Model>, DbErr> {
+    let query = if delete_name {
+        hysteria::Entity::find()
+            .select_only()
+            .columns(hysteria::Column::iter().filter(|col| match col {
+                hysteria::Column::Name => false,
+                _ => true,
+            }))
+            .all(db)
+    } else {
+        hysteria::Entity::find().all(db)
+    };
+    let hysterias = query.await?;
     Ok(hysterias)
 }
 
@@ -80,7 +87,7 @@ mod tests {
         setup_schema(&db, base_config::Entity).await;
 
         add_hysteria_item(&db, hy_record).await.unwrap();
-        let hysterias = get_all_hysteria_item(&db).await.unwrap();
+        let hysterias = get_all_hysteria_item(&db, true).await.unwrap();
         assert_eq!(hysterias[0].id, 1);
     }
 }
