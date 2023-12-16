@@ -21,72 +21,16 @@ const formValue = reactive<HysteriaProxy>({
   },
 })
 
-const cards: Card[] = [
-  {
-    tag: 'Vmess',
-    name: '美国硅谷',
-    delay: 144,
-    protocol: 'TCP',
-  },
-  {
-    tag: 'tag2',
-    name: 'name2',
-    delay: 143,
-    protocol: 'UDP',
-  },
-  {
-    tag: 'tag3',
-    name: 'name3',
-    delay: 142,
-    protocol: 'TCP',
-  },
-  {
-    tag: 'tag4',
-    name: 'name4',
-    delay: 141,
-    protocol: 'UDP',
-  },
-  {
-    tag: 'tag5',
-    name: 'name5',
-    delay: 140,
-    protocol: 'UDP',
-  },
-  {
-    tag: 'tag6',
-    name: 'name6',
-    delay: 139,
-    protocol: 'TCP',
-  },
-  {
-    tag: 'tag7',
-    name: 'name7',
-    delay: 138,
-    protocol: 'UDP',
-  },
-  {
-    tag: 'tag8',
-    name: 'name8',
-    delay: 500,
-    protocol: 'UDP',
-  },
-  {
-    tag: 'tag9',
-    name: 'name9',
-    delay: 666,
-    protocol: 'TCP',
-  },
-  {
-    tag: 'tag10',
-    name: 'name10',
-    delay: 1428,
-    protocol: 'UDP',
-  },
-]
+const cards = ref<Card[]>([])
 
 async function batchGetProxy() {
-  await invoke<Card[]>('get_all_proxies')
-  // console.log(res.data)
+  const res = await invoke<any>('get_all_proxies')
+  cards.value = res.data.Multiple.map((item: any) => ({
+    tag: 'hysteria',
+    name: item.name,
+    delay: 200,
+    protocol: 'TCP',
+  }))
 }
 
 batchGetProxy()
@@ -105,7 +49,7 @@ batchGetProxy()
       </div>
       <div class="flex-1 flex gap-3" />
     </div>
-    <div class="flex-1">
+    <div class="flex-1 flex flex-col">
       <div class="h-16 flex justify-between items-center">
         <div class="text-primay text-2xl">
           Proxies
@@ -119,7 +63,10 @@ batchGetProxy()
           </n-button>
         </div>
       </div>
-      <div class="flex-1 w-full">
+      <div
+        v-if="cards.length !== 0"
+        class="flex-1 w-full"
+      >
         <div class="grid grid-cols-5 auto-rows-fr gap-4 xl:grid-cols-6 xxl:grid-cols-7 xxxl:grid-cols-8 tv:grid-cols-10">
           <template
             v-for="card, index in cards"
@@ -133,6 +80,15 @@ batchGetProxy()
             />
           </template>
         </div>
+      </div>
+      <div
+        v-else
+        class="flex-1 w-full flex justify-center items-center"
+      >
+        <n-empty
+          size="huge"
+          description="No Proxy Found"
+        />
       </div>
     </div>
   </div>
