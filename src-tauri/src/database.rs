@@ -1,6 +1,7 @@
 use entity::{base_config, hysteria};
 use migration::{Migrator, MigratorTrait};
 use sea_orm::EntityTrait;
+use sea_orm::{entity::*, query::QuerySelect};
 use sea_orm::{ActiveModelTrait, Database, DatabaseConnection, DbErr};
 use serde_json::Value;
 use std::path::PathBuf;
@@ -27,7 +28,14 @@ pub async fn add_hysteria_item(
 }
 
 pub async fn get_all_hysteria_item(db: &DatabaseConnection) -> Result<Vec<hysteria::Model>, DbErr> {
-    let hysterias = hysteria::Entity::find().all(db).await?;
+    let hysterias = hysteria::Entity::find()
+        .select_only()
+        .columns(hysteria::Column::iter().filter(|col| match col {
+            hysteria::Column::Name => false,
+            _ => true,
+        }))
+        .all(db)
+        .await?;
     Ok(hysterias)
 }
 
@@ -66,12 +74,10 @@ mod tests {
         }"#;
         let hy_record: hysteria::Model = serde_json::from_str(&config_str).unwrap();
         let db = Database::connect("sqlite::memory:").await.unwrap();
-        
 
         // Setup database schema
         setup_schema(&db, hysteria::Entity).await;
         setup_schema(&db, base_config::Entity).await;
-        
 
         add_hysteria_item(&db, hy_record).await.unwrap();
         let hysterias = get_all_hysteria_item(&db).await.unwrap();

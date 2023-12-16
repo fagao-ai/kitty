@@ -19,6 +19,7 @@ impl MigrationTrait for Migration {
                             .auto_increment()
                             .primary_key(),
                     )
+                    .col(ColumnDef::new(Hysteria::Name).string().not_null())
                     .col(ColumnDef::new(Hysteria::Server).string().not_null())
                     .col(ColumnDef::new(Hysteria::Auth).string().not_null())
                     .col(ColumnDef::new(Hysteria::Tls).json().not_null())
@@ -40,6 +41,7 @@ impl MigrationTrait for Migration {
 enum Hysteria {
     Table,
     Id,
+    Name,
     Server,
     Auth,
     Tls,
