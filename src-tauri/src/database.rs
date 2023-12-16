@@ -9,7 +9,7 @@ pub async fn init_db(app_dir: PathBuf) -> Result<DatabaseConnection, DbErr> {
     let sqlite_path = app_dir.join("MyApp.sqlite");
     let sqlite_url = format!("sqlite://{}?mode=rwc", sqlite_path.to_string_lossy());
     let db: DatabaseConnection = Database::connect(&sqlite_url).await?;
-    Migrator::up(&db, Some(1)).await?;
+    Migrator::up(&db, None).await?;
     // let migrations = Migrator::get_applied_migrations(&db).await?;
 
     Ok(db)

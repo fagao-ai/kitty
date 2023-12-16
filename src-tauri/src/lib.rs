@@ -53,6 +53,16 @@ async fn add_hy_item<'a>(
     Ok(())
 }
 
+#[tauri::command(rename_all = "snake_case")]
+async fn get_all_proxies<'a>(
+    state: State<'a, AppState>,
+) -> CommandResult<KittyResponse<hysteria::Model>> {
+    let db = state.get_db();
+    let hy_proxies = get_all_hysteria_item(&db).await?;
+    let data = ResponseItem::Multiple(hy_proxies);
+    Ok(KittyResponse::new(0, data, "success"))
+}
+
 fn get_hashmap_from_struct<'a, T>(input_struct: &T) -> HashMap<String, Value>
 where
     T: Deserialize<'a> + Serialize,
@@ -295,6 +305,7 @@ pub fn run() {
             stop_hysteria,
             start_hysteria,
             add_hy_item,
+            get_all_proxies,
             incre_base_config,
             query_base_config,
         ])
