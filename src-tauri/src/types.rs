@@ -1,19 +1,14 @@
 use serde::{ser::Serializer, Deserialize, Serialize};
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
-pub enum ResponseItem<T> {
-    Single(T),
-    Multiple(Vec<T>),
-}
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct KittyResponse<T> {
-    pub data: Option<ResponseItem<T>>,
+    pub data: Option<T>,
     pub code: i8,
     pub msg: Option<String>,
 }
 
 impl<T> KittyResponse<T> {
-    pub fn new(code: i8, data: ResponseItem<T>, msg: &str) -> Self {
+    pub fn new(code: i8, data: T, msg: &str) -> Self {
         Self {
             code,
             data: Some(data),
@@ -26,6 +21,14 @@ impl<T> KittyResponse<T> {
             data: None,
             code,
             msg: Some(msg.to_string()),
+        }
+    }
+
+    pub fn from_data(data: T) -> Self {
+        Self {
+            code: 0,
+            data: Some(data),
+            msg: Some("success".to_string()),
         }
     }
 }

@@ -31,7 +31,7 @@ use tauri_plugin_shell::{process::CommandEvent, ShellExt};
 use uuid::Uuid;
 
 use proxy::system_proxy::set_system_proxy;
-use types::{CommandResult, KittyResponse, ResponseItem};
+use types::{CommandResult, KittyResponse};
 
 // Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
 #[tauri::command]
@@ -58,11 +58,10 @@ async fn add_hy_item<'a>(
 #[tauri::command(rename_all = "snake_case")]
 async fn get_all_proxies<'a>(
     state: State<'a, AppState>,
-) -> CommandResult<KittyResponse<hysteria::Model>> {
+) -> CommandResult<KittyResponse<Vec<hysteria::Model>>> {
     let db = state.get_db();
     let hy_proxies = get_all_hysteria_item(&db).await?;
-    let data = ResponseItem::Multiple(hy_proxies);
-    Ok(KittyResponse::new(0, data, "success"))
+    Ok(KittyResponse::from_data(hy_proxies))
 }
 
 fn get_hashmap_from_struct<'a, T>(input_struct: &T) -> HashMap<String, Value>
@@ -219,8 +218,7 @@ async fn incre_base_config<'a>(
 ) -> CommandResult<KittyResponse<base_config::Model>> {
     let db = state.get_db();
     let added_record = add_base_config(&db, record).await?;
-    let response =
-        KittyResponse::<base_config::Model>::new(0, ResponseItem::Single(added_record), "success");
+    let response = KittyResponse::from_data(added_record);
     Ok(response)
 }
 
@@ -231,9 +229,7 @@ async fn query_base_config<'a>(
     let db = state.get_db();
     let record = get_base_config(&db).await?;
     let response = match record {
-        Some(record) => {
-            KittyResponse::<base_config::Model>::new(0, ResponseItem::Single(record), "success")
-        }
+        Some(record) => KittyResponse::<base_config::Model>::from_data(record),
         None => KittyResponse::from_msg(101, "base_config not exists"),
     };
     Ok(response)
@@ -243,7 +239,7 @@ fn set_system_tray<'a>(app: &'a mut tauri::App) -> Result<()> {
     let toggle = MenuItemBuilder::with_id("toggle", "Toggle").build(app);
     let menu = MenuBuilder::new(app).items(&[&toggle]).build()?;
     let parent_dir = env::current_dir()?.parent().unwrap().to_owned();
-    let icon_path = parent_dir.join("icons").join("32x32.png");
+    let icon_path = parent_dir.join("icons").join("icons8-48.png");
     let icon = Icon::File(icon_path);
     let _tray = TrayIconBuilder::new()
         .menu(&menu)
