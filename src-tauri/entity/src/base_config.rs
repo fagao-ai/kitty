@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 #[sea_orm(table_name = "base_config")]
 pub struct Model {
     #[sea_orm(primary_key, auto_increment = true)]
-    #[serde(skip)]
+    // #[serde(skip)]
     pub id: i32,
     pub http_port: i16,
     pub socks_port: i16,

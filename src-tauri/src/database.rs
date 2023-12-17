@@ -26,9 +26,7 @@ pub async fn add_hysteria_item(
     hysteria_res
 }
 
-pub async fn get_all_hysteria_item(
-    db: &DatabaseConnection,
-) -> Result<Vec<hysteria::Model>, DbErr> {
+pub async fn get_all_hysteria_item(db: &DatabaseConnection) -> Result<Vec<hysteria::Model>, DbErr> {
     let hysterias = hysteria::Entity::find().all(db).await?;
     Ok(hysterias)
 }
@@ -46,6 +44,19 @@ pub async fn add_base_config(
 pub async fn get_base_config(db: &DatabaseConnection) -> Result<Option<base_config::Model>, DbErr> {
     let base_config_record = base_config::Entity::find().one(db).await?;
     Ok(base_config_record)
+}
+
+pub async fn update_base_config(
+    db: &DatabaseConnection,
+    id: i32,
+    record: base_config::Model,
+) -> Result<base_config::Model, DbErr> {
+    let json_value: Value = serde_json::to_value(record).unwrap();
+    let base_config_record = base_config::Entity::find_by_id(id).one(db).await?;
+    let mut base_config_record: base_config::ActiveModel = base_config_record.unwrap().into();
+    base_config_record.set_from_json(json_value);
+    let base_config_res = base_config_record.update(db).await?;
+    Ok(base_config_res)
 }
 #[cfg(test)]
 mod tests {

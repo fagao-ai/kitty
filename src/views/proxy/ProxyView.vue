@@ -25,8 +25,8 @@ const formValue = reactive<HysteriaProxy>({
 const cards = ref<Card[]>([])
 
 async function batchGetProxy() {
-  const res = await invoke<any>('get_all_proxies')
-  cards.value = res.data.Multiple.map((item: any) => ({
+  const res = await invoke<Card[]>('get_all_proxies')
+  cards.value = res.data.map(item => ({
     tag: 'hysteria',
     name: item.name,
     delay: 200,

@@ -23,7 +23,10 @@ use tauri::{
     Icon,
 };
 
-use database::{add_base_config, add_hysteria_item, get_all_hysteria_item, get_base_config};
+use database::{
+    add_base_config, add_hysteria_item, get_all_hysteria_item, get_base_config,
+    update_base_config as update_kitty_base_config,
+};
 
 use state::AppState;
 use tauri::{AppHandle, Manager, State};
@@ -235,6 +238,19 @@ async fn query_base_config<'a>(
     Ok(response)
 }
 
+#[tauri::command(rename_all = "snake_case")]
+async fn update_base_config<'a>(
+    state: State<'a, AppState>,
+    id: i32,
+    base_config: base_config::Model,
+) -> CommandResult<KittyResponse<base_config::Model>> {
+    let db = state.get_db();
+    let updated_record = update_kitty_base_config(&db, id, base_config).await?;
+    Ok(KittyResponse::<base_config::Model>::from_data(
+        updated_record,
+    ))
+}
+
 fn set_system_tray<'a>(app: &'a mut tauri::App) -> Result<()> {
     let toggle = MenuItemBuilder::with_id("toggle", "Toggle").build(app);
     let menu = MenuBuilder::new(app).items(&[&toggle]).build()?;
@@ -307,6 +323,7 @@ pub fn run() {
             get_all_proxies,
             incre_base_config,
             query_base_config,
+            update_base_config,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

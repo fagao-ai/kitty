@@ -1,7 +1,9 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { reactive, ref } from 'vue'
 import { NSwitch } from 'naive-ui'
+import { decamelizeKeys } from 'humps'
 import { invoke } from '@/utils/invoke'
+import type { KittyBaseConfig } from '@/types/setting'
 
 const proxyStatus = ref(false)
 const proxyLoading = ref(false)
@@ -18,13 +20,20 @@ async function handleSwitchProxy(value: boolean) {
   }
 }
 
-const onlyAllowNumber = (value: string) => !value || /^\d+$/.test(value)
+const baseConfig = reactive<KittyBaseConfig>({
+  id: 0,
+  httpPort: 10086,
+  socksPort: 10087,
+})
 
 async function getBaseConfig() {
-  await invoke('query_base_config')
-  // console.log('config is', config)
+  const config = await invoke<KittyBaseConfig>('query_base_config')
+  Object.assign(baseConfig, config.data)
 }
 
+async function onBaseConfigUpdate() {
+  await invoke('update_base_config', { id: baseConfig.id, base_config: decamelizeKeys(baseConfig) })
+}
 getBaseConfig()
 </script>
 
@@ -91,11 +100,13 @@ getBaseConfig()
             Socks5代理端口
           </div>
           <div class="font-medium w-20">
-            <n-input
+            <n-input-number
+              v-model:value="baseConfig.socksPort"
               type="text"
-              value="10086"
-              :disabled="true"
-              :allow-input="onlyAllowNumber"
+              :show-button="false"
+              :max="65535"
+              :min="1"
+              @blur="onBaseConfigUpdate"
             />
           </div>
         </div>
@@ -104,11 +115,13 @@ getBaseConfig()
             HTTP代理端口
           </div>
           <div class="font-medium w-20">
-            <n-input
+            <n-input-number
+              v-model:value="baseConfig.httpPort"
               type="text"
-              value="10086"
-              :disabled="true"
-              :allow-input="onlyAllowNumber"
+              :show-button="false"
+              :max="65535"
+              :min="1"
+              @blur="onBaseConfigUpdate"
             />
           </div>
         </div>
