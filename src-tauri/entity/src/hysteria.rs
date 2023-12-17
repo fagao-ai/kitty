@@ -59,11 +59,3 @@ impl<'a> From<&'a Model> for HysteriaModelWithoutName {
         }
     }
 }
-
-impl Model {
-    fn serde_string(&self) -> Result<String, serde_json::Error> {
-        let tmp_struct = HysteriaModelWithoutName::from(self);
-        let value = serde_json::to_string(&tmp_struct);
-        value
-    }
-}

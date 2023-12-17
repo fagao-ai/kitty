@@ -4,7 +4,7 @@ use anyhow::{Context, Result};
 use std::env;
 use std::process::Command;
 
-fn build_hysteria() -> Result<()> {
+fn _build_hysteria() -> Result<()> {
     let repo_url = "https://github.com/apernet/hysteria.git";
     let repo_path = env::var("OUT_DIR").unwrap();
     let _repo = match Repository::clone(repo_url, &repo_path) {

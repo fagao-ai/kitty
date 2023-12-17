@@ -2,16 +2,23 @@ use anyhow::Result;
 use sysproxy::Sysproxy;
 
 #[cfg(target_os = "windows")]
-pub fn set_system_proxy(host: &str, socks_port: u16, http_port: Option<u16>) {
-    let mut socks_sysproxy = Sysproxy {
-        enable: true,
-        host: host.into(),
-        port: socks_port,
-        bypass: "localhost;127.*".into(),
-        #[cfg(not(target_os = "windows"))]
-        bypass: "localhost,127.0.0.1/8".into(),
+pub fn set_system_proxy(host: &str, socks_port: u16, http_port: Option<u16>) -> Result<()> {
+    use anyhow::anyhow;
+
+    let res = if let Some(port) = http_port {
+        let mut socks_sysproxy = Sysproxy {
+            enable: true,
+            host: host.into(),
+            port: port,
+            bypass: "localhost;127.*".into(),
+        };
+
+        let _ = socks_sysproxy.set_system_proxy();
+        Ok(())
+    } else {
+        Err(anyhow!("windows must set http proxy port"))
     };
-    let _ = socks_sysproxy.set_system_proxy();
+    res
 }
 
 #[cfg(target_os = "linux")]
@@ -41,7 +48,7 @@ pub fn set_system_proxy(host: &str, socks_port: u16, http_port: Option<u16>) -> 
 }
 
 #[cfg(target_os = "macos")]
-pub fn set_system_proxy(host: &str, socks_port: u16, http_port: Option<u16>) {
+pub fn set_system_proxy(host: &str, socks_port: u16, http_port: Option<u16>) -> Result<()> {
     let service = "Wi-Fi";
     let mut socks_sysproxy = Sysproxy {
         enable: true,
@@ -66,11 +73,11 @@ pub fn set_system_proxy(host: &str, socks_port: u16, http_port: Option<u16>) {
 }
 
 #[cfg(target_os = "windows")]
-pub fn clear_system_proxy(host: &str, socks_port: u16, http_port: Option<u16>) {
+pub fn clear_system_proxy() {
     let mut socks_sysproxy = Sysproxy {
         enable: false,
-        host: host.into(),
-        port: socks_port,
+        host: "127.0.0.1".into(),
+        port: 10086,
         bypass: "localhost;127.*".into(),
         #[cfg(not(target_os = "windows"))]
         bypass: "localhost,127.0.0.1/8".into(),

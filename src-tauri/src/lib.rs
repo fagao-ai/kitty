@@ -2,6 +2,7 @@ mod database;
 mod process_manager;
 mod proxy;
 mod state;
+mod system_interface;
 mod types;
 mod utils;
 
@@ -13,8 +14,8 @@ use std::{collections::HashMap, env, fs, io::Write, path::PathBuf};
 use crate::{process_manager::ProcessManager, proxy::system_proxy::clear_system_proxy};
 use entity::{
     base_config,
-    hysteria::{self},
     hysteria::HysteriaModelWithoutName,
+    hysteria::{self},
 };
 use tauri::{
     menu::{MenuBuilder, MenuItemBuilder},
@@ -34,7 +35,7 @@ use types::{CommandResult, KittyResponse, ResponseItem};
 
 // Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
 #[tauri::command]
-fn stop_hysteria<'a>(app_handle: AppHandle, state: State<'a, AppState>) -> CommandResult<()> {
+fn stop_hysteria<'a>(state: State<'a, AppState>) -> CommandResult<()> {
     let mut process_manager = state.process_manager.lock().unwrap();
     let _kill_result = process_manager.kill("hysteria")?;
     println!("stop_hy called!!!");
@@ -172,13 +173,13 @@ async fn start_hysteria<'a>(
 
             while let Some(event) = receiver.recv().await {
                 match event {
-                    CommandEvent::Terminated(payload) => {}
+                    CommandEvent::Terminated(_payload) => {}
                     CommandEvent::Stderr(line) => {
                         let line = String::from_utf8(line).unwrap();
                         if line.contains("server listening") {
                             let mut process_manager = state.process_manager.lock().unwrap();
                             process_manager.add_child("hysteria", child_pid);
-                            let _ = set_system_proxy("127.0.0.1", 10086, Some(10087));
+                            let _ = set_system_proxy("127.0.0.1", 10086, Some(10087))?;
                             print!("stderr: {}", line);
                             break;
                         }

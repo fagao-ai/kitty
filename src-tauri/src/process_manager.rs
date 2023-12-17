@@ -1,6 +1,5 @@
-use libc::{c_int, kill};
+use crate::system_interface::interface;
 use std::collections::HashMap;
-
 pub struct ProcessManager {
     childs: HashMap<String, u32>,
 }
@@ -20,7 +19,7 @@ impl ProcessManager {
         let child_pid = self.childs.get(process_name);
         match child_pid {
             Some(child_pid) => {
-                let result = unsafe { kill(child_pid.clone() as i32, libc::SIGTERM as c_int) };
+                let result = interface::kill_by_pid(child_pid.clone());
                 if result == -1 {
                     println!("无法发送信号");
                 } else {
