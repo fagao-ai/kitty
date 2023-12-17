@@ -22,7 +22,7 @@ use entity::{
 use tauri::{
     menu::{MenuBuilder, MenuItemBuilder},
     tray::{ClickType, TrayIconBuilder},
-    Icon,
+    Icon, WindowEvent,
 };
 
 use database::{
@@ -268,6 +268,26 @@ fn setup<'a>(app: &'a mut tauri::App) -> Result<(), Box<dyn std::error::Error>> 
     Ok(())
 }
 
+async fn on_window_exit(event: tauri::GlobalWindowEvent) {
+    match event.event() {
+        WindowEvent::Destroyed => {
+
+            println!("exit!!!");
+            let am: State<ProcessManagerState> = event.window().state();
+            am.process_manager
+                .lock()
+                .await
+                .terminate_backend()
+                .expect("");
+        }
+        _ => {}
+    }
+}
+
+fn on_window_exit_func(event: tauri::GlobalWindowEvent) {
+    tauri::async_runtime::block_on(on_window_exit(event))
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -280,6 +300,7 @@ pub fn run() {
         .plugin(tauri_plugin_window::init())
         .plugin(tauri_plugin_shell::init())
         .setup(setup)
+        .on_window_event(on_window_exit_func)
         .invoke_handler(tauri::generate_handler![
             stop_hysteria,
             start_hysteria,

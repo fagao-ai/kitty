@@ -8,6 +8,7 @@ use tauri::async_runtime::Receiver;
 use tauri::AppHandle;
 use tauri_plugin_shell::{process::CommandChild, process::CommandEvent, ShellExt};
 
+
 pub struct HysteriaManager {
     name: String,
     child: Option<CommandChild>,
