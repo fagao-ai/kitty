@@ -1,17 +1,19 @@
 mod database;
-mod process_manager;
+// mod process_manager;
+mod protocol;
 mod proxy;
 mod state;
 mod system_interface;
 mod types;
 mod utils;
 
+use crate::protocol::hysteria::HysteriaManager;
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::{collections::HashMap, env, fs, io::Write, path::PathBuf};
 
-use crate::{process_manager::ProcessManager, proxy::system_proxy::clear_system_proxy};
+use crate::proxy::system_proxy::clear_system_proxy;
 use entity::{
     base_config,
     hysteria::HysteriaModelWithoutName,
@@ -28,19 +30,19 @@ use database::{
     update_base_config as update_kitty_base_config,
 };
 
-use state::AppState;
+use state::{DatabaseState, ProcessManagerState};
 use tauri::{AppHandle, Manager, State};
-use tauri_plugin_shell::{process::CommandEvent, ShellExt};
+
 use uuid::Uuid;
 
-use proxy::system_proxy::set_system_proxy;
+use crate::protocol::traits::CommandManagerTrait;
 use types::{CommandResult, KittyResponse};
 
 // Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
 #[tauri::command]
-fn stop_hysteria<'a>(state: State<'a, AppState>) -> CommandResult<()> {
+fn stop_hysteria<'a>(state: State<'a, ProcessManagerState>) -> CommandResult<()> {
     let mut process_manager = state.process_manager.lock().unwrap();
-    let _kill_result = process_manager.kill("hysteria")?;
+    let _kill_result = process_manager.terminate_backend()?;
     println!("stop_hy called!!!");
     let _ = clear_system_proxy();
     println!("clear_system_proxy called!!!");
@@ -49,7 +51,7 @@ fn stop_hysteria<'a>(state: State<'a, AppState>) -> CommandResult<()> {
 
 #[tauri::command(rename_all = "snake_case")]
 async fn add_hy_item<'a>(
-    state: State<'a, AppState>,
+    state: State<'a, DatabaseState>,
     hysteria_config: hysteria::Model,
 ) -> CommandResult<()> {
     println!("{:?}", &hysteria_config);
@@ -60,7 +62,7 @@ async fn add_hy_item<'a>(
 
 #[tauri::command(rename_all = "snake_case")]
 async fn get_all_proxies<'a>(
-    state: State<'a, AppState>,
+    state: State<'a, DatabaseState>,
 ) -> CommandResult<KittyResponse<Vec<hysteria::Model>>> {
     let db = state.get_db();
     let hy_proxies = get_all_hysteria_item(&db).await?;
@@ -139,14 +141,11 @@ fn get_hysteria_tmp_config_path(
 async fn start_hysteria<'a>(
     app_handle: AppHandle,
     // app: &'a mut tauri::App,
-    state: State<'a, AppState>,
-) -> CommandResult<KittyResponse<hysteria::Model>> {
+    db_state: State<'a, DatabaseState>,
+    state: State<'a, ProcessManagerState>,
+) -> CommandResult<KittyResponse<Option<hysteria::Model>>> {
     println!("start_hysteria!!!");
-    let commmand = app_handle
-        .shell()
-        .sidecar("hysteria")
-        .expect("failed to create `hysteria` binary command ");
-    let db = state.get_db();
+    let db = db_state.get_db();
     let items = get_all_hysteria_item(&db).await?;
     let base_config = get_base_config(&db).await?;
     let base_config = base_config.unwrap();
@@ -163,52 +162,14 @@ async fn start_hysteria<'a>(
         None
     };
     println!("config_path: {:?}", &config_path);
-    let response: KittyResponse<_> = match config_path {
+    let mut process_manager = state.process_manager.lock().unwrap();
+    let response = match config_path {
         Some(file) => {
-            let (mut receiver, child) = commmand
-                .arg("client")
-                .arg("--config")
-                .arg(file)
-                .spawn()
-                .expect("command start failed.");
-            let child_pid = child.pid();
-
-            while let Some(event) = receiver.recv().await {
-                match event {
-                    CommandEvent::Terminated(_payload) => {}
-                    CommandEvent::Stderr(line) => {
-                        let line = String::from_utf8(line).unwrap();
-                        if line.contains("server listening") {
-                            let mut process_manager = state.process_manager.lock().unwrap();
-                            process_manager.add_child("hysteria", child_pid);
-                            let _ = set_system_proxy("127.0.0.1", 10086, Some(10087))?;
-                            print!("stderr: {}", line);
-                            break;
-                        }
-                        print!("stderr: {}", line);
-                    }
-                    CommandEvent::Stdout(line) => {
-                        print!("stdout: {}", String::from_utf8(line).unwrap());
-                    }
-                    _ => {}
-                }
-            }
-            println!("started hysteria!!!");
-            tauri::async_runtime::spawn(async move {
-                while let Some(event) = receiver.recv().await {
-                    match event {
-                        CommandEvent::Terminated(payload) => {
-                            println!("stop hysteria!!");
-                            println!("{:?}", payload);
-                        }
-                        _ => {}
-                    }
-                }
-            });
-
-            KittyResponse::default()
+            let args = vec!["client", "--config", file.as_str()];
+            let _ = process_manager.start_backend(app_handle, args)?;
+            KittyResponse::from_data(None)
         }
-        None => KittyResponse::<hysteria::Model>::from_msg(0, "hysteria config is empty."),
+        None => KittyResponse::from_msg(100, "hysteria config is empty, please ad"),
     };
 
     Ok(response)
@@ -216,7 +177,7 @@ async fn start_hysteria<'a>(
 
 #[tauri::command]
 async fn incre_base_config<'a>(
-    state: State<'a, AppState>,
+    state: State<'a, DatabaseState>,
     record: base_config::Model,
 ) -> CommandResult<KittyResponse<base_config::Model>> {
     let db = state.get_db();
@@ -227,7 +188,7 @@ async fn incre_base_config<'a>(
 
 #[tauri::command]
 async fn query_base_config<'a>(
-    state: State<'a, AppState>,
+    state: State<'a, DatabaseState>,
 ) -> CommandResult<KittyResponse<base_config::Model>> {
     let db = state.get_db();
     let record = get_base_config(&db).await?;
@@ -290,7 +251,7 @@ fn setup<'a>(app: &'a mut tauri::App) -> Result<(), Box<dyn std::error::Error>> 
         fs::create_dir_all(&app_dir)?;
     }
     println!("app_dir: {:?}", app_dir);
-    let app_state: State<AppState> = handle.state();
+    let app_state: State<DatabaseState> = handle.state();
     let db = tauri::async_runtime::block_on(async move {
         let db = database::init_db(app_dir).await;
         match db {
@@ -309,9 +270,11 @@ fn setup<'a>(app: &'a mut tauri::App) -> Result<(), Box<dyn std::error::Error>> 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
-        .manage(AppState {
+        .manage(DatabaseState {
             db: Default::default(),
-            process_manager: std::sync::Mutex::new(ProcessManager::new()),
+        })
+        .manage(ProcessManagerState {
+            process_manager: std::sync::Mutex::new(HysteriaManager::new()),
         })
         .plugin(tauri_plugin_window::init())
         .plugin(tauri_plugin_shell::init())
