@@ -19,6 +19,13 @@ async function handleSwitchProxy(value: boolean) {
 }
 
 const onlyAllowNumber = (value: string) => !value || /^\d+$/.test(value)
+
+async function getBaseConfig() {
+  await invoke('query_base_config')
+  // console.log('config is', config)
+}
+
+getBaseConfig()
 </script>
 
 <template>
@@ -33,7 +40,11 @@ const onlyAllowNumber = (value: string) => !value || /^\d+$/.test(value)
             开机启动
           </div>
           <div class="font-medium">
-            <n-switch :value="false" :disabled="true" size="medium" />
+            <n-switch
+              :value="false"
+              :disabled="true"
+              size="medium"
+            />
           </div>
         </div>
         <div class="flex justify-between">
@@ -49,7 +60,12 @@ const onlyAllowNumber = (value: string) => !value || /^\d+$/.test(value)
             系统代理
           </div>
           <div class="font-medium">
-            <n-switch v-model="proxyStatus" :loading="proxyLoading" size="medium" @update:value="handleSwitchProxy" />
+            <n-switch
+              v-model="proxyStatus"
+              :loading="proxyLoading"
+              size="medium"
+              @update:value="handleSwitchProxy"
+            />
           </div>
         </div>
         <div class="flex justify-between">
@@ -75,7 +91,12 @@ const onlyAllowNumber = (value: string) => !value || /^\d+$/.test(value)
             Socks5代理端口
           </div>
           <div class="font-medium w-20">
-            <n-input type="text" value="10086" :disabled="true" :allow-input="onlyAllowNumber" />
+            <n-input
+              type="text"
+              value="10086"
+              :disabled="true"
+              :allow-input="onlyAllowNumber"
+            />
           </div>
         </div>
         <div class="flex justify-between">
@@ -83,7 +104,12 @@ const onlyAllowNumber = (value: string) => !value || /^\d+$/.test(value)
             HTTP代理端口
           </div>
           <div class="font-medium w-20">
-            <n-input type="text" value="10086" :disabled="true" :allow-input="onlyAllowNumber" />
+            <n-input
+              type="text"
+              value="10086"
+              :disabled="true"
+              :allow-input="onlyAllowNumber"
+            />
           </div>
         </div>
       </div>

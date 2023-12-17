@@ -48,7 +48,9 @@ pub fn set_system_proxy(host: &str, socks_port: u16, http_port: Option<u16>) -> 
 }
 
 #[cfg(target_os = "macos")]
-pub fn set_system_proxy(host: &str, socks_port: u16, http_port: Option<u16>) -> Result<()> {
+pub fn set_system_proxy(host: &str, socks_port: u16, http_port: Option<u16>) -> Result<&str> {
+    use anyhow::Ok;
+
     let service = "Wi-Fi";
     let mut socks_sysproxy = Sysproxy {
         enable: true,
@@ -67,8 +69,9 @@ pub fn set_system_proxy(host: &str, socks_port: u16, http_port: Option<u16>) -> 
             };
             let _ = socks_sysproxy.set_http(service);
             let _ = socks_sysproxy.set_https(service);
+            Ok("set socks proxy success")
         }
-        None => (),
+        None => Ok("the http_port is not set"),
     }
 }
 
