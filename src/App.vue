@@ -2,6 +2,8 @@
 import { NConfigProvider } from 'naive-ui'
 import { useTheme } from '@/utils/theme'
 import MenuView from '@/views/menu/MenuView.vue'
+import 'vfonts/Lato.css'
+import 'vfonts/FiraCode.css'
 
 const { theme, themeOverrides } = useTheme()
 </script>
