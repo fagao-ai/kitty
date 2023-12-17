@@ -1,6 +1,8 @@
 // use crate::process_manager::ProcessManager;
 use crate::protocol::hysteria::HysteriaManager;
 use sea_orm::DatabaseConnection;
+use futures::lock::Mutex;
+
 
 pub struct DatabaseState {
     pub db: std::sync::Mutex<Option<DatabaseConnection>>,
@@ -15,5 +17,5 @@ impl DatabaseState {
 }
 
 pub struct ProcessManagerState {
-    pub process_manager: std::sync::Mutex<HysteriaManager>,
+    pub process_manager: Mutex<HysteriaManager>,
 }

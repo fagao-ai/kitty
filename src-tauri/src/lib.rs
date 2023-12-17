@@ -1,11 +1,11 @@
 mod database;
-// mod process_manager;
 mod protocol;
 mod proxy;
 mod state;
 mod system_interface;
 mod types;
 mod utils;
+use futures::lock::Mutex;
 
 use crate::protocol::hysteria::HysteriaManager;
 use anyhow::Result;
@@ -40,8 +40,8 @@ use types::{CommandResult, KittyResponse};
 
 // Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
 #[tauri::command]
-fn stop_hysteria<'a>(state: State<'a, ProcessManagerState>) -> CommandResult<()> {
-    let mut process_manager = state.process_manager.lock().unwrap();
+async fn stop_hysteria<'a>(state: State<'a, ProcessManagerState>) -> CommandResult<()> {
+    let mut process_manager = state.process_manager.lock().await;
     let _kill_result = process_manager.terminate_backend()?;
     println!("stop_hy called!!!");
     let _ = clear_system_proxy();
@@ -162,11 +162,12 @@ async fn start_hysteria<'a>(
         None
     };
     println!("config_path: {:?}", &config_path);
-    let mut process_manager = state.process_manager.lock().unwrap();
+    let mut process_manager = state.process_manager.lock().await;
     let response = match config_path {
         Some(file) => {
             let args = vec!["client", "--config", file.as_str()];
             let _ = process_manager.start_backend(app_handle, args)?;
+            let _ = process_manager.check_status().await?;
             KittyResponse::from_data(None)
         }
         None => KittyResponse::from_msg(100, "hysteria config is empty, please ad"),
@@ -201,7 +202,7 @@ async fn query_base_config<'a>(
 
 #[tauri::command(rename_all = "snake_case")]
 async fn update_base_config<'a>(
-    state: State<'a, AppState>,
+    state: State<'a, DatabaseState>,
     id: i32,
     base_config: base_config::Model,
 ) -> CommandResult<KittyResponse<base_config::Model>> {
@@ -274,7 +275,7 @@ pub fn run() {
             db: Default::default(),
         })
         .manage(ProcessManagerState {
-            process_manager: std::sync::Mutex::new(HysteriaManager::new()),
+            process_manager: Mutex::new(HysteriaManager::new()),
         })
         .plugin(tauri_plugin_window::init())
         .plugin(tauri_plugin_shell::init())

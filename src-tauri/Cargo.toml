@@ -41,6 +41,7 @@ uuid = { version = "1.6.1", features = ["v4"] }
 libc = "0.2.151"
 sysproxy = "0.3.0"
 winapi = { version = "0.3", features = ["winuser"] }
+futures = "0.3.29"
 
 [workspace]
 members = [".", "migration", "entity"]
