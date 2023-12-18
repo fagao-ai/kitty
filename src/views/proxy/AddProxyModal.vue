@@ -17,7 +17,7 @@ const showInsertModal = useVModel(props, 'showModal')
 const form = useVModel(props, 'formData')
 
 async function onInsertSubmit() {
-  await invoke('add_hy_item', { hysteria_config: form.value })
+  await invoke('add_hy_item', { record: form.value })
   emits('insertSubmit')
   showInsertModal.value = false
 }
