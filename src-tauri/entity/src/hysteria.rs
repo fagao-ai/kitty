@@ -59,3 +59,18 @@ impl<'a> From<&'a Model> for HysteriaModelWithoutName {
         }
     }
 }
+
+impl Model {
+    pub async fn insert_one(&self, db: &DatabaseConnection) -> Result<Model, DbErr> {
+        let json_value = serde_json::to_value(self).unwrap();
+
+        let hysteria_record = self::ActiveModel::from_json(json_value)?;
+        let hysteria_res = hysteria_record.insert(db).await;
+        hysteria_res
+    }
+
+    pub async fn fectch_all(db: &DatabaseConnection) -> Result<Vec<Self>, DbErr> {
+        let hysterias = self::Entity::find().all(db).await?;
+        Ok(hysterias)
+    }
+}

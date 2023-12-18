@@ -25,11 +25,6 @@ use tauri::{
     Icon, WindowEvent,
 };
 
-use database::{
-    add_base_config, add_hysteria_item, get_all_hysteria_item, get_base_config,
-    update_base_config as update_kitty_base_config,
-};
-
 use state::{DatabaseState, ProcessManagerState};
 use tauri::{AppHandle, Manager, State};
 
@@ -52,11 +47,11 @@ async fn stop_hysteria<'a>(state: State<'a, ProcessManagerState>) -> CommandResu
 #[tauri::command(rename_all = "snake_case")]
 async fn add_hy_item<'a>(
     state: State<'a, DatabaseState>,
-    hysteria_config: hysteria::Model,
+    record: hysteria::Model,
 ) -> CommandResult<()> {
-    println!("{:?}", &hysteria_config);
+    println!("{:?}", &record);
     let db = state.get_db();
-    add_hysteria_item(&db, hysteria_config).await?;
+    record.insert_one(&db).await?;
     Ok(())
 }
 
@@ -65,7 +60,7 @@ async fn get_all_proxies<'a>(
     state: State<'a, DatabaseState>,
 ) -> CommandResult<KittyResponse<Vec<hysteria::Model>>> {
     let db = state.get_db();
-    let hy_proxies = get_all_hysteria_item(&db).await?;
+    let hy_proxies = hysteria::Model::fectch_all(&db).await?;
     Ok(KittyResponse::from_data(hy_proxies))
 }
 
@@ -146,8 +141,8 @@ async fn start_hysteria<'a>(
 ) -> CommandResult<KittyResponse<Option<hysteria::Model>>> {
     println!("start_hysteria!!!");
     let db = db_state.get_db();
-    let items = get_all_hysteria_item(&db).await?;
-    let base_config = get_base_config(&db).await?;
+    let items = hysteria::Model::fectch_all(&db).await?;
+    let base_config = base_config::Model::first(&db).await?;
     let base_config = base_config.unwrap();
     let config_path = if items.len() > 0 {
         let app_cache_dir = app_handle.path().app_cache_dir()?;
@@ -182,7 +177,7 @@ async fn incre_base_config<'a>(
     record: base_config::Model,
 ) -> CommandResult<KittyResponse<base_config::Model>> {
     let db = state.get_db();
-    let added_record = add_base_config(&db, record).await?;
+    let added_record = record.insert_one(&db).await?;
     let response = KittyResponse::from_data(added_record);
     Ok(response)
 }
@@ -192,7 +187,7 @@ async fn query_base_config<'a>(
     state: State<'a, DatabaseState>,
 ) -> CommandResult<KittyResponse<base_config::Model>> {
     let db = state.get_db();
-    let record = get_base_config(&db).await?;
+    let record = base_config::Model::first(&db).await?;
     let response = match record {
         Some(record) => KittyResponse::<base_config::Model>::from_data(record),
         None => KittyResponse::from_msg(101, "base_config not exists"),
@@ -204,10 +199,10 @@ async fn query_base_config<'a>(
 async fn update_base_config<'a>(
     state: State<'a, DatabaseState>,
     id: i32,
-    base_config: base_config::Model,
+    record: base_config::Model,
 ) -> CommandResult<KittyResponse<base_config::Model>> {
     let db = state.get_db();
-    let updated_record = update_kitty_base_config(&db, id, base_config).await?;
+    let updated_record = record.update(&db, id).await?;
     Ok(KittyResponse::<base_config::Model>::from_data(
         updated_record,
     ))
@@ -271,7 +266,6 @@ fn setup<'a>(app: &'a mut tauri::App) -> Result<(), Box<dyn std::error::Error>> 
 async fn on_window_exit(event: tauri::GlobalWindowEvent) {
     match event.event() {
         WindowEvent::Destroyed => {
-
             println!("exit!!!");
             let am: State<ProcessManagerState> = event.window().state();
             am.process_manager

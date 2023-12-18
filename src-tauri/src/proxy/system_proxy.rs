@@ -144,13 +144,14 @@ pub fn clear_system_proxy() -> Result<()> {
     Ok(())
 }
 
-#[warn(dead_code)]
+#[cfg(target_os = "macos")]
 enum ProxyType {
     HTTP,
     HTTPS,
     SOCKS,
 }
 
+#[cfg(target_os = "macos")]
 impl ProxyType {
     fn to_target(&self) -> &'static str {
         match self {
@@ -164,7 +165,7 @@ impl ProxyType {
 #[cfg(target_os = "macos")]
 pub fn clear_system_proxy() -> Result<()> {
     use std::process::Command;
-    let service = "Wi-Fi";
+    let service =get_active_network_interface()?;
     let target_state = format!("-set{}state", ProxyType::HTTP.to_target());
     Command::new("networksetup")
         .args([target_state.as_str(), service, "off"])
