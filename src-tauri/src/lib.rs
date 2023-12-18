@@ -2,7 +2,6 @@ mod database;
 mod protocol;
 mod proxy;
 mod state;
-mod system_interface;
 mod types;
 mod utils;
 use futures::lock::Mutex;

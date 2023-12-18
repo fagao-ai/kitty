@@ -1,4 +1,4 @@
-use crate::{proxy::system_proxy::set_system_proxy, system_interface::interface};
+use crate::proxy::system_proxy::set_system_proxy;
 use std::ffi::OsStr;
 
 use crate::protocol::traits::CommandManagerTrait;
