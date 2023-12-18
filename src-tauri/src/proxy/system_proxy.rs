@@ -96,7 +96,7 @@ fn get_active_network_interface() -> Result<String> {
 pub fn set_system_proxy(host: &str, socks_port: u16, http_port: Option<u16>) -> Result<&str> {
     use anyhow::Ok;
 
-    let service = "Wi-Fi";
+    let service = get_active_network_interface()?;
     let socks_sysproxy = Sysproxy {
         enable: true,
         host: host.into(),
