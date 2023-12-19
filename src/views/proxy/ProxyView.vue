@@ -32,65 +32,58 @@ async function batchGetProxy() {
     delay: 200,
     protocol: 'TCP',
   }))
+  // cards.value.push({
+  //   tag: 'hysteria',
+  //   name: 'test',
+  //   delay: 200,
+  //   protocol: 'TCP',
+  // })
 }
 
 batchGetProxy()
 </script>
 
 <template>
-  <div class="flex flex-col w-full h-full">
-    <div
-      v-if="false"
-      class="h-1/5 flex flex-col"
-    >
-      <div class="h-16 flex justify-between items-center ">
-        <div class="text-primay text-2xl">
-          Settings
-        </div>
+  <div class="flex flex-col w-full h-full space-y-4">
+    <div class="h-8 flex justify-between items-center">
+      <div class="text-primay text-2xl font-extrabold">
+        Proxies
       </div>
-      <div class="flex-1 flex gap-3" />
+      <div>
+        <n-button
+          round
+          @click="showInsertModal = true"
+        >
+          add
+        </n-button>
+      </div>
     </div>
-    <div class="flex-1 flex flex-col">
-      <div class="h-16 flex justify-between items-center">
-        <div class="text-primay text-2xl">
-          Proxies
-        </div>
-        <div>
-          <n-button
-            round
-            @click="showInsertModal = true"
-          >
-            add
-          </n-button>
-        </div>
+    <div
+      v-if="cards.length !== 0"
+      class="flex-1 w-full"
+    >
+      <div class="grid grid-cols-5 auto-rows-fr gap-4 xl:grid-cols-6 xxl:grid-cols-7 xxxl:grid-cols-8 tv:grid-cols-10">
+        <template
+          v-for="card, index in cards"
+          :key="index"
+        >
+          <proxy-card
+            :name="card.name"
+            :delay="card.delay"
+            :tag="card.tag"
+            :protocol="card.protocol"
+          />
+        </template>
       </div>
-      <div
-        v-if="cards.length !== 0"
-        class="flex-1 w-full"
-      >
-        <div class="grid grid-cols-5 auto-rows-fr gap-4 xl:grid-cols-6 xxl:grid-cols-7 xxxl:grid-cols-8 tv:grid-cols-10">
-          <template
-            v-for="card, index in cards"
-            :key="index"
-          >
-            <proxy-card
-              :name="card.name"
-              :delay="card.delay"
-              :tag="card.tag"
-              :protocol="card.protocol"
-            />
-          </template>
-        </div>
-      </div>
-      <div
-        v-else
-        class="flex-1 w-full flex justify-center items-center"
-      >
-        <n-empty
-          size="huge"
-          description="No Proxy Found"
-        />
-      </div>
+    </div>
+    <div
+      v-else
+      class="flex-1 w-full flex justify-center items-center"
+    >
+      <n-empty
+        size="huge"
+        description="No Proxy Found"
+      />
     </div>
   </div>
   <add-proxy-modal

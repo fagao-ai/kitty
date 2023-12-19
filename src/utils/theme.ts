@@ -6,7 +6,7 @@ function useTheme() {
   const osThemeRef = useOsTheme()
   const theme = ref<BuiltInGlobalTheme | null>(null)
   const primaryColor = '#5352ed'
-  const themeOverrides: GlobalThemeOverrides = {
+  const lightThemeOverrides: GlobalThemeOverrides = {
     common: {
       primaryColor,
       primaryColorHover: primaryColor,
@@ -14,6 +14,26 @@ function useTheme() {
     Button: {
       textColorPrimary: primaryColor,
       textColor: primaryColor,
+    },
+    Menu: {
+      itemTextColorActive: 'whitesmoke',
+      itemTextColorActiveHover: 'white',
+    },
+  }
+
+  const darkThemeOverrides: GlobalThemeOverrides = {
+    common: {
+      primaryColor,
+      primaryColorHover: primaryColor,
+    },
+    Button: {
+      textColorPrimary: primaryColor,
+      textColor: primaryColor,
+    },
+    Menu: {
+      itemTextColor: '#5b7497',
+      itemTextColorActive: 'whitesmoke',
+      itemTextColorActiveHover: 'white',
     },
   }
 
@@ -29,7 +49,8 @@ function useTheme() {
 
   return {
     theme,
-    themeOverrides,
+    lightThemeOverrides,
+    darkThemeOverrides,
   }
 }
 

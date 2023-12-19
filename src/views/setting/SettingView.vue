@@ -53,7 +53,7 @@ getHysteriaStatus()
       settings
     </div>
     <div class="flex-1 flex flex-col space-y-6">
-      <div class="grid grid-cols-2 grid-rows-2 gap-x-16 gap-y-4 p-6 bg-[#f9f7f7] shadow-lg rounded-md text-[#5b7497]">
+      <div class="dark:bg-dark grid grid-cols-2 grid-rows-2 gap-x-16 gap-y-4 p-6 bg-[#f9f7f7] shadow-lg rounded-md text-[#5b7497] dark:text-slate-300">
         <div class="flex justify-between">
           <div class="font-semibold">
             开机启动
@@ -90,7 +90,7 @@ getHysteriaStatus()
           </div>
         </div>
       </div>
-      <div class="grid grid-cols-2 grid-rows-2 gap-x-16 gap-y-4 p-6 text-[#5b7497] bg-[#f9f7f7] shadow-lg rounded-md">
+      <div class="dark:bg-dark dark:text-slate-300 grid grid-cols-2 grid-rows-2 gap-x-16 gap-y-4 p-6 text-[#5b7497] bg-[#f9f7f7] shadow-lg rounded-md">
         <div class="flex justify-between">
           <div class="font-semibold">
             代理模式

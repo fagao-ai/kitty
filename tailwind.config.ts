@@ -11,6 +11,7 @@ const tailwindConfig: Config = {
     extend: {
       colors: {
         primay: '#5352ed',
+        dark: '#3e4247',
       },
       screens: {
         xl: '1200px',

@@ -85,11 +85,13 @@ const menuOptions: MenuOption[] = [
     @apply flex justify-center items-center;
     padding-left: 0 !important;
     padding-right: 0 !important;
-  }
 
-  .router-link-active {
-    font-size: 18px;
-    color: white !important;
+    .n-menu-item-content-header {
+
+      .router-link-active {
+        font-size: 18px;
+      }
+    }
   }
 }
 </style>

@@ -5,13 +5,13 @@ import MenuView from '@/views/menu/MenuView.vue'
 import 'vfonts/Lato.css'
 import 'vfonts/FiraCode.css'
 
-const { theme, themeOverrides } = useTheme()
+const { theme, lightThemeOverrides, darkThemeOverrides } = useTheme()
 </script>
 
 <template>
   <n-config-provider
     :theme="theme"
-    :theme-overrides="themeOverrides"
+    :theme-overrides="theme === null ? lightThemeOverrides : darkThemeOverrides"
     class="flex w-full h-full bg-[#fdfdfd] dark:bg-[#373839]"
   >
     <div class="w-48">
