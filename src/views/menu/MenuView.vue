@@ -2,7 +2,10 @@
 import { h } from 'vue'
 import { NMenu } from 'naive-ui'
 import type { MenuOption } from 'naive-ui'
-import { RouterLink } from 'vue-router'
+import { RouterLink, useRoute } from 'vue-router'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 const menuOptions: MenuOption[] = [
   {
@@ -14,7 +17,7 @@ const menuOptions: MenuOption[] = [
             name: 'proxy',
           },
         },
-        { default: () => 'Proxies' },
+        { default: () => t('menubar.proxies') },
       ),
     key: 'proxy',
   },
@@ -27,11 +30,13 @@ const menuOptions: MenuOption[] = [
             name: 'setting',
           },
         },
-        { default: () => 'Settings' },
+        { default: () => t('menubar.settings') },
       ),
     key: 'setting',
   },
 ]
+
+const route = useRoute()
 </script>
 
 <template>
@@ -42,16 +47,17 @@ const menuOptions: MenuOption[] = [
       </div>
       <div class="flex-1 text-white text-lg">
         <n-menu
-          default-value="proxy"
+          :value="route.name as string ?? 'proxy'"
+          :default-value="route.name as string ?? 'proxy'"
           :options="menuOptions"
         />
       </div>
     </div>
     <div class="h-1/8 flex flex-center flex-col">
-      <div class="text-primay text-lg">
-        version
+      <div class="text-primay text-xs">
+        {{ t('menubar.version') }}
       </div>
-      <div class="text-primay">
+      <div class="text-primay text-xs">
         0.0.1.beta
       </div>
     </div>

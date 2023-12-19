@@ -4,9 +4,8 @@ import { camelizeKeys } from 'humps'
 import type { InvokeArgs, InvokeOptions } from '@tauri-apps/api/types/primitives'
 import type { KittyResponse } from '@/types'
 
-const message = useMessage()
-
 export async function invoke<T>(cmd: string, args?: InvokeArgs, options?: InvokeOptions): Promise<KittyResponse<T>> {
+  const message = useMessage()
   try {
     if (import.meta.env.KITTY_ENV !== 'web') {
       const resp = await tauriInvoke<KittyResponse<T>>(cmd, args, options)
@@ -24,7 +23,7 @@ export async function invoke<T>(cmd: string, args?: InvokeArgs, options?: Invoke
     return camelizeKeys(resp.json()) as unknown as KittyResponse<T>
   }
   catch (e) {
-    message.error(String(e))
+    message.error(`${e}`, { duration: 3000 })
     console.error('kitty error', e)
     throw e
   }

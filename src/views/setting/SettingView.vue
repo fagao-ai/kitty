@@ -1,9 +1,13 @@
 <script setup lang="ts">
-import { reactive, ref } from 'vue'
-import { NSwitch } from 'naive-ui'
+import { reactive, ref, unref, watch } from 'vue'
+import { NRadioGroup, NSwitch } from 'naive-ui'
 import { decamelizeKeys } from 'humps'
+import { useI18n } from 'vue-i18n'
 import { invoke } from '@/utils/invoke'
+import { settingStore } from '@/views/setting/store'
 import type { KittyBaseConfig } from '@/types/setting'
+
+const { t, locale } = useI18n()
 
 const proxyStatus = ref(false)
 const proxyLoading = ref(false)
@@ -45,6 +49,16 @@ async function onBaseConfigUpdate() {
 }
 getBaseConfig()
 getHysteriaStatus()
+
+const language = ref(unref(settingStore).language)
+
+function whenLanguageChanged(lang: string) {
+  settingStore.value.language = lang
+  // language.value = lang
+  locale.value = lang
+}
+
+watch(language, whenLanguageChanged, { immediate: true })
 </script>
 
 <template>
@@ -54,7 +68,7 @@ getHysteriaStatus()
     </div>
     <div class="flex-1 flex flex-col space-y-6">
       <div class="dark:bg-dark grid grid-cols-2 grid-rows-2 gap-x-16 gap-y-4 p-6 bg-[#f9f7f7] shadow-lg rounded-md text-[#5b7497] dark:text-slate-300">
-        <div class="flex justify-between">
+        <div class="flex justify-between items-center">
           <div class="font-semibold">
             开机启动
           </div>
@@ -62,15 +76,22 @@ getHysteriaStatus()
             <n-switch :value="false" :disabled="true" size="medium" />
           </div>
         </div>
-        <div class="flex justify-between">
+        <div class="flex justify-between items-center">
           <div class="font-semibold">
-            Language
+            {{ t('setting.language') }}
           </div>
           <div class="font-medium">
-            Chinese
+            <n-radio-group v-model:value="language" name="langGroup">
+              <n-radio-button value="zh">
+                文
+              </n-radio-button>
+              <n-radio-button value="en">
+                En
+              </n-radio-button>
+            </n-radio-group>
           </div>
         </div>
-        <div class="flex justify-between">
+        <div class="flex justify-between items-center">
           <div class="font-semibold">
             系统代理
           </div>
@@ -81,7 +102,7 @@ getHysteriaStatus()
             />
           </div>
         </div>
-        <div class="flex justify-between">
+        <div class="flex justify-between items-center">
           <div class="font-semibold">
             允许局域网连接
           </div>
@@ -91,7 +112,7 @@ getHysteriaStatus()
         </div>
       </div>
       <div class="dark:bg-dark dark:text-slate-300 grid grid-cols-2 grid-rows-2 gap-x-16 gap-y-4 p-6 text-[#5b7497] bg-[#f9f7f7] shadow-lg rounded-md">
-        <div class="flex justify-between">
+        <div class="flex justify-between items-center">
           <div class="font-semibold">
             代理模式
           </div>
@@ -99,7 +120,7 @@ getHysteriaStatus()
             全局
           </div>
         </div>
-        <div class="flex justify-between">
+        <div class="flex justify-between items-center">
           <div class="font-semibold">
             Socks5代理端口
           </div>
@@ -110,7 +131,7 @@ getHysteriaStatus()
             />
           </div>
         </div>
-        <div class="flex justify-between">
+        <div class="flex justify-between items-center">
           <div class="font-semibold">
             HTTP代理端口
           </div>
