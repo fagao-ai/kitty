@@ -44,6 +44,13 @@ async fn stop_hysteria<'a>(state: State<'a, ProcessManagerState>) -> CommandResu
 }
 
 #[tauri::command(rename_all = "snake_case")]
+async fn get_hysterie_status<'a>(state: State<'a, ProcessManagerState>) -> CommandResult<KittyResponse<bool>> {
+    let process_manager = state.process_manager.lock().await;
+    let res = process_manager.is_open();
+    Ok(KittyResponse::from_data(res))
+}
+
+#[tauri::command(rename_all = "snake_case")]
 async fn add_hy_item<'a>(
     state: State<'a, DatabaseState>,
     record: hysteria::Model,
@@ -58,8 +65,10 @@ async fn add_hy_item<'a>(
 async fn get_all_proxies<'a>(
     state: State<'a, DatabaseState>,
 ) -> CommandResult<KittyResponse<Vec<hysteria::Model>>> {
+    println!("called get_all_proxies");
     let db = state.get_db();
     let hy_proxies = hysteria::Model::fectch_all(&db).await?;
+    println!("hy_proxies: {:?}", hy_proxies);
     Ok(KittyResponse::from_data(hy_proxies))
 }
 
@@ -302,6 +311,7 @@ pub fn run() {
             incre_base_config,
             query_base_config,
             update_base_config,
+            get_hysterie_status,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

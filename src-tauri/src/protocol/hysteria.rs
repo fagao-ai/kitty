@@ -53,6 +53,7 @@ impl CommandManagerTrait for HysteriaManager {
     fn terminate_backend(&mut self) -> Result<()> {
         if let Some(child) = self.child.take() {
             child.kill()?;
+            self.child = None;
         }
         Ok(())
     }
@@ -101,5 +102,14 @@ impl CommandManagerTrait for HysteriaManager {
             }
         });
         Ok(())
+    }
+
+    fn is_open(&self) -> bool {
+        let res = match self.child {
+            Some(_) => true,
+            None => false,
+
+        };
+        res
     }
 }

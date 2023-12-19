@@ -20,4 +20,6 @@ pub(crate) trait CommandManagerTrait {
     ) -> Result<()>;
 
     async fn check_status(&mut self) -> Result<()>;
+
+    fn is_open(&self) -> bool;
 }

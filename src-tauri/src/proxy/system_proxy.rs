@@ -61,18 +61,18 @@ fn get_active_network_interface() -> Result<String> {
         let stdout = String::from_utf8_lossy(&output.stdout);
         let lines = stdout.lines();
         let lines: Vec<&str> = lines.filter(|x| !x.contains("asterisk (*)")).collect();
-        for line in lines {
+        for service in lines {
             let info = Command::new("networksetup")
                 .arg("-getinfo")
-                .arg(line.trim())
+                .arg(service.trim())
                 .output()?;
             if info.status.success() {
                 let mut info_map: HashMap<String, String> = HashMap::new();
                 let stdout = String::from_utf8_lossy(&info.stdout);
                 let lines = stdout.lines();
-                for line in lines {
-                    if line.contains(":") {
-                        let mut parts = line.trim().splitn(2, ':').map(str::trim);
+                for line_item in lines {
+                    if line_item.contains(":") {
+                        let mut parts = line_item.trim().splitn(2, ':').map(str::trim);
                         if let (Some(key), Some(value)) = (parts.next(), parts.next()) {
                             info_map.insert(key.to_string(), value.to_string());
                         }
@@ -80,8 +80,8 @@ fn get_active_network_interface() -> Result<String> {
                 }
                 if let Some(value) = info_map.get("IP address") {
                     match Ipv4Addr::from_str(value) {
-                        Ok(res) => {
-                            return Ok(res.to_owned().to_string());
+                        Ok(_) => {
+                            return Ok(service.to_owned().to_string());
                         }
                         Err(_) => continue,
                     }
@@ -97,13 +97,14 @@ pub fn set_system_proxy(host: &str, socks_port: u16, http_port: Option<u16>) -> 
     use anyhow::Ok;
 
     let service = get_active_network_interface()?;
+    println!("servie: {}", service);
     let socks_sysproxy = Sysproxy {
         enable: true,
         host: host.into(),
         port: socks_port,
         bypass: "localhost,127.0.0.1/8".into(),
     };
-    let _ = socks_sysproxy.set_socks("0x10");
+    let _ = socks_sysproxy.set_socks(service.as_str());
     match http_port {
         Some(http_port) => {
             let socks_sysproxy = Sysproxy {
@@ -112,8 +113,8 @@ pub fn set_system_proxy(host: &str, socks_port: u16, http_port: Option<u16>) -> 
                 port: http_port,
                 bypass: "localhost,127.0.0.1/8".into(),
             };
-            let _ = socks_sysproxy.set_http(service);
-            let _ = socks_sysproxy.set_https(service);
+            let _ = socks_sysproxy.set_http(service.as_str());
+            let _ = socks_sysproxy.set_https(service.as_str());
             Ok("set socks proxy success")
         }
         None => Ok("the http_port is not set"),
@@ -165,10 +166,10 @@ impl ProxyType {
 #[cfg(target_os = "macos")]
 pub fn clear_system_proxy() -> Result<()> {
     use std::process::Command;
-    let service =get_active_network_interface()?;
+    let service = get_active_network_interface()?;
     let target_state = format!("-set{}state", ProxyType::HTTP.to_target());
     Command::new("networksetup")
-        .args([target_state.as_str(), service, "off"])
+        .args([target_state.as_str(), service.as_str(), "off"])
         .status()?;
     Ok(())
 }

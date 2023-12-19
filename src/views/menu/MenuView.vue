@@ -38,7 +38,7 @@ const menuOptions: MenuOption[] = [
   <div class="flex flex-col h-full p-4">
     <div class="flex-1 flex flex-col">
       <div class="text-5xl font-bold h-1/6 flex flex-center text-primay">
-        Kitty
+        kitty
       </div>
       <div class="flex-1 text-white text-lg">
         <n-menu
@@ -49,7 +49,7 @@ const menuOptions: MenuOption[] = [
     </div>
     <div class="h-1/8 flex flex-center flex-col">
       <div class="text-primay text-lg">
-        Kitty Version
+        version
       </div>
       <div class="text-primay">
         0.0.1.beta

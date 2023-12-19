@@ -10,10 +10,14 @@ const proxyLoading = ref(false)
 async function handleSwitchProxy(value: boolean) {
   proxyLoading.value = true
   try {
-    if (value)
+    if (value) {
+      const res = await invoke<boolean>('get_hysterie_status')
+      if (res.data)
+        return
+
       await invoke('start_hysteria')
-    else
-      await invoke('stop_hysteria')
+    }
+    else { await invoke('stop_hysteria') }
   }
   finally {
     proxyLoading.value = false
@@ -31,16 +35,22 @@ async function getBaseConfig() {
   Object.assign(baseConfig, config.data)
 }
 
+async function getHysteriaStatus() {
+  const res = await invoke<boolean>('get_hysterie_status')
+  proxyStatus.value = res.data
+}
+
 async function onBaseConfigUpdate() {
   await invoke('update_base_config', { id: baseConfig.id, base_config: decamelizeKeys(baseConfig) })
 }
 getBaseConfig()
+getHysteriaStatus()
 </script>
 
 <template>
   <div class="w-full h-full flex flex-col space-y-4">
     <div class="h-8 text-2xl text-primay font-extrabold">
-      Settings
+      settings
     </div>
     <div class="flex-1 flex flex-col space-y-6">
       <div class="grid grid-cols-2 grid-rows-2 gap-x-16 gap-y-4 p-6 bg-[#f9f7f7] shadow-lg rounded-md text-[#5b7497]">
@@ -49,11 +59,7 @@ getBaseConfig()
             开机启动
           </div>
           <div class="font-medium">
-            <n-switch
-              :value="false"
-              :disabled="true"
-              size="medium"
-            />
+            <n-switch :value="false" :disabled="true" size="medium" />
           </div>
         </div>
         <div class="flex justify-between">
@@ -70,9 +76,7 @@ getBaseConfig()
           </div>
           <div class="font-medium">
             <n-switch
-              v-model="proxyStatus"
-              :loading="proxyLoading"
-              size="medium"
+              v-model:value="proxyStatus" :loading="proxyLoading" size="medium"
               @update:value="handleSwitchProxy"
             />
           </div>
@@ -101,11 +105,7 @@ getBaseConfig()
           </div>
           <div class="font-medium w-20">
             <n-input-number
-              v-model:value="baseConfig.socksPort"
-              type="text"
-              :show-button="false"
-              :max="65535"
-              :min="1"
+              v-model:value="baseConfig.socksPort" type="text" :show-button="false" :max="65535" :min="1"
               @blur="onBaseConfigUpdate"
             />
           </div>
@@ -116,11 +116,7 @@ getBaseConfig()
           </div>
           <div class="font-medium w-20">
             <n-input-number
-              v-model:value="baseConfig.httpPort"
-              type="text"
-              :show-button="false"
-              :max="65535"
-              :min="1"
+              v-model:value="baseConfig.httpPort" type="text" :show-button="false" :max="65535" :min="1"
               @blur="onBaseConfigUpdate"
             />
           </div>
