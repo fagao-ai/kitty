@@ -683,6 +683,27 @@ dependencies = [
 ]
 
 [[package]]
+name = "bzip2"
+version = "0.4.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bdb116a6ef3f6c3698828873ad02c3014b3c85cadb88496095628e3ef1e347f8"
+dependencies = [
+ "bzip2-sys",
+ "libc",
+]
+
+[[package]]
+name = "bzip2-sys"
+version = "0.1.11+1.0.8"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "736a955f3fa7875102d57c82b8cac37ec45224a07fd32d58f9f7a186b6cd4cdc"
+dependencies = [
+ "cc",
+ "libc",
+ "pkg-config",
+]
+
+[[package]]
 name = "cairo-rs"
 version = "0.18.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2443,6 +2464,7 @@ dependencies = [
  "tokio",
  "uuid",
  "winapi 0.3.9",
+ "zip",
 ]
 
 [[package]]
@@ -3415,7 +3437,7 @@ dependencies = [
  "line-wrap",
  "quick-xml",
  "serde",
- "time",
+ "time 0.3.30",
 ]
 
 [[package]]
@@ -4066,7 +4088,7 @@ dependencies = [
  "sqlx",
  "strum",
  "thiserror",
- "time",
+ "time 0.3.30",
  "tracing",
  "url",
  "uuid",
@@ -4134,7 +4156,7 @@ dependencies = [
  "rust_decimal",
  "sea-query-derive",
  "serde_json",
- "time",
+ "time 0.3.30",
  "uuid",
 ]
 
@@ -4150,7 +4172,7 @@ dependencies = [
  "sea-query",
  "serde_json",
  "sqlx",
- "time",
+ "time 0.3.30",
  "uuid",
 ]
 
@@ -4322,7 +4344,7 @@ dependencies = [
  "serde",
  "serde_json",
  "serde_with_macros",
- "time",
+ "time 0.3.30",
 ]
 
 [[package]]
@@ -4596,7 +4618,7 @@ dependencies = [
  "smallvec",
  "sqlformat",
  "thiserror",
- "time",
+ "time 0.3.30",
  "tokio",
  "tokio-stream",
  "tracing",
@@ -4686,7 +4708,7 @@ dependencies = [
  "sqlx-core",
  "stringprep",
  "thiserror",
- "time",
+ "time 0.3.30",
  "tracing",
  "uuid",
  "whoami",
@@ -4731,7 +4753,7 @@ dependencies = [
  "sqlx-core",
  "stringprep",
  "thiserror",
- "time",
+ "time 0.3.30",
  "tracing",
  "uuid",
  "whoami",
@@ -4756,7 +4778,7 @@ dependencies = [
  "percent-encoding",
  "serde",
  "sqlx-core",
- "time",
+ "time 0.3.30",
  "tracing",
  "url",
  "urlencoding",
@@ -5093,7 +5115,7 @@ dependencies = [
  "sha2",
  "tauri-utils",
  "thiserror",
- "time",
+ "time 0.3.30",
  "url",
  "uuid",
  "walkdir",
@@ -5310,6 +5332,17 @@ checksum = "3fdd6f064ccff2d6567adcb3873ca630700f00b5ad3f060c25b5dcfd9a4ce152"
 dependencies = [
  "cfg-if",
  "once_cell",
+]
+
+[[package]]
+name = "time"
+version = "0.1.45"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1b797afad3f312d1c66a56d11d0316f916356d11bd158fbc6ca6389ff6bf805a"
+dependencies = [
+ "libc",
+ "wasi 0.10.0+wasi-snapshot-preview1",
+ "winapi 0.3.9",
 ]
 
 [[package]]
@@ -5779,6 +5812,12 @@ name = "wasi"
 version = "0.9.0+wasi-snapshot-preview1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cccddf32554fecc6acb585f82a32a72e28b48f8c4c1883ddfeeeaa96f7d8e519"
+
+[[package]]
+name = "wasi"
+version = "0.10.0+wasi-snapshot-preview1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1a143597ca7c7793eff794def352d41792a93c481eb1042423ff7ff72ba2c31f"
 
 [[package]]
 name = "wasi"
@@ -6487,6 +6526,20 @@ name = "zeroize"
 version = "1.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "525b4ec142c6b68a2d10f01f7bbf6755599ca3f81ea53b8431b7dd348f5fdb2d"
+
+[[package]]
+name = "zip"
+version = "0.5.13"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "93ab48844d61251bb3835145c521d88aa4031d7139e8485990f60ca911fa0815"
+dependencies = [
+ "byteorder",
+ "bzip2",
+ "crc32fast",
+ "flate2",
+ "thiserror",
+ "time 0.1.45",
+]
 
 [[package]]
 name = "zvariant"
