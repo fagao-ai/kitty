@@ -30,6 +30,7 @@ use tauri::{AppHandle, Manager, State};
 use uuid::Uuid;
 
 use crate::protocol::traits::CommandManagerTrait;
+use tauri_plugin_autostart::MacosLauncher;
 use types::{CommandResult, KittyResponse};
 
 // Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
@@ -44,7 +45,9 @@ async fn stop_hysteria<'a>(state: State<'a, ProcessManagerState>) -> CommandResu
 }
 
 #[tauri::command(rename_all = "snake_case")]
-async fn get_hysterie_status<'a>(state: State<'a, ProcessManagerState>) -> CommandResult<KittyResponse<bool>> {
+async fn get_hysterie_status<'a>(
+    state: State<'a, ProcessManagerState>,
+) -> CommandResult<KittyResponse<bool>> {
     let process_manager = state.process_manager.lock().await;
     let res = process_manager.is_open();
     Ok(KittyResponse::from_data(res))
@@ -300,6 +303,10 @@ pub fn run() {
             process_manager: Mutex::new(HysteriaManager::new()),
         })
         .plugin(tauri_plugin_window::init())
+        .plugin(tauri_plugin_autostart::init(
+            MacosLauncher::LaunchAgent,
+            Some(vec![]),
+        ))
         .plugin(tauri_plugin_shell::init())
         .setup(setup)
         .on_window_event(on_window_exit_func)

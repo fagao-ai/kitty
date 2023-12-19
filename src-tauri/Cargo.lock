@@ -470,6 +470,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "auto-launch"
+version = "0.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1f012b8cc0c850f34117ec8252a44418f2e34a2cf501de89e29b241ae5f79471"
+dependencies = [
+ "dirs",
+ "thiserror",
+ "winreg 0.10.1",
+]
+
+[[package]]
 name = "autocfg"
 version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1151,6 +1162,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "dirs"
+version = "4.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ca3aa72a6f96ea37bbc5aa912f6788242832f75369bdfdadcb0e38423f100059"
+dependencies = [
+ "dirs-sys",
+]
+
+[[package]]
 name = "dirs-next"
 version = "2.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1158,6 +1178,17 @@ checksum = "b98cf8ebf19c3d1b223e151f99a4f9f0690dca41414773390fc824184ac833e1"
 dependencies = [
  "cfg-if",
  "dirs-sys-next",
+]
+
+[[package]]
+name = "dirs-sys"
+version = "0.3.7"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1b1d1d91c932ef41c0f2663aa8b0ca0342d444d842c06914aa0a7e352d0bada6"
+dependencies = [
+ "libc",
+ "redox_users",
+ "winapi 0.3.9",
 ]
 
 [[package]]
@@ -2404,6 +2435,7 @@ dependencies = [
  "sysproxy",
  "tauri",
  "tauri-build",
+ "tauri-plugin-autostart",
  "tauri-plugin-process",
  "tauri-plugin-shell",
  "tauri-plugin-window",
@@ -5079,6 +5111,20 @@ dependencies = [
  "syn 2.0.39",
  "tauri-codegen",
  "tauri-utils",
+]
+
+[[package]]
+name = "tauri-plugin-autostart"
+version = "2.0.0-alpha.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "015ab4226e7df86493336df054626a4c8b6eca8a0431cc9afdd2d86663b75710"
+dependencies = [
+ "auto-launch",
+ "log 0.4.20",
+ "serde",
+ "serde_json",
+ "tauri",
+ "thiserror",
 ]
 
 [[package]]
