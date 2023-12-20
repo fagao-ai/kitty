@@ -1,4 +1,4 @@
-use anyhow::{Context, Result};
+use anyhow::{anyhow, Context, Ok, Result};
 use build_target::{Arch, Os, Target};
 use reqwest;
 use std::fs::{self, File};
@@ -26,7 +26,11 @@ fn download_file(url: &str, file_name: &str) -> PathBuf {
     binaries_path
 }
 
-fn download_file_from_zip(url: &str, save_file_name: &str, extract_target_file: &str) {
+fn download_file_from_zip(
+    url: &str,
+    save_file_name: &str,
+    extract_target_file: &str,
+) -> Result<PathBuf> {
     let mut response =
         reqwest::blocking::get(url).expect(format!("download {} failed!", save_file_name).as_str());
 
@@ -34,23 +38,18 @@ fn download_file_from_zip(url: &str, save_file_name: &str, extract_target_file: 
     response.read_to_end(&mut buffer).unwrap();
 
     let mut archive = ZipArchive::new(std::io::Cursor::new(buffer)).unwrap();
-    let file_name = Path::new(extract_target_file)
-        .file_name()
-        .unwrap()
-        .to_str()
-        .unwrap();
     for i in 0..archive.len() {
         let mut file = archive.by_index(i).unwrap();
         let file_path = file.mangled_name();
-        let aa = file_path.join(extract_target_file);
-        let is_file_needed: bool = file_path == aa;
-        if is_file_needed {
-            let binaries_path = get_binary_file_path(file_name);
-            let mut extracted_file = std::fs::File::create(file_name).unwrap();
+        let target_zip_file_name = file_path.file_name().unwrap().to_str().unwrap();
+        if target_zip_file_name == extract_target_file {
+            let binaries_path = get_binary_file_path(save_file_name);
+            let mut extracted_file = std::fs::File::create(&binaries_path).unwrap();
             std::io::copy(&mut file, &mut extracted_file).unwrap();
-            break;
+            return Ok(binaries_path);
         }
     }
+    Err(anyhow!("down zip not match"))
 }
 
 fn get_hysteria_source_name(target: &Target) -> String {
@@ -148,29 +147,37 @@ fn download_hysteria() {
     let _ = fs::set_permissions(binaries_path, perms);
 }
 
-fn download_xray() {
+fn download_xray() -> Result<()> {
     let target = build_target::target().unwrap();
     let source_name = get_xray_source_name(&target);
     let download_url =
         format!("https://github.com/XTLS/Xray-core/releases/download/v1.8.6/{source_name}");
     let target_name = format!("xray-{}", target.triple);
-    let binaries_path = download_file(download_url.as_str(), target_name.as_str());
+    let extract_target_file = "xray";
+    let binaries_path = download_file_from_zip(
+        download_url.as_str(),
+        target_name.as_str(),
+        extract_target_file,
+    )?;
     let mut perms = fs::metadata(&binaries_path)
         .expect("metadata failed.")
         .permissions();
     perms.set_mode(0o755);
     let _ = fs::set_permissions(binaries_path, perms);
+    Ok(())
 }
 
-fn download_binaries() {
+fn download_binaries() -> Result<()> {
     let hysteria_feature = env::var("CARGO_FEATURE_HYSTERIA").is_ok();
     let xray_feature = env::var("CARGO_FEATURE_XRAY").is_ok();
     if !hysteria_feature && !xray_feature {
         let _ = download_hysteria();
-        let _ = download_xray();
+        let _ = download_xray()?;
     }
+    Ok(())
 }
 
 fn main() {
+    let _ = download_binaries();
     tauri_build::build()
 }
