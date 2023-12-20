@@ -41,7 +41,6 @@ impl CommandManagerTrait for HysteriaManager {
                     .sidecar(self.name.as_str())
                     .expect(err_msg.as_str());
                 let (child_receiver, child) = t_command.args(args).spawn()?;
-
                 self.child = Some(child);
                 self.child_receiver = Some(child_receiver);
                 Ok(())

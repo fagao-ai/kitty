@@ -146,30 +146,15 @@ pub fn clear_system_proxy() -> Result<()> {
 }
 
 #[cfg(target_os = "macos")]
-enum ProxyType {
-    HTTP,
-    HTTPS,
-    SOCKS,
-}
-
-#[cfg(target_os = "macos")]
-impl ProxyType {
-    fn to_target(&self) -> &'static str {
-        match self {
-            ProxyType::HTTP => "webproxy",
-            ProxyType::HTTPS => "securewebproxy",
-            ProxyType::SOCKS => "socksfirewallproxy",
-        }
-    }
-}
-
-#[cfg(target_os = "macos")]
 pub fn clear_system_proxy() -> Result<()> {
-    use std::process::Command;
-    let service = get_active_network_interface()?;
-    let target_state = format!("-set{}state", ProxyType::HTTP.to_target());
-    Command::new("networksetup")
-        .args([target_state.as_str(), service.as_str(), "off"])
-        .status()?;
+    let socks_sysproxy = Sysproxy {
+        enable: false,
+        host: "127.0.0.1".into(),
+        port: 10086,
+        bypass: "localhost;127.*".into(),
+    };
+
+    let _ = socks_sysproxy.set_system_proxy();
+
     Ok(())
 }

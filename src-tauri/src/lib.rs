@@ -10,7 +10,7 @@ use crate::protocol::hysteria::HysteriaManager;
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use std::{collections::HashMap, env, fs, io::Write, path::PathBuf};
+use std::{collections::HashMap, env, fs, io::Write, path::PathBuf, process::exit};
 
 use crate::proxy::system_proxy::clear_system_proxy;
 use entity::{
@@ -220,18 +220,24 @@ async fn update_base_config<'a>(
 }
 
 fn set_system_tray<'a>(app: &'a mut tauri::App) -> Result<()> {
-    let toggle = MenuItemBuilder::with_id("toggle", "Toggle").build(app);
-    let menu = MenuBuilder::new(app).items(&[&toggle]).build()?;
+    let quit = MenuItemBuilder::with_id("quit", "Quit").build(app);
+    let hide = MenuItemBuilder::with_id("hide", "Hide").build(app);
+    let menu = MenuBuilder::new(app).items(&[&quit, &hide]).build()?;
     let parent_dir = env::current_dir()?.parent().unwrap().to_owned();
     let icon_path = parent_dir.join("icons").join("icons8-48.png");
     let icon = Icon::File(icon_path);
     let _tray = TrayIconBuilder::new()
         .menu(&menu)
         .icon(icon)
-        .on_menu_event(move |_app, event| match event.id().as_ref() {
-            "toggle" => {
-                println!("toggle clicked");
+        .on_menu_event(move |app, event: tauri::menu::MenuEvent| match event.id().as_ref() {
+            "hide" => {
+                let window: tauri::Window = app.get_window("main").unwrap();
+                window.hide().unwrap();
             }
+            "quit" => {
+                app.exit(0);
+            }
+            
             _ => (),
         })
         .on_tray_icon_event(|tray, event| {
@@ -308,6 +314,7 @@ pub fn run() {
             Some(vec![]),
         ))
         .plugin(tauri_plugin_shell::init())
+        .plugin(tauri_plugin_notification::init())
         .setup(setup)
         .on_window_event(on_window_exit_func)
         .invoke_handler(tauri::generate_handler![

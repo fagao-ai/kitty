@@ -68,7 +68,9 @@ impl Serialize for KittyCommandError {
     where
         S: Serializer,
     {
-        serializer.serialize_str(self.to_string().as_ref())
+        let res = String::from("aaa") + self.to_string().as_str();
+
+        serializer.serialize_str(res.as_ref())
     }
 }
 
