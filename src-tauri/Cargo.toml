@@ -25,11 +25,12 @@ build-target = "0.4.0"
 zip = "0.5"
 
 [dependencies]
-tauri = { version = "2.0.0-alpha", features = [
+tauri = { version = "2.0.0-alpha.10", features = [
   "tray-icon",
-  "icon-ico"
+  "icon-ico",
+  "icon-png",
 ] }
-tauri-plugin-window = "2.0.0-alpha"
+tauri-plugin-window = "2.0.0-alpha.2"
 tauri-plugin-shell = "2.0.0-alpha"
 serde_json = "1.0"
 serde = "1.0.193"

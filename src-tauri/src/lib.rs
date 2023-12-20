@@ -223,9 +223,13 @@ fn set_system_tray<'a>(app: &'a mut tauri::App) -> Result<()> {
     let quit = MenuItemBuilder::with_id("quit", "Quit").build(app);
     let hide = MenuItemBuilder::with_id("hide", "Hide").build(app);
     let menu = MenuBuilder::new(app).items(&[&quit, &hide]).build()?;
-    let parent_dir = env::current_dir()?.parent().unwrap().to_owned();
+    let current_path = env::current_dir()?;
+    println!("current_path: {:?}", current_path);
+    let parent_dir = current_path.to_owned();
     let icon_path = parent_dir.join("icons").join("icons8-48.png");
+    println!("icon_path: {:?}", icon_path);
     let icon = Icon::File(icon_path);
+    print!("set_system_tray");
     let _tray = TrayIconBuilder::new()
         .menu(&menu)
         .icon(icon)

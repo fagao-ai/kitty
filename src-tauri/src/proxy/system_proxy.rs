@@ -6,7 +6,7 @@ pub fn set_system_proxy(host: &str, socks_port: u16, http_port: Option<u16>) -> 
     use anyhow::anyhow;
 
     let res = if let Some(port) = http_port {
-        let mut socks_sysproxy = Sysproxy {
+        let socks_sysproxy = Sysproxy {
             enable: true,
             host: host.into(),
             port: port,
@@ -123,7 +123,7 @@ pub fn set_system_proxy(host: &str, socks_port: u16, http_port: Option<u16>) -> 
 
 #[cfg(target_os = "windows")]
 pub fn clear_system_proxy() {
-    let mut socks_sysproxy = Sysproxy {
+    let socks_sysproxy = Sysproxy {
         enable: false,
         host: "127.0.0.1".into(),
         port: 10086,

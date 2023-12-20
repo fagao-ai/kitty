@@ -3,11 +3,24 @@ use build_target::{Arch, Os, Target};
 use reqwest;
 use std::fs::{self, File};
 use std::io::Read;
-use std::os::unix::fs::PermissionsExt;
+
 use std::path::{Path, PathBuf};
-use std::process::Command;
 use std::{env, io};
 use zip::ZipArchive;
+
+fn set_execute_permession(binaries_path: &PathBuf) {
+    #[cfg(target_family = "unix")]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        let mut perms = fs::metadata(&binaries_path)
+            .expect("metadata failed.")
+            .permissions();
+        perms.set_mode(0o755);
+        let _ = fs::set_permissions(binaries_path, perms);
+    }
+    #[cfg(not(target_family = "unix"))]
+    {}
+}
 
 fn get_binary_file_path(file_name: &str) -> PathBuf {
     let project_dir = env::var("CARGO_MANIFEST_DIR").expect("Failed to get CARGO_MANIFEST_DIR");
@@ -138,13 +151,14 @@ fn download_hysteria() {
     let target = build_target::target().unwrap();
     let source_name = get_hysteria_source_name(&target);
     let download_url = format!("https://download.hysteria.network/app/latest/{source_name}");
-    let target_name = format!("hysteria-{}", target.triple);
+
+    let suffix = match target.os {
+        Os::Windows => ".exe",
+        _ => "",
+    };
+    let target_name = format!("hysteria-{}{}", target.triple, suffix);
     let binaries_path = download_file(download_url.as_str(), target_name.as_str());
-    let mut perms = fs::metadata(&binaries_path)
-        .expect("metadata failed.")
-        .permissions();
-    perms.set_mode(0o755);
-    let _ = fs::set_permissions(binaries_path, perms);
+    set_execute_permession(&binaries_path);
 }
 
 fn download_xray() -> Result<()> {
@@ -159,11 +173,7 @@ fn download_xray() -> Result<()> {
         target_name.as_str(),
         extract_target_file,
     )?;
-    let mut perms = fs::metadata(&binaries_path)
-        .expect("metadata failed.")
-        .permissions();
-    perms.set_mode(0o755);
-    let _ = fs::set_permissions(binaries_path, perms);
+    set_execute_permession(&binaries_path);
     Ok(())
 }
 
@@ -172,7 +182,7 @@ fn download_binaries() -> Result<()> {
     let xray_feature = env::var("CARGO_FEATURE_XRAY").is_ok();
     if !hysteria_feature && !xray_feature {
         let _ = download_hysteria();
-        let _ = download_xray()?;
+        // let _ = download_xray()?;
     }
     Ok(())
 }

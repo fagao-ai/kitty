@@ -5074,6 +5074,7 @@ dependencies = [
  "muda",
  "objc",
  "percent-encoding",
+ "png",
  "raw-window-handle",
  "reqwest",
  "serde",
