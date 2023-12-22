@@ -8,14 +8,6 @@ pub struct KittyResponse<T> {
 }
 
 impl<T> KittyResponse<T> {
-    pub fn new(code: i8, data: T, msg: &str) -> Self {
-        Self {
-            code,
-            data: Some(data),
-            msg: Some(msg.to_string()),
-        }
-    }
-
     pub fn from_msg(code: i8, msg: &str) -> Self {
         Self {
             data: None,
@@ -55,11 +47,15 @@ pub enum KittyCommandError {
     #[error(transparent)]
     TauriError(#[from] tauri::Error),
 
+
+    #[error(transparent)]
+    TauriShellError(#[from] tauri_plugin_shell::Error),
+
     #[error(transparent)]
     AnyHowError(#[from] anyhow::Error),
 
     #[error(transparent)]
-    TauriShellError(#[from] tauri_plugin_shell::Error),
+    StdError(#[from] std::io::Error),
 }
 
 // we must manually implement serde::Serialize

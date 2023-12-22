@@ -174,6 +174,7 @@ async fn start_hysteria<'a>(
             let args = vec!["client", "--config", file.as_str()];
             let _ = process_manager.start_backend(app_handle, args)?;
             let _ = process_manager.check_status().await?;
+            let _ = fs::remove_file(file)?;
             KittyResponse::from_data(None)
         }
         None => KittyResponse::from_msg(100, "hysteria config is empty, please ad"),
@@ -233,17 +234,19 @@ fn set_system_tray<'a>(app: &'a mut tauri::App) -> Result<()> {
     let _tray = TrayIconBuilder::new()
         .menu(&menu)
         .icon(icon)
-        .on_menu_event(move |app, event: tauri::menu::MenuEvent| match event.id().as_ref() {
-            "hide" => {
-                let window: tauri::Window = app.get_window("main").unwrap();
-                window.hide().unwrap();
-            }
-            "quit" => {
-                app.exit(0);
-            }
-            
-            _ => (),
-        })
+        .on_menu_event(
+            move |app, event: tauri::menu::MenuEvent| match event.id().as_ref() {
+                "hide" => {
+                    let window: tauri::Window = app.get_window("main").unwrap();
+                    window.hide().unwrap();
+                }
+                "quit" => {
+                    app.exit(0);
+                }
+
+                _ => (),
+            },
+        )
         .on_tray_icon_event(|tray, event| {
             if event.click_type == ClickType::Left {
                 let app = tray.app_handle();

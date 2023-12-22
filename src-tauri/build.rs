@@ -1,4 +1,4 @@
-use anyhow::{anyhow, Context, Ok, Result};
+use anyhow::{anyhow, Context, Result};
 use build_target::{Arch, Os, Target};
 use reqwest;
 use std::fs::{self, File};
@@ -40,25 +40,38 @@ fn download_file(url: &str, file_name: &str) -> PathBuf {
 }
 
 fn download_file_from_zip(
+    target: &Target,
     url: &str,
     save_file_name: &str,
     extract_target_file: &str,
 ) -> Result<PathBuf> {
-    let mut response =
-        reqwest::blocking::get(url).expect(format!("download {} failed!", save_file_name).as_str());
-
+    let response = reqwest::blocking::get(url);
+    let mut response = match response {
+        Ok(response) => response,
+        Err(_) => panic!("download xray failed."),
+    };
+    println!("download xray ing.");
     let mut buffer: Vec<u8> = vec![];
     response.read_to_end(&mut buffer).unwrap();
 
     let mut archive = ZipArchive::new(std::io::Cursor::new(buffer)).unwrap();
     for i in 0..archive.len() {
         let mut file = archive.by_index(i).unwrap();
+
         let file_path = file.mangled_name();
+        eprintln!("unzip file_path : {:?}", file_path);
         let target_zip_file_name = file_path.file_name().unwrap().to_str().unwrap();
-        if target_zip_file_name == extract_target_file {
+        eprintln!("download target_zip_file_name: {:?}", target_zip_file_name);
+        eprintln!("download extract_target_file: {:?}", extract_target_file);
+        let extract_target_file = match target.os {
+            Os::Windows => extract_target_file.to_string() + ".exe",
+            _ => extract_target_file.to_string(),
+        };
+        if target_zip_file_name == extract_target_file.as_str() {
             let binaries_path = get_binary_file_path(save_file_name);
             let mut extracted_file = std::fs::File::create(&binaries_path).unwrap();
             std::io::copy(&mut file, &mut extracted_file).unwrap();
+            eprintln!("download success: {:?}", binaries_path);
             return Ok(binaries_path);
         }
     }
@@ -167,12 +180,16 @@ fn download_xray() -> Result<()> {
     let download_url =
         format!("https://github.com/XTLS/Xray-core/releases/download/v1.8.6/{source_name}");
     let target_name = format!("xray-{}", target.triple);
+    eprintln!("Debug message: This is a debug print.");
+
     let extract_target_file = "xray";
     let binaries_path = download_file_from_zip(
+        &target,
         download_url.as_str(),
         target_name.as_str(),
         extract_target_file,
     )?;
+    eprintln!("Debug message: This is a debug print1.");
     set_execute_permession(&binaries_path);
     Ok(())
 }
@@ -182,7 +199,7 @@ fn download_binaries() -> Result<()> {
     let xray_feature = env::var("CARGO_FEATURE_XRAY").is_ok();
     if !hysteria_feature && !xray_feature {
         let _ = download_hysteria();
-        // let _ = download_xray()?;
+        let _ = download_xray()?;
     }
     Ok(())
 }
