@@ -1,10 +1,22 @@
 {
+  "common": {
+    "global": "全局",
+    "rules": "规则",
+    "direct": "直连"
+  },
   "menubar": {
     "proxies": "代理",
     "settings": "设置",
     "version": "版本"
   },
   "setting": {
-    "language": "语言"
+    "language": "语言",
+    "autoStart": "开机启动",
+    "title": "设置",
+    "systemProxy": "系统代理",
+    "allowLan": "允许局域网连接",
+    "mode": "代理模式",
+    "httpPort": "HTTP 代理端口",
+    "socks5Port": "Socks5 代理端口"
   }
 }

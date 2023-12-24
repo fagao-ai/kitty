@@ -64,7 +64,7 @@ watch(language, whenLanguageChanged, { immediate: true })
 <template>
   <div class="w-full h-full flex flex-col space-y-4">
     <div class="h-8 text-2xl text-primay font-extrabold">
-      settings
+      {{ t('setting.title') }}
     </div>
     <div class="flex-1 flex flex-col space-y-6">
       <div
@@ -72,7 +72,7 @@ watch(language, whenLanguageChanged, { immediate: true })
       >
         <div class="flex justify-between items-center">
           <div class="font-semibold">
-            开机启动
+            {{ t('setting.autoStart') }}
           </div>
           <div class="font-medium">
             <n-switch
@@ -102,7 +102,7 @@ watch(language, whenLanguageChanged, { immediate: true })
         </div>
         <div class="flex justify-between items-center">
           <div class="font-semibold">
-            系统代理
+            {{ t('setting.systemProxy') }}
           </div>
           <div class="font-medium">
             <n-switch
@@ -115,7 +115,7 @@ watch(language, whenLanguageChanged, { immediate: true })
         </div>
         <div class="flex justify-between items-center">
           <div class="font-semibold">
-            允许局域网连接
+            {{ t('setting.allowLan') }}
           </div>
           <div class="font-medium">
             Off
@@ -127,15 +127,15 @@ watch(language, whenLanguageChanged, { immediate: true })
       >
         <div class="flex justify-between items-center">
           <div class="font-semibold">
-            代理模式
+            {{ t('setting.mode') }}
           </div>
           <div class="font-medium">
-            全局
+            {{ t('common.global') }}
           </div>
         </div>
         <div class="flex justify-between items-center">
           <div class="font-semibold">
-            Socks5代理端口
+            {{ t('setting.socks5Port') }}
           </div>
           <div class="font-medium w-20">
             <n-input-number
@@ -150,7 +150,7 @@ watch(language, whenLanguageChanged, { immediate: true })
         </div>
         <div class="flex justify-between items-center">
           <div class="font-semibold">
-            HTTP代理端口
+            {{ t('setting.httpPort') }}
           </div>
           <div class="font-medium w-20">
             <n-input-number

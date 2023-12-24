@@ -1,10 +1,22 @@
 {
+  "common": {
+    "global": "Global",
+    "rules": "Rules",
+    "direct": "Direct"
+  },
   "menubar": {
     "proxies": "Proxies",
     "settings": "Settings",
     "version": "version"
   },
   "setting": {
-    "language": "Language"
+    "language": "Language",
+    "autoStart": "Start at login",
+    "title": "Settings",
+    "systemProxy": "Set as system proxy",
+    "allowLan": "Allow connect from Lan",
+    "mode": "Mode",
+    "socks5Port": "Socks5 port",
+    "httpPort": "HTTP port"
   }
 }
