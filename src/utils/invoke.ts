@@ -24,7 +24,7 @@ export async function invoke<T>(cmd: string, args?: InvokeArgs, options?: Invoke
     return camelizeKeys(resp.json()) as unknown as KittyResponse<T>
   }
   catch (e) {
-    message.error(`subeeeee`, { duration: 3000 })
+    message.error(`${e}`, { duration: 3000 })
     console.error('kitty error', e)
 
     throw e
