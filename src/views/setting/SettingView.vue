@@ -67,13 +67,19 @@ watch(language, whenLanguageChanged, { immediate: true })
       settings
     </div>
     <div class="flex-1 flex flex-col space-y-6">
-      <div class="dark:bg-dark grid grid-cols-2 grid-rows-2 gap-x-16 gap-y-4 p-6 bg-[#f9f7f7] shadow-lg rounded-md text-[#5b7497] dark:text-slate-300">
+      <div
+        class="dark:bg-dark grid grid-cols-2 grid-rows-2 gap-x-16 gap-y-4 p-6 bg-[#f9f7f7] shadow-lg rounded-md text-[#5b7497] dark:text-slate-300"
+      >
         <div class="flex justify-between items-center">
           <div class="font-semibold">
             开机启动
           </div>
           <div class="font-medium">
-            <n-switch :value="false" :disabled="true" size="medium" />
+            <n-switch
+              :value="false"
+              :disabled="true"
+              size="medium"
+            />
           </div>
         </div>
         <div class="flex justify-between items-center">
@@ -81,11 +87,14 @@ watch(language, whenLanguageChanged, { immediate: true })
             {{ t('setting.language') }}
           </div>
           <div class="font-medium">
-            <n-radio-group v-model:value="language" name="langGroup">
-              <n-radio-button value="zh">
+            <n-radio-group
+              v-model:value="language"
+              name="langGroup"
+            >
+              <n-radio-button value="zh-CN">
                 文
               </n-radio-button>
-              <n-radio-button value="en">
+              <n-radio-button value="en-US">
                 En
               </n-radio-button>
             </n-radio-group>
@@ -97,7 +106,9 @@ watch(language, whenLanguageChanged, { immediate: true })
           </div>
           <div class="font-medium">
             <n-switch
-              v-model:value="proxyStatus" :loading="proxyLoading" size="medium"
+              v-model:value="proxyStatus"
+              :loading="proxyLoading"
+              size="medium"
               @update:value="handleSwitchProxy"
             />
           </div>
@@ -111,7 +122,9 @@ watch(language, whenLanguageChanged, { immediate: true })
           </div>
         </div>
       </div>
-      <div class="dark:bg-dark dark:text-slate-300 grid grid-cols-2 grid-rows-2 gap-x-16 gap-y-4 p-6 text-[#5b7497] bg-[#f9f7f7] shadow-lg rounded-md">
+      <div
+        class="dark:bg-dark dark:text-slate-300 grid grid-cols-2 grid-rows-2 gap-x-16 gap-y-4 p-6 text-[#5b7497] bg-[#f9f7f7] shadow-lg rounded-md"
+      >
         <div class="flex justify-between items-center">
           <div class="font-semibold">
             代理模式
@@ -126,7 +139,11 @@ watch(language, whenLanguageChanged, { immediate: true })
           </div>
           <div class="font-medium w-20">
             <n-input-number
-              v-model:value="baseConfig.socksPort" type="text" :show-button="false" :max="65535" :min="1"
+              v-model:value="baseConfig.socksPort"
+              type="text"
+              :show-button="false"
+              :max="65535"
+              :min="1"
               @blur="onBaseConfigUpdate"
             />
           </div>
@@ -137,7 +154,11 @@ watch(language, whenLanguageChanged, { immediate: true })
           </div>
           <div class="font-medium w-20">
             <n-input-number
-              v-model:value="baseConfig.httpPort" type="text" :show-button="false" :max="65535" :min="1"
+              v-model:value="baseConfig.httpPort"
+              type="text"
+              :show-button="false"
+              :max="65535"
+              :min="1"
               @blur="onBaseConfigUpdate"
             />
           </div>

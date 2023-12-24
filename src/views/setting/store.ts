@@ -1,7 +1,7 @@
 import { useLocalStorage } from '@vueuse/core'
 
 const settingStore = useLocalStorage('setting', {
-  language: 'zh',
+  language: 'zh-CN',
 })
 
 export { settingStore }

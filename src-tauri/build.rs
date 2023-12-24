@@ -34,6 +34,9 @@ fn download_file(url: &str, file_name: &str) -> PathBuf {
         reqwest::blocking::get(url).expect(format!("download {} failed!", file_name).as_str());
 
     let binaries_path = get_binary_file_path(file_name);
+    if !binaries_path.exists() {
+        fs::create_dir_all(&binaries_path).unwrap();
+    }
     let mut out = File::create(&binaries_path).expect("failed to create file");
     io::copy(&mut file, &mut out).expect("failed to copy content");
     binaries_path
