@@ -10,7 +10,7 @@ use crate::protocol::hysteria::HysteriaManager;
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use std::{collections::HashMap, env, fs, io::Write, path::PathBuf, process::exit};
+use std::{collections::HashMap, env, fs, io::Write, path::PathBuf};
 
 use crate::proxy::system_proxy::clear_system_proxy;
 use entity::{
@@ -18,6 +18,7 @@ use entity::{
     hysteria::HysteriaModelWithoutName,
     hysteria::{self},
 };
+use proxy::delay::{kitty_proxies_delay, ProxyDelay, ProxyInfo};
 use tauri::{
     menu::{MenuBuilder, MenuItemBuilder},
     tray::{ClickType, TrayIconBuilder},
@@ -42,6 +43,12 @@ async fn stop_hysteria<'a>(state: State<'a, ProcessManagerState>) -> CommandResu
     let _ = clear_system_proxy();
     println!("clear_system_proxy called!!!");
     Ok(())
+}
+
+#[tauri::command(rename_all = "snake_case")]
+async fn proxies_delay(proxies: Vec<ProxyInfo>) -> CommandResult<KittyResponse<Vec<ProxyDelay>>> {
+    let results = kitty_proxies_delay(proxies).await;
+    Ok(KittyResponse::<Vec<ProxyDelay>>::from_data(results))
 }
 
 #[tauri::command(rename_all = "snake_case")]
@@ -332,6 +339,7 @@ pub fn run() {
             incre_base_config,
             query_base_config,
             update_base_config,
+            proxies_delay,
             get_hysterie_status,
         ])
         .run(tauri::generate_context!())
