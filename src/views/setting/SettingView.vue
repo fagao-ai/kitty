@@ -15,7 +15,7 @@ async function handleSwitchProxy(value: boolean) {
   proxyLoading.value = true
   try {
     if (value) {
-      const res = await invoke<boolean>('get_hysterie_status')
+      const res = await invoke<boolean>('get_hysteria_status')
       if (res.data)
         return
 
@@ -40,7 +40,7 @@ async function getBaseConfig() {
 }
 
 async function getHysteriaStatus() {
-  const res = await invoke<boolean>('get_hysterie_status')
+  const res = await invoke<boolean>('get_hysteria_status')
   proxyStatus.value = res.data
 }
 

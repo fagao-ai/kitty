@@ -1,7 +1,8 @@
 // use crate::process_manager::ProcessManager;
 use crate::protocol::hysteria::HysteriaManager;
 use sea_orm::DatabaseConnection;
-use futures::lock::Mutex;
+use tokio::sync::Mutex;
+use kitty_proxy::{HttpProxy, SocksProxy};
 
 
 pub struct DatabaseState {
@@ -18,4 +19,9 @@ impl DatabaseState {
 
 pub struct ProcessManagerState {
     pub process_manager: Mutex<HysteriaManager>,
+}
+
+pub struct KittyProxyState {
+    pub http_proxy: Mutex<HttpProxy>,
+    pub socks_proxy: Mutex<SocksProxy>,
 }

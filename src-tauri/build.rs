@@ -1,4 +1,4 @@
-use anyhow::{anyhow, Context, Result};
+use anyhow::{anyhow, Result};
 use build_target::{Arch, Os, Target};
 use reqwest;
 use std::fs::{self, File};
@@ -8,7 +8,7 @@ use std::path::{Path, PathBuf};
 use std::{env, io};
 use zip::ZipArchive;
 
-fn set_execute_permession(binaries_path: &PathBuf) {
+fn set_execute_permission(binaries_path: &PathBuf) {
     #[cfg(target_family = "unix")]
     {
         use std::os::unix::fs::PermissionsExt;
@@ -174,7 +174,7 @@ fn download_hysteria() {
     };
     let target_name = format!("hysteria-{}{}", target.triple, suffix);
     let binaries_path = download_file(download_url.as_str(), target_name.as_str());
-    set_execute_permession(&binaries_path);
+    set_execute_permission(&binaries_path);
 }
 
 fn download_xray() -> Result<()> {
@@ -193,7 +193,7 @@ fn download_xray() -> Result<()> {
         extract_target_file,
     )?;
     eprintln!("Debug message: This is a debug print1.");
-    set_execute_permession(&binaries_path);
+    set_execute_permission(&binaries_path);
     Ok(())
 }
 

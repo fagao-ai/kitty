@@ -4,13 +4,16 @@ mod proxy;
 mod state;
 mod types;
 mod utils;
-use futures::lock::Mutex;
+
+use tokio::sync::Mutex;
 
 use crate::protocol::hysteria::HysteriaManager;
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::{collections::HashMap, env, fs, io::Write, path::PathBuf};
+use std::str::FromStr;
+use kitty_proxy::{HttpProxy, MatchProxy, SocksProxy};
 
 use crate::proxy::system_proxy::clear_system_proxy;
 use entity::{
@@ -33,6 +36,7 @@ use uuid::Uuid;
 use crate::protocol::traits::CommandManagerTrait;
 use tauri_plugin_autostart::MacosLauncher;
 use types::{CommandResult, KittyResponse};
+use crate::state::KittyProxyState;
 
 // Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
 #[tauri::command]
@@ -52,7 +56,7 @@ async fn proxies_delay(proxies: Vec<ProxyInfo>) -> CommandResult<KittyResponse<V
 }
 
 #[tauri::command(rename_all = "snake_case")]
-async fn get_hysterie_status<'a>(
+async fn get_hysteria_status<'a>(
     state: State<'a, ProcessManagerState>,
 ) -> CommandResult<KittyResponse<bool>> {
     let process_manager = state.process_manager.lock().await;
@@ -83,8 +87,8 @@ async fn get_all_proxies<'a>(
 }
 
 fn get_hashmap_from_struct<'a, T>(input_struct: &T) -> HashMap<String, Value>
-where
-    T: Deserialize<'a> + Serialize,
+    where
+        T: Deserialize<'a> + Serialize,
 {
     let main_config_json_string = serde_json::to_string(&input_struct).unwrap();
     let json_value: Value = serde_json::from_str(&main_config_json_string).unwrap();
@@ -129,7 +133,7 @@ fn merge_hysteria_config(
 
 fn get_hysteria_tmp_config_path(
     app_tmp_dir: &PathBuf,
-    hyteria_config: &hysteria::Model,
+    hysteria_config: &hysteria::Model,
     base_config: Option<&base_config::Model>,
 ) -> Result<String> {
     let uuid = Uuid::new_v4();
@@ -139,7 +143,7 @@ fn get_hysteria_tmp_config_path(
     fs::create_dir_all(temp_json_file.parent().unwrap())?;
     println!("temp_json_file {:?}", temp_json_file);
     let mut file = std::fs::File::create(&temp_json_file).expect("Failed to create temporary file");
-    let config_hashmap = merge_hysteria_config(hyteria_config, base_config);
+    let config_hashmap = merge_hysteria_config(hysteria_config, base_config);
     let config_str = serde_json::to_string(&config_hashmap)?;
     let config_bytes = config_str.as_bytes();
     file.write_all(config_bytes)?;
@@ -187,17 +191,6 @@ async fn start_hysteria<'a>(
         None => KittyResponse::from_msg(100, "hysteria config is empty, please ad"),
     };
 
-    Ok(response)
-}
-
-#[tauri::command]
-async fn incre_base_config<'a>(
-    state: State<'a, DatabaseState>,
-    record: base_config::Model,
-) -> CommandResult<KittyResponse<base_config::Model>> {
-    let db = state.get_db();
-    let added_record = record.insert_one(&db).await?;
-    let response = KittyResponse::from_data(added_record);
     Ok(response)
 }
 
@@ -267,7 +260,7 @@ fn set_system_tray<'a>(app: &'a mut tauri::App) -> Result<()> {
     Ok(())
 }
 
-fn setup<'a>(app: &'a mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
+fn setup_db<'a>(app: &'a mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
     let handle = app.handle();
 
     let app_dir = handle
@@ -290,6 +283,26 @@ fn setup<'a>(app: &'a mut tauri::App) -> Result<(), Box<dyn std::error::Error>> 
     });
     *app_state.db.lock().unwrap() = Some(db);
     let _ = set_system_tray(app);
+    Ok(())
+}
+
+fn setup_kitty_proxy<'a>(app: &'a mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
+    let handle = app.handle();
+    let resource_dir = handle.path().resource_dir()?;
+    let app_state: State<KittyProxyState> = handle.state();
+    tauri::async_runtime::block_on(async move {
+        let geoip_file = resource_dir.join("geoip.dat");
+        let geosite_file = resource_dir.join("geosite.dat");
+        let _match_proxy = MatchProxy::from_geo_dat(
+            Some(&geoip_file),
+            Some(&geosite_file),
+        ).unwrap();
+        let http_proxy = HttpProxy::new("127.0.0.1", 10088, None, "127.0.0.1", 10809).await.unwrap();
+        let socks_proxy = SocksProxy::new("127.0.0.1", 10089, None, "127.0.0.1", 10809).await.unwrap();
+        *app_state.socks_proxy.lock().await = socks_proxy;
+        *app_state.http_proxy.lock().await = http_proxy;
+    });
+
 
     Ok(())
 }
@@ -329,18 +342,18 @@ pub fn run() {
         ))
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_notification::init())
-        .setup(setup)
+        .setup(setup_db)
+        .setup(setup_kitty_proxy)
         .on_window_event(on_window_exit_func)
         .invoke_handler(tauri::generate_handler![
             stop_hysteria,
             start_hysteria,
             add_hy_item,
             get_all_proxies,
-            incre_base_config,
             query_base_config,
             update_base_config,
             proxies_delay,
-            get_hysterie_status,
+            get_hysteria_status,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -10,7 +10,6 @@
     "version": "0.0.0"
   },
   "tauri": {
-
     "bundle": {
       "active": true,
       "targets": "all",
@@ -24,9 +23,11 @@
       ],
       "externalBin": [
         "binaries/hysteria"
+      ],
+      "resources": [
+        "static/*"
       ]
     },
-    
     "security": {
       "csp": null
     },
@@ -46,7 +47,7 @@
       "scope": [
         {
           "name": "hysteria",
-          "cmd":  "binaries/hysteria"
+          "cmd": "binaries/hysteria"
         }
       ]
     },
