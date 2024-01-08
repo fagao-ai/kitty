@@ -9,10 +9,10 @@ use tokio::sync::Mutex;
 
 use crate::protocol::hysteria::HysteriaManager;
 use anyhow::Result;
+use kitty_proxy::{HttpProxy, MatchProxy, SocksProxy};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::{collections::HashMap, env, fs, io::Write, path::PathBuf};
-use kitty_proxy::{HttpProxy, MatchProxy, SocksProxy};
 
 use crate::proxy::system_proxy::clear_system_proxy;
 use entity::{
@@ -33,9 +33,9 @@ use tauri::{AppHandle, Manager, State};
 use uuid::Uuid;
 
 use crate::protocol::traits::CommandManagerTrait;
+use crate::state::KittyProxyState;
 use tauri_plugin_autostart::MacosLauncher;
 use types::{CommandResult, KittyResponse};
-use crate::state::KittyProxyState;
 
 // Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
 #[tauri::command]
@@ -86,8 +86,8 @@ async fn get_all_proxies<'a>(
 }
 
 fn get_hashmap_from_struct<'a, T>(input_struct: &T) -> HashMap<String, Value>
-    where
-        T: Deserialize<'a> + Serialize,
+where
+    T: Deserialize<'a> + Serialize,
 {
     let main_config_json_string = serde_json::to_string(&input_struct).unwrap();
     let json_value: Value = serde_json::from_str(&main_config_json_string).unwrap();
@@ -289,19 +289,25 @@ fn setup_kitty_proxy<'a>(app: &'a mut tauri::App) -> Result<(), Box<dyn std::err
     let handle = app.handle();
     let resource_dir = handle.path().resource_dir()?;
     let app_state: State<KittyProxyState> = handle.state();
+    let db_state: State<DatabaseState> = handle.state();
+    let db = db_state.get_db();
     tauri::async_runtime::block_on(async move {
+        let record = base_config::Model::first(&db).await.unwrap().unwrap();
+        let http_port = record.http_port;
+        let socks_port = record.socks_port;
         let geoip_file = resource_dir.join("geoip.dat");
         let geosite_file = resource_dir.join("geosite.dat");
-        let _match_proxy = MatchProxy::from_geo_dat(
-            Some(&geoip_file),
-            Some(&geosite_file),
-        ).unwrap();
-        let http_proxy = HttpProxy::new("127.0.0.1", 10088, None, "127.0.0.1", 10809).await.unwrap();
-        let socks_proxy = SocksProxy::new("127.0.0.1", 10089, None, "127.0.0.1", 10809).await.unwrap();
+        let _match_proxy =
+            MatchProxy::from_geo_dat(Some(&geoip_file), Some(&geosite_file)).unwrap();
+        let http_proxy = HttpProxy::new("127.0.0.1", 10088, None, "127.0.0.1", 10809)
+            .await
+            .unwrap();
+        let socks_proxy = SocksProxy::new("127.0.0.1", 10089, None, "127.0.0.1", 10809)
+            .await
+            .unwrap();
         *app_state.socks_proxy.lock().await = socks_proxy;
         *app_state.http_proxy.lock().await = http_proxy;
     });
-
 
     Ok(())
 }

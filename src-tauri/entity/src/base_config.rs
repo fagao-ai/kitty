@@ -9,8 +9,8 @@ pub struct Model {
     #[sea_orm(primary_key, auto_increment = true)]
     // #[serde(skip)]
     pub id: i32,
-    pub http_port: i16,
-    pub socks_port: i16,
+    pub http_port: u16,
+    pub socks_port: u16,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
