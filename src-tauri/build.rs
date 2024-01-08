@@ -182,7 +182,12 @@ fn download_xray() -> Result<()> {
     let source_name = get_xray_source_name(&target);
     let download_url =
         format!("https://github.com/XTLS/Xray-core/releases/download/v1.8.6/{source_name}");
-    let target_name = format!("xray-{}", target.triple);
+
+    let suffix = match target.os {
+        Os::Windows => ".exe",
+        _ => "",
+    };
+    let target_name = format!("xray-{}{}", target.triple, suffix);
     eprintln!("Debug message: This is a debug print.");
 
     let extract_target_file = "xray";
