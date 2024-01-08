@@ -22,10 +22,19 @@ fn set_execute_permission(binaries_path: &PathBuf) {
     {}
 }
 
-fn get_binary_file_path(file_name: &str) -> PathBuf {
+enum FileEnum {
+    Binary,
+    Static,
+}
+
+fn get_file_path(file_name: &str, file_enum: FileEnum) -> PathBuf {
     let project_dir = env::var("CARGO_MANIFEST_DIR").expect("Failed to get CARGO_MANIFEST_DIR");
     let project_dir = Path::new(&project_dir);
-    let binaries_path = project_dir.join("binaries").join(file_name);
+    let folder_name = match file_enum {
+        FileEnum::Binary => "binaries",
+        FileEnum::Static => "static",
+    };
+    let binaries_path = project_dir.join(folder_name).join(file_name);
     binaries_path
 }
 
@@ -33,7 +42,7 @@ fn download_file(url: &str, file_name: &str) -> PathBuf {
     let mut file =
         reqwest::blocking::get(url).expect(format!("download {} failed!", file_name).as_str());
 
-    let binaries_path = get_binary_file_path(file_name);
+    let binaries_path = get_file_path(file_name, FileEnum::Binary);
     if !binaries_path.exists() {
         fs::create_dir_all(&binaries_path).unwrap();
     }
@@ -71,7 +80,7 @@ fn download_file_from_zip(
             _ => extract_target_file.to_string(),
         };
         if target_zip_file_name == extract_target_file.as_str() {
-            let binaries_path = get_binary_file_path(save_file_name);
+            let binaries_path = get_file_path(save_file_name, FileEnum::Binary);
             let mut extracted_file = std::fs::File::create(&binaries_path).unwrap();
             std::io::copy(&mut file, &mut extracted_file).unwrap();
             eprintln!("download success: {:?}", binaries_path);
@@ -212,7 +221,21 @@ fn download_binaries() -> Result<()> {
     Ok(())
 }
 
+fn download_geo_file(file_name: &str) -> Result<()> {
+    let url = format!(
+        "https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/{file_name}"
+    );
+    let mut geo_file = reqwest::blocking::get(url).expect("download geoip.dat failed!");
+    let geo_file_path = get_file_path(file_name, FileEnum::Static);
+    println!("geo_file_path: {:?}", geo_file_path);
+    let mut out = File::create(&geo_file_path).expect("failed to create file");
+    io::copy(&mut geo_file, &mut out).expect("failed to copy content");
+    Ok(())
+}
+
 fn main() {
     let _ = download_binaries();
+    let _ = download_geo_file("geoip.dat");
+    let _ = download_geo_file("geosite.dat");
     tauri_build::build()
 }

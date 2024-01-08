@@ -12,7 +12,6 @@ use anyhow::Result;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::{collections::HashMap, env, fs, io::Write, path::PathBuf};
-use std::str::FromStr;
 use kitty_proxy::{HttpProxy, MatchProxy, SocksProxy};
 
 use crate::proxy::system_proxy::clear_system_proxy;
