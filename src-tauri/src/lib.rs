@@ -181,8 +181,7 @@ async fn start_hysteria<'a>(
     let mut process_manager = state.process_manager.lock().await;
     let response = match config_path {
         Some(file) => {
-            let args = vec!["client", "--config", file.as_str()];
-            let _ = process_manager.start_backend(app_handle, args)?;
+            let _ = process_manager.start_backend(app_handle, "")?;
             let _ = process_manager.check_status().await?;
             let _ = fs::remove_file(file)?;
             KittyResponse::from_data(None)
@@ -307,6 +306,7 @@ fn setup_kitty_proxy<'a>(app: &'a mut tauri::App) -> Result<(), Box<dyn std::err
             .unwrap();
         *app_state.socks_proxy.lock().await = socks_proxy;
         *app_state.http_proxy.lock().await = http_proxy;
+        // (http_proxy, socks_proxy)
     });
 
     Ok(())

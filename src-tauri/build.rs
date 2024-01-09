@@ -2,7 +2,7 @@ use anyhow::{anyhow, Result};
 use build_target::{Arch, Os, Target};
 use reqwest;
 use std::fs::{self, File};
-use std::io::Read;
+use std::io::{Read, Write};
 
 use std::path::{Path, PathBuf};
 use std::{env, io};
@@ -39,15 +39,13 @@ fn get_file_path(file_name: &str, file_enum: FileEnum) -> PathBuf {
 }
 
 fn download_file(url: &str, file_name: &str) -> PathBuf {
-    let mut file =
+    let response =
         reqwest::blocking::get(url).expect(format!("download {} failed!", file_name).as_str());
 
     let binaries_path = get_file_path(file_name, FileEnum::Binary);
-    if !binaries_path.exists() {
-        fs::create_dir_all(&binaries_path).unwrap();
-    }
     let mut out = File::create(&binaries_path).expect("failed to create file");
-    io::copy(&mut file, &mut out).expect("failed to copy content");
+    let content = response.bytes().expect("read response failed.");
+    out.write_all(&content).expect("write binary file failed.");
     binaries_path
 }
 
@@ -118,7 +116,7 @@ fn get_hysteria_source_name(target: &Target) -> String {
             format!("hysteria-{}-{}", os_name, arch)
         }
         Os::MacOs => {
-            let os_name = "linux";
+            let os_name = "darwin";
             let arch = match target.arch {
                 Arch::X86_64 => "amd64",
                 Arch::AARCH64 => "arm64",
@@ -159,7 +157,7 @@ fn get_xray_source_name(target: &Target) -> String {
             format!("Xray-{}-{}.zip", os_name, arch)
         }
         Os::MacOs => {
-            let os_name = "linux";
+            let os_name = "macos";
             let arch = match target.arch {
                 Arch::X86_64 => "64",
                 Arch::AARCH64 => "arm64-v8a",
@@ -176,7 +174,7 @@ fn download_hysteria() {
     let target = build_target::target().unwrap();
     let source_name = get_hysteria_source_name(&target);
     let download_url = format!("https://download.hysteria.network/app/latest/{source_name}");
-
+    println!("download url: {}", download_url);
     let suffix = match target.os {
         Os::Windows => ".exe",
         _ => "",
@@ -191,7 +189,7 @@ fn download_xray() -> Result<()> {
     let source_name = get_xray_source_name(&target);
     let download_url =
         format!("https://github.com/XTLS/Xray-core/releases/download/v1.8.6/{source_name}");
-
+    println!("download url: {}", download_url);
     let suffix = match target.os {
         Os::Windows => ".exe",
         _ => "",

@@ -47,10 +47,7 @@ tauri-plugin-process = "2.0.0-alpha"
 thiserror = "1.0.50"
 anyhow = "1"
 uuid = { version = "1.6.1", features = [ "v4" ] }
-libc = "0.2.151"
 sysproxy = "0.3.0"
-winapi = { version = "0.3", features = [ "winuser" ] }
-futures = "0.3.29"
 async-trait = "0.1.74"
 tauri-plugin-autostart = "2.0.0-alpha"
 tauri-plugin-notification = "2.0.0-alpha.7"
