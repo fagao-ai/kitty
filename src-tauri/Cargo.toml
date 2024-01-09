@@ -58,7 +58,8 @@ kitty_proxy = { git = "https://github.com/hezhaozhao-git/kitty_proxy.git", versi
 members = [
   ".",
   "migration",
-  "entity"
+  "entity",
+  "protocols"
 ]
 
 [features]
