@@ -1,18 +1,22 @@
-use crate::proxy::system_proxy::set_system_proxy;
+use std::borrow::Borrow;
+use std::cell::RefCell;
+// use crate::proxy::system_proxy::set_system_proxy;
 use std::fs::File;
-use std::fs;
 use std::io::Write;
+use std::io::{self, BufRead};
+use std::path::PathBuf;
+use std::rc::Rc;
 
-use anyhow::{anyhow, Ok, Result};
-use async_trait::async_trait;
-use std::borrow::BorrowMut;
-use std::process::Command;
 use crate::traits::CommandManagerTrait;
+use anyhow::{anyhow, Result};
+use serde::{Deserialize, Serialize};
+use std::process::{Child, Command, Stdio};
+use uuid::Uuid;
 
 pub struct HysteriaManager {
     name: String,
-    child: Option<Command>,
-    child_receiver: Option<Receiver<CommandEvent>>,
+    child: Option<Rc<RefCell<Child>>>,
+    config_path: Option<PathBuf>,
 }
 
 impl HysteriaManager {
@@ -20,96 +24,115 @@ impl HysteriaManager {
         Self {
             name: "hysteria".into(),
             child: None,
-            child_receiver: None,
+            config_path: None,
         }
     }
 }
 
-#[async_trait]
+// #[async_trait]
 impl CommandManagerTrait for HysteriaManager {
-    fn start_backend(&mut self, command: &Command, config_content: &str) -> Result<()>
+    fn start_backend<T>(
+        &mut self,
+        init_command: &mut Command,
+        config: T,
+        config_dir: &PathBuf,
+    ) -> Result<()>
+    where
+        T: Serialize,
     {
-        let res = match self.child.borrow_mut() {
-            Some(_) => Err(anyhow!(format!("{} already started.", self.name))),
-            None => {
-                let app_cache_dir = app_handle.path().app_cache_dir()?;
-                if !app_cache_dir.exists() {
-                    fs::create_dir_all(&app_cache_dir).unwrap();
+        let command = init_command.args(["client", "--config"]);
+        let config_content = serde_json::to_string(&config)?;
+        let config_file_path = config_dir.join(format!("{}_{}.json", self.name, Uuid::new_v4()));
+        let mut file = File::create(&config_file_path)?;
+        file.write_all(config_content.as_bytes())?;
+        let child = command
+            .arg(&config_file_path)
+            .stdout(Stdio::piped())
+            .stderr(Stdio::piped())
+            .spawn()?;
+        self.child = Some(Rc::new(RefCell::new(child)));
+        self.config_path = Some(config_file_path);
+        Ok(())
+    }
+
+    fn check_status(&mut self) -> Result<()> {
+        match self.child.as_mut() {
+            Some(child) => match child.borrow_mut().try_wait() {
+                Ok(None) => {
+                    let std_err = &mut child.borrow_mut().stderr;
+                    if let Some(stderr) = std_err.take() {
+                        let reader = io::BufReader::new(stderr);
+                        for line in reader.lines() {
+                            if let Ok(line) = line {
+                                println!("{line}");
+                                if line.contains("server listening") {
+                                    return Ok(());
+                                }
+                            }
+                        }
+                    }
                 }
-                println!("app_tmp_dir: {:?}", app_cache_dir);
-                let config_path = app_cache_dir.join("hysteria_config.json");
-                let mut file = File::create(&config_path).expect("failed to create file");
-                file.write_all(config_content.as_bytes());
-                let err_msg = format!("failed to create `{}` binary command ", self.name);
-                let t_command = app_handle
-                    .shell()
-                    .sidecar(self.name.as_str())
-                    .expect(err_msg.as_str());
-                let (child_receiver, child) = t_command.args(["client", "--config"]).arg(config_path.as_os_str()).spawn()?;
-                self.child = Some(child);
-                self.child_receiver = Some(child_receiver);
-                Ok(())
-            }
-        };
-        res
+                _ => {}
+            },
+
+            None => {}
+        }
+
+        Err(anyhow!("{} start failed!", self.name))
     }
 
     fn terminate_backend(&mut self) -> Result<()> {
-        if let Some(child) = self.child.take() {
-            child.kill()?;
+        if let Some(child) = self.child.borrow() {
+            child.borrow_mut().kill()?;
             self.child = None;
         }
         Ok(())
     }
 
-    fn restart_backend(&mut self, app_handle: AppHandle, config_content: &str) -> Result<()>
-    {
-        let _terminate_result = self.terminate_backend()?;
-        self.start_backend(app_handle, config_content)?;
+    // fn restart_backend(&mut self) -> Result<()> {
+    //     if self.is_runing() {
+    //         let _terminate_result = self.terminate_backend()?;
+    //         let command = Command::new()
+    //             .args(["client", "--config"])
+    //             .arg(self.config_path.unwrap());
+
+    //         Ok(())
+    //     } else {
+    //         return Err(anyhow!("{} not be runing!", self.name));
+    //     }
+    // }
+
+    fn restart_backend(&self) -> Result<()> {
         Ok(())
     }
 
-    async fn check_status(&mut self) -> Result<()> {
-        let receive_unwrap = std::mem::replace(&mut self.child_receiver, None);
-        let mut receiver = receive_unwrap.unwrap();
-        while let Some(event) = receiver.recv().await {
-            match event {
-                CommandEvent::Terminated(_payload) => {}
-                CommandEvent::Stderr(line) => {
-                    let line = String::from_utf8(line).unwrap();
-                    if line.contains("server listening") {
-                        let _ = set_system_proxy("127.0.0.1", 10086, Some(10087))?;
-                        print!("stderr: {}", line);
-                        break;
-                    }
-                    print!("stderr: {}", line);
-                }
-                CommandEvent::Stdout(line) => {
-                    print!("stdout: {}", String::from_utf8(line).unwrap());
-                }
-                _ => {}
+    fn is_runing(&self) -> bool {
+        if let Some(child) = self.child.borrow() {
+            match child.borrow_mut().try_wait() {
+                Ok(None) => true,
+                _ => false,
             }
+        } else {
+            false
         }
-        println!("started hysteria!!!");
-        tauri::async_runtime::spawn(async move {
-            while let Some(event) = receiver.recv().await {
-                match event {
-                    CommandEvent::Terminated(payload) => {
-                        println!("stop hysteria!!");
-                        println!("{:?}", payload);
-                    }
-                    _ => {}
-                }
-            }
-        });
-        Ok(())
     }
+}
 
-    fn is_open(&self) -> bool {
-        let res = match self.child {
-            Some(_) => true,
-            None => false,
-        };
-        res
+#[cfg(test)]
+mod tests {
+    use std::str::FromStr;
+
+    use serde_json::Value;
+
+    use super::*;
+    #[test]
+    fn test_it_work() {
+        let mut hy = HysteriaManager::new();
+        let mut command = Command::new("E:\\opdensource\\kitty\\src-tauri\\binaries\\hysteria-x86_64-pc-windows-msvc.exe");
+        let config = "";
+        let config: Value = serde_json::from_str(config).unwrap();
+        let config_dir = PathBuf::from_str("E:\\opdensource\\kitty\\src-tauri\\binaries").unwrap();
+        hy.start_backend(&mut command, config, &config_dir).unwrap();
+        hy.check_status().unwrap();
     }
 }

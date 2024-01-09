@@ -1,14 +1,14 @@
 use crate::proxy::system_proxy::set_system_proxy;
-use std::fs::File;
 use std::fs;
+use std::fs::File;
 use std::io::Write;
 
 use crate::protocol::traits::CommandManagerTrait;
 use anyhow::{anyhow, Ok, Result};
 use async_trait::async_trait;
 use std::borrow::BorrowMut;
-use tauri::{async_runtime::Receiver, Manager};
 use tauri::AppHandle;
+use tauri::{async_runtime::Receiver, Manager};
 use tauri_plugin_shell::{process::CommandChild, process::CommandEvent, ShellExt};
 
 pub struct HysteriaManager {
@@ -29,8 +29,7 @@ impl HysteriaManager {
 
 #[async_trait]
 impl CommandManagerTrait for HysteriaManager {
-    fn start_backend(&mut self, app_handle: AppHandle, config_content: &str) -> Result<()>
-    {
+    fn start_backend(&mut self, app_handle: AppHandle, config_content: &str) -> Result<()> {
         let res = match self.child.borrow_mut() {
             Some(_) => Err(anyhow!(format!("{} already started.", self.name))),
             None => {
@@ -39,7 +38,7 @@ impl CommandManagerTrait for HysteriaManager {
                     fs::create_dir_all(&app_cache_dir).unwrap();
                 }
                 println!("app_tmp_dir: {:?}", app_cache_dir);
-                let config_path =app_cache_dir.join("hysteria_config.json");
+                let config_path = app_cache_dir.join("hysteria_config.json");
                 let mut file = File::create(&config_path).expect("failed to create file");
                 file.write_all(config_content.as_bytes());
                 let err_msg = format!("failed to create `{}` binary command ", self.name);
@@ -47,7 +46,10 @@ impl CommandManagerTrait for HysteriaManager {
                     .shell()
                     .sidecar(self.name.as_str())
                     .expect(err_msg.as_str());
-                let (child_receiver, child) = t_command.args(["client", "--config"]).arg(config_path.as_os_str()).spawn()?;
+                let (child_receiver, child) = t_command
+                    .args(["client", "--config"])
+                    .arg(config_path.as_os_str())
+                    .spawn()?;
                 self.child = Some(child);
                 self.child_receiver = Some(child_receiver);
                 Ok(())
@@ -64,8 +66,7 @@ impl CommandManagerTrait for HysteriaManager {
         Ok(())
     }
 
-    fn restart_backend(&mut self, app_handle: AppHandle, config_content: &str) -> Result<()>
-    {
+    fn restart_backend(&mut self, app_handle: AppHandle, config_content: &str) -> Result<()> {
         let _terminate_result = self.terminate_backend()?;
         self.start_backend(app_handle, config_content)?;
         Ok(())
