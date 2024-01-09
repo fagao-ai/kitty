@@ -28,3 +28,4 @@ pnpm-lock.yaml
 package-lock.json
 .idea
 src-tauri/binaries/
+src-tauri/static/*.dat
