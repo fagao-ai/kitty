@@ -3784,6 +3784,7 @@ dependencies = [
  "async-trait",
  "serde",
  "serde_json",
+ "shared_child",
  "uuid",
 ]
 
