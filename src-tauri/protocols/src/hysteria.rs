@@ -1,11 +1,13 @@
-use std::fs::File;
+use std::collections::HashMap;
+use std::fs::{self, File};
 use std::io::Write;
 use std::io::{self, BufRead};
 use std::path::PathBuf;
 
 use crate::traits::CommandManagerTrait;
 use anyhow::{anyhow, Result};
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
+use serde_json::Value;
 use shared_child::SharedChild;
 use std::process::{Command, Stdio};
 use std::sync::Arc;
@@ -13,43 +15,60 @@ use uuid::Uuid;
 
 pub struct HysteriaManager {
     name: String,
+    bin_path: PathBuf,
     child: Option<Arc<SharedChild>>,
     config_path: Option<PathBuf>,
 }
 
 impl HysteriaManager {
-    pub fn new() -> Self {
+    pub fn new(bin_path: PathBuf) -> Self {
         Self {
             name: "hysteria".into(),
             child: None,
+            bin_path,
             config_path: None,
         }
     }
 }
 
-impl HysteriaManager {
-    fn start_backend<T>(
-        &mut self,
-        init_command: &mut Command,
-        config: T,
-        config_dir: &PathBuf,
-    ) -> Result<()>
-        where
-            T: Serialize,
+impl Drop for HysteriaManager {
+    fn drop(&mut self) {
+        println!("Executing extra code before dropping HysteriaManager");
+        let config_path_clone = self.config_path.clone();
+        if let Some(config_path) = config_path_clone {
+            if config_path.exists() {
+                fs::remove_file(config_path).expect("config_path remove failed.");
+            }
+        }
+    }
+}
+
+impl CommandManagerTrait for HysteriaManager {
+    fn start_backend<T>(&mut self, config: T, config_dir: PathBuf) -> Result<()>
+    where
+        T: Serialize,
     {
-        let command = init_command.args(["client", "--config"]);
         let config_content = serde_json::to_string(&config)?;
         let config_file_path = config_dir.join(format!("{}_{}.json", self.name, Uuid::new_v4()));
         let mut file = File::create(&config_file_path)?;
         file.write_all(config_content.as_bytes())?;
+        self.start_backend_from_path(config_file_path)?;
+        Ok(())
+    }
+
+    fn start_backend_from_path(&mut self, config_path: PathBuf) -> Result<()> {
+        let command_str = self.bin_path.as_os_str();
+        let mut command = Command::new(command_str);
+        let command = command.args(["client", "--config"]);
         let command = command
-            .arg(&config_file_path)
+            .arg(config_path.as_os_str())
             .stdout(Stdio::piped())
             .stderr(Stdio::piped());
         let share_child = SharedChild::spawn(command)?;
         let child_arc = Arc::new(share_child);
         self.child = Some(child_arc);
-        self.config_path = Some(config_file_path);
+        println!("config_file_path: {:?}", config_path);
+        self.config_path = Some(config_path);
         Ok(())
     }
 
@@ -83,21 +102,21 @@ impl HysteriaManager {
         Ok(())
     }
 
-    // fn restart_backend(&mut self) -> Result<()> {
-    //     if self.is_runing() {
-    //         let _terminate_result = self.terminate_backend()?;
-    //         let command = Command::new()
-    //             .args(["client", "--config"])
-    //             .arg(self.config_path.unwrap());
-
-    //         Ok(())
-    //     } else {
-    //         return Err(anyhow!("{} not be runing!", self.name));
-    //     }
-    // }
-
-    fn restart_backend(&self) -> Result<()> {
-        Ok(())
+    fn restart_backend(&mut self) -> Result<()> {
+        if self.is_running() {
+            let _terminate_result = self.terminate_backend()?;
+            let config_path_clone = self.config_path.clone();
+            if let Some(config_path) = config_path_clone {
+                let file = File::open(&config_path)?;
+                let reader: io::BufReader<File> = io::BufReader::new(file);
+                let config: Value = serde_json::from_reader(reader)?;
+                println!("config: {:?}", config);
+                let _ = self.start_backend_from_path(config_path)?;
+            }
+            Ok(())
+        } else {
+            return Err(anyhow!("{} not be runing!", self.name));
+        }
     }
 
     fn is_running(&self) -> bool {
@@ -123,35 +142,21 @@ mod tests {
 
     #[test]
     fn test_it_work() {
-        let mut hy = HysteriaManager::new();
-        let mut command = Command::new(
-            "/Users/hezhaozhao/myself/kitty/src-tauri/binaries/hysteria-aarch64-apple-darwin",
+        let mut hy = HysteriaManager::new(
+            PathBuf::from_str(
+                "E:\\opdensource\\kitty\\src-tauri\\binaries\\hysteria-x86_64-pc-windows-msvc.exe",
+            )
+            .unwrap(),
         );
-        let config = r#"{
-  "server": "155.248.218.187:10086",
-  "auth": "Hzz19951218?",
-  "bandwidth": {
-    "up": "10 mbps",
-    "down": "100 mbps"
-  },
-  "tls": {
-    "sni": "bing.com",
-    "insecure": true
-  },
-  "socks5": {
-    "listen": "127.0.0.1:1080"
-  },
-  "http": {
-    "listen": "127.0.0.1:8080"
-  }
-}
-"#;
+        let config = r#""#;
         let config: Value = serde_json::from_str(config).unwrap();
-        let config_dir =
-            PathBuf::from_str("/Users/hezhaozhao/myself/kitty/src-tauri/binaries").unwrap();
-        hy.start_backend(&mut command, config, &config_dir).unwrap();
+        let config_dir = PathBuf::from_str("E:\\opdensource\\kitty\\src-tauri\\binaries").unwrap();
+        hy.start_backend(config, config_dir).unwrap();
         assert_eq!(hy.check_status().unwrap(), ());
         thread::sleep(Duration::from_secs(10));
+        assert_eq!(hy.is_running(), true);
+        hy.restart_backend().unwrap();
+        assert_eq!(hy.is_running(), true);
         hy.terminate_backend().unwrap();
     }
 }
