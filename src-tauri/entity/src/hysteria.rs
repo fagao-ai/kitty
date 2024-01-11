@@ -1,6 +1,9 @@
 use sea_orm::{entity::prelude::*, FromJsonQueryResult};
 
+use anyhow::Result;
+use port_scanner::local_port_available;
 use serde::{Deserialize, Serialize};
+use std::convert::TryFrom;
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, DeriveEntityModel)]
 #[sea_orm(table_name = "hysteria")]
@@ -79,6 +82,14 @@ struct ListenAddr {
     pub listen: String,
 }
 
+impl ListenAddr {
+    fn new(port: u16) -> Self {
+        Self {
+            listen: format!("127.0.0.1:{port}"),
+        }
+    }
+}
+
 #[derive(Serialize, Deserialize)]
 struct CommandHysteria {
     pub server: String,
@@ -87,4 +98,38 @@ struct CommandHysteria {
     pub tls: Tls,
     pub socks5: ListenAddr,
     pub http: ListenAddr,
+}
+
+impl CommandHysteria {
+    fn get_http_port(&self) -> u16 {
+        let http_addr = &self.http.listen;
+        http_addr.split(":").nth(1).unwrap().parse::<u16>().unwrap()
+    }
+
+    fn get_socks_port(&self) -> u16 {
+        let http_addr = &self.socks5.listen;
+        http_addr.split(":").nth(1).unwrap().parse::<u16>().unwrap()
+    }
+}
+
+impl TryFrom<&Model> for CommandHysteria {
+    type Error = String;
+
+    fn try_from(record: &Model) -> Result<Self, Self::Error> {
+        let http_port = 11186;
+        let socks_port = 11186;
+        for port in [http_port, socks_port] {
+            if !local_port_available(port) {
+                return Err(format!("port {port} already used."));
+            }
+        }
+        Ok(Self {
+            server: record.server.clone(),
+            auth: record.auth.clone(),
+            bandwidth: record.bandwidth.clone(),
+            tls: record.tls.clone(),
+            socks5: ListenAddr::new(socks_port),
+            http: ListenAddr::new(http_port),
+        })
+    }
 }

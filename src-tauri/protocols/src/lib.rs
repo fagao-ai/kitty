@@ -1,8 +1,13 @@
+#[cfg(feature = "hysteria")]
 pub mod hysteria;
-pub mod traits;
+#[cfg(feature = "xray")]
 pub mod xray;
 
-
+#[cfg(feature = "hysteria")]
 pub use hysteria::HysteriaManager;
-pub use traits::CommandManagerTrait;
+
+#[cfg(feature = "xray")]
 pub use xray::XrayManager;
+
+pub mod traits;
+pub use traits::CommandManagerTrait;
