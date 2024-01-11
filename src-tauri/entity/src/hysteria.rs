@@ -18,7 +18,6 @@ pub struct Model {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, FromJsonQueryResult)]
-
 pub struct Tls {
     sni: String,
     insecure: bool,
@@ -69,8 +68,23 @@ impl Model {
         hysteria_res
     }
 
-    pub async fn fectch_all(db: &DatabaseConnection) -> Result<Vec<Self>, DbErr> {
+    pub async fn fetch_all(db: &DatabaseConnection) -> Result<Vec<Self>, DbErr> {
         let hysterias = self::Entity::find().all(db).await?;
         Ok(hysterias)
     }
+}
+
+#[derive(Serialize, Deserialize)]
+struct ListenAddr {
+    pub listen: String,
+}
+
+#[derive(Serialize, Deserialize)]
+struct CommandHysteria {
+    pub server: String,
+    pub auth: String,
+    pub bandwidth: Bandwidth,
+    pub tls: Tls,
+    pub socks5: ListenAddr,
+    pub http: ListenAddr,
 }

@@ -1,46 +1,43 @@
 mod database;
-mod protocol;
 mod proxy;
 mod state;
 mod types;
 mod utils;
 
-use tokio::sync::Mutex;
-
-use crate::protocol::hysteria::HysteriaManager;
-use anyhow::Result;
-use kitty_proxy::{HttpProxy, MatchProxy, SocksProxy};
-use serde::{Deserialize, Serialize};
-use serde_json::Value;
-use std::{collections::HashMap, env, fs, io::Write, path::PathBuf};
-
 use crate::proxy::system_proxy::clear_system_proxy;
+use anyhow::Result;
 use entity::{
     base_config,
     hysteria::HysteriaModelWithoutName,
     hysteria::{self},
 };
+use kitty_proxy::{HttpProxy, MatchProxy, SocksProxy};
 use proxy::delay::{kitty_proxies_delay, ProxyDelay, ProxyInfo};
+use serde::{Deserialize, Serialize};
+use serde_json::Value;
+use std::{collections::HashMap, env, fs, io::Write, path::PathBuf, borrow::BorrowMut};
 use tauri::{
     menu::{MenuBuilder, MenuItemBuilder},
     tray::{ClickType, TrayIconBuilder},
     Icon, WindowEvent,
 };
+use tokio::sync::Mutex;
 
 use state::{DatabaseState, ProcessManagerState};
 use tauri::{AppHandle, Manager, State};
 
 use uuid::Uuid;
 
-use crate::protocol::traits::CommandManagerTrait;
 use crate::state::KittyProxyState;
 use tauri_plugin_autostart::MacosLauncher;
 use types::{CommandResult, KittyResponse};
 
+use protocols::{HysteriaManager, XrayManager, CommandManagerTrait};
+
 // Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
 #[tauri::command]
 async fn stop_hysteria<'a>(state: State<'a, ProcessManagerState>) -> CommandResult<()> {
-    let mut process_manager = state.process_manager.lock().await;
+    let mut process_manager = state.hy_process_manager.lock().await;
     let _kill_result = process_manager.terminate_backend()?;
     println!("stop_hy called!!!");
     let _ = clear_system_proxy();
@@ -58,8 +55,8 @@ async fn proxies_delay(proxies: Vec<ProxyInfo>) -> CommandResult<KittyResponse<V
 async fn get_hysteria_status<'a>(
     state: State<'a, ProcessManagerState>,
 ) -> CommandResult<KittyResponse<bool>> {
-    let process_manager = state.process_manager.lock().await;
-    let res = process_manager.is_open();
+    let mut process_manager = state.hy_process_manager.lock().await;
+    let res = process_manager.borrow_mut().is_open();
     Ok(KittyResponse::from_data(res))
 }
 
@@ -80,14 +77,14 @@ async fn get_all_proxies<'a>(
 ) -> CommandResult<KittyResponse<Vec<hysteria::Model>>> {
     println!("called get_all_proxies");
     let db = state.get_db();
-    let hy_proxies = hysteria::Model::fectch_all(&db).await?;
+    let hy_proxies = hysteria::Model::fetch_all(&db).await?;
     println!("hy_proxies: {:?}", hy_proxies);
     Ok(KittyResponse::from_data(hy_proxies))
 }
 
 fn get_hashmap_from_struct<'a, T>(input_struct: &T) -> HashMap<String, Value>
-where
-    T: Deserialize<'a> + Serialize,
+    where
+        T: Deserialize<'a> + Serialize,
 {
     let main_config_json_string = serde_json::to_string(&input_struct).unwrap();
     let json_value: Value = serde_json::from_str(&main_config_json_string).unwrap();
@@ -162,7 +159,7 @@ async fn start_hysteria<'a>(
 ) -> CommandResult<KittyResponse<Option<hysteria::Model>>> {
     println!("start_hysteria!!!");
     let db = db_state.get_db();
-    let items = hysteria::Model::fectch_all(&db).await?;
+    let items = hysteria::Model::fetch_all(&db).await?;
     let base_config = base_config::Model::first(&db).await?;
     let base_config = base_config.unwrap();
     let config_path = if items.len() > 0 {
@@ -178,11 +175,11 @@ async fn start_hysteria<'a>(
         None
     };
     println!("config_path: {:?}", &config_path);
-    let mut process_manager = state.process_manager.lock().await;
+    let mut process_manager = state.hy_process_manager.lock().await;
     let response = match config_path {
         Some(file) => {
             let _ = process_manager.start_backend(app_handle, "")?;
-            let _ = process_manager.check_status().await?;
+            let _ = process_manager.check_status()?;
             let _ = fs::remove_file(file)?;
             KittyResponse::from_data(None)
         }
@@ -317,7 +314,7 @@ async fn on_window_exit(event: tauri::GlobalWindowEvent) {
         WindowEvent::Destroyed => {
             println!("exit!!!");
             let am: State<ProcessManagerState> = event.window().state();
-            am.process_manager
+            am.hy_process_manager
                 .lock()
                 .await
                 .terminate_backend()
@@ -338,7 +335,8 @@ pub fn run() {
             db: Default::default(),
         })
         .manage(ProcessManagerState {
-            process_manager: Mutex::new(HysteriaManager::new()),
+            hy_process_manager: Mutex::new(HysteriaManager::new("".into())),
+            xray_process_manager: Mutex::new(XrayManager::new("".into(), HashMap::new())),
         })
         .plugin(tauri_plugin_window::init())
         .plugin(tauri_plugin_autostart::init(

@@ -2528,6 +2528,7 @@ dependencies = [
  "kernel32-sys",
  "kitty_proxy",
  "migration",
+ "protocols",
  "reqwest",
  "rusqlite",
  "sea-orm",
@@ -3781,7 +3782,6 @@ name = "protocols"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "async-trait",
  "serde",
  "serde_json",
  "shared_child",

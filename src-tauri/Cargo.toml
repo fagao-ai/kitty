@@ -41,6 +41,7 @@ sea-orm = { version = "0.12", features = [
   "macros",
 ] }
 entity = { path = "./entity" }
+protocols = { path = "./protocols" }
 migration = { path = "./migration" }
 tokio = { version = "1.34.0", features = [ "macros" ] }
 tauri-plugin-process = "2.0.0-alpha"
