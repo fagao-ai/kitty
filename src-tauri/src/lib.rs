@@ -154,7 +154,7 @@ fn on_window_exit_func(event: tauri::GlobalWindowEvent) {
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    tauri::Builder::default()
+    let builder = tauri::Builder::default()
         .manage(DatabaseState {
             db: Default::default(),
         })
@@ -171,17 +171,19 @@ pub fn run() {
         .plugin(tauri_plugin_notification::init())
         .setup(setup_db)
         .setup(setup_kitty_proxy)
-        .on_window_event(on_window_exit_func)
-        .invoke_handler(
-            #[cfg(feature = "hysteria")]
-            tauri::generate_handler![
+        .on_window_event(on_window_exit_func);
+    let builder = builder.invoke_handler(
+        #[cfg(feature = "hysteria")]
+        tauri::generate_handler![
             hysteria_api::get_hysteria_status,
             hysteria_api::add_hy_item,
             hysteria_api::get_all_hysterias,
             hysteria_api::query_base_config,
             hysteria_api::update_base_config,
+        ],
+    );
 
-        ])
+    builder
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
