@@ -16,8 +16,8 @@ impl DatabaseState {
 }
 
 pub struct ProcessManagerState {
-    pub hy_process_manager: Mutex<HysteriaManager>,
-    pub xray_process_manager: Mutex<XrayManager>,
+    pub hy_process_manager: Mutex<Option<HysteriaManager>>,
+    pub xray_process_manager: Mutex<Option<XrayManager>>,
 }
 
 pub struct KittyProxyState {

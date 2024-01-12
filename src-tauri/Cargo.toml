@@ -47,14 +47,11 @@ tokio = { version = "1.34.0", features = [ "macros" ] }
 tauri-plugin-process = "2.0.0-alpha"
 thiserror = "1.0.50"
 anyhow = "1"
-uuid = { version = "1.6.1", features = [ "v4" ] }
 sysproxy = "0.3.0"
-async-trait = "0.1.74"
 tauri-plugin-autostart = "2.0.0-alpha"
 tauri-plugin-notification = "2.0.0-alpha.7"
 reqwest = { version = "0.11.22", features = [ "json" ] }
 kitty_proxy = { git = "https://github.com/hezhaozhao-git/kitty_proxy.git", version = "0.1.0" }
-port_scanner = "0.1.5"
 
 [workspace]
 members = [

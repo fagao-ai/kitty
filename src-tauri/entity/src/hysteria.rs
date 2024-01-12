@@ -20,7 +20,6 @@ pub struct Model {
     bandwidth: Bandwidth,
 }
 
-
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, FromJsonQueryResult)]
 pub struct Tls {
     sni: String,
@@ -66,13 +65,12 @@ impl<'a> From<&'a Model> for HysteriaModelWithoutName {
 impl Model {
     pub async fn insert_one(&self, db: &DatabaseConnection) -> Result<Model, DbErr> {
         let json_value = serde_json::to_value(self).unwrap();
-
         let hysteria_record = self::ActiveModel::from_json(json_value)?;
         let hysteria_res = hysteria_record.insert(db).await;
         hysteria_res
     }
 
-    pub async fn fetch_all(db: &DatabaseConnection) -> Result<Vec<Self>, DbErr> {
+    pub async fn fetch_all(db: &DatabaseConnection) -> Result<Vec<Model>, DbErr> {
         let hysterias = self::Entity::find().all(db).await?;
         Ok(hysterias)
     }

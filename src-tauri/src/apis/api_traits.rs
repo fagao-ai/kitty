@@ -1,10 +1,11 @@
-use sea_orm::{ActiveModelBehavior, DatabaseConnection, EntityTrait};
-use entity::base_config;
 use crate::types::{CommandResult, KittyResponse};
-use protocols::CommandManagerTrait;
+use entity::base_config;
+use sea_orm::{ActiveModelBehavior, DatabaseConnection, EntityTrait, ModelTrait};
 
 pub trait APIServiceTrait {
-    async fn query_base_config(db: &DatabaseConnection) -> CommandResult<KittyResponse<base_config::Model>> {
+    async fn query_base_config(
+        db: &DatabaseConnection,
+    ) -> CommandResult<KittyResponse<base_config::Model>> {
         let record = base_config::Model::first(db).await?;
         let response = match record {
             Some(record) => KittyResponse::<base_config::Model>::from_data(record),
@@ -24,15 +25,4 @@ pub trait APIServiceTrait {
         ))
     }
 
-    async fn add_protocol_item<T: ActiveModelBehavior + EntityTrait>(db: &DatabaseConnection, record: T) -> CommandResult<()> {
-        record.insert_one(db).await?;
-        Ok(())
-    }
-
-    fn get_protocol_status<T: CommandManagerTrait>(
-        command_manager: &T
-    ) -> CommandResult<KittyResponse<bool>> {
-        let res = command_manager.is_running();
-        Ok(KittyResponse::from_data(res))
-    }
 }

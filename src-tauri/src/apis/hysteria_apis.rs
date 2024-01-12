@@ -1,10 +1,9 @@
-use sea_orm::DatabaseConnection;
-use entity::hysteria;
 use crate::apis::api_traits::APIServiceTrait;
 use anyhow::Result;
+use entity::hysteria;
+use sea_orm::DatabaseConnection;
 
 pub struct HysteriaAPI;
-
 
 impl APIServiceTrait for HysteriaAPI {}
 
@@ -13,5 +12,14 @@ impl HysteriaAPI {
         let hy_proxies = hysteria::Model::fetch_all(&db).await?;
         println!("hy_proxies: {:?}", hy_proxies);
         Ok(hy_proxies)
+    }
+
+    pub async fn add_hysteria_item(
+        &self,
+        db: &DatabaseConnection,
+        record: hysteria::Model,
+    ) -> Result<()> {
+        record.insert_one(db).await?;
+        Ok(())
     }
 }

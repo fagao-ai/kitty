@@ -232,8 +232,8 @@ fn download_geo_file(file_name: &str) -> Result<()> {
 }
 
 fn main() {
-    let _ = download_binaries();
-    let _ = download_geo_file("geoip.dat");
-    let _ = download_geo_file("geosite.dat");
+    // let _ = download_binaries();
+    // let _ = download_geo_file("geoip.dat");
+    // let _ = download_geo_file("geosite.dat");
     tauri_build::build()
 }

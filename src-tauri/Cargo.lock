@@ -2514,12 +2514,10 @@ name = "kitty"
 version = "0.0.0"
 dependencies = [
  "anyhow",
- "async-trait",
  "build-target",
  "entity",
  "kitty_proxy",
  "migration",
- "port_scanner",
  "protocols",
  "reqwest",
  "rusqlite",
@@ -2536,7 +2534,6 @@ dependencies = [
  "tauri-plugin-window",
  "thiserror",
  "tokio",
- "uuid",
  "zip",
 ]
 
