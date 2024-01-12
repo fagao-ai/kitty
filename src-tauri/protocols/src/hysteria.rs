@@ -127,6 +127,10 @@ impl CommandManagerTrait for HysteriaManager {
         }
         false
     }
+
+    fn name(&self) -> String {
+        self.name.clone()
+    }
 }
 
 #[cfg(test)]

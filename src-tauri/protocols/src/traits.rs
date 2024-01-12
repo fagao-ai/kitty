@@ -9,4 +9,5 @@ pub trait CommandManagerTrait {
     fn terminate_backend(&mut self) -> Result<()>;
     fn restart_backend(&mut self) -> Result<()>;
     fn is_running(&self) -> bool;
+    fn name(&self) -> String;
 }

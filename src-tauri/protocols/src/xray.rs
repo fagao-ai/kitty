@@ -134,6 +134,9 @@ impl CommandManagerTrait for XrayManager {
         }
         false
     }
+    fn name(&self) -> String {
+        self.name.clone()
+    }
 }
 
 #[cfg(test)]

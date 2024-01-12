@@ -1,23 +1,3 @@
-use std::{borrow::BorrowMut, env, fs, io::Write};
-
-use kitty_proxy::{HttpProxy, MatchProxy, SocksProxy};
-
-use anyhow::Result;
-use entity::base_config;
-use protocols::CommandManagerTrait;
-use serde::{Deserialize, Serialize};
-use state::{DatabaseState, ProcessManagerState};
-use tauri::{
-    menu::{MenuBuilder, MenuItemBuilder},
-    tray::{ClickType, TrayIconBuilder},
-    Icon, WindowEvent,
-};
-use tauri::{AppHandle, Manager, State};
-use tauri_plugin_autostart::MacosLauncher;
-use tokio::sync::Mutex;
-
-use crate::state::KittyProxyState;
-
 mod apis;
 mod database;
 mod proxy;
@@ -26,118 +6,23 @@ mod tauri_apis;
 mod types;
 mod utils;
 
-// Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
-// #[tauri::command]
-// async fn stop_hysteria<'a>(state: State<'a, ProcessManagerState>) -> CommandResult<()> {
-//     let mut process_manager = state.hy_process_manager.lock().await;
-//     let _kill_result = process_manager.terminate_backend()?;
-//     println!("stop_hy called!!!");
-//     let _ = clear_system_proxy();
-//     println!("clear_system_proxy called!!!");
-//     Ok(())
-// }
+use std::{env, fs};
 
-// #[tauri::command(rename_all = "snake_case")]
-// async fn proxies_delay(proxies: Vec<ProxyInfo>) -> CommandResult<KittyResponse<Vec<ProxyDelay>>> {
-//     let results = kitty_proxies_delay(proxies).await;
-//     Ok(KittyResponse::<Vec<ProxyDelay>>::from_data(results))
-// }
+use kitty_proxy::{HttpProxy, MatchProxy, SocksProxy};
 
-// #[tauri::command(rename_all = "snake_case")]
-// async fn get_hysteria_status<'a>(
-//     state: State<'a, ProcessManagerState>,
-// ) -> CommandResult<KittyResponse<bool>> {
-//     let mut process_manager = state.hy_process_manager.lock().await;
-//     let res = process_manager.is_open();
-//     Ok(KittyResponse::from_data(res))
-// }
-
-// #[tauri::command(rename_all = "snake_case")]
-// async fn add_hy_item<'a>(
-//     state: State<'a, DatabaseState>,
-//     record: hysteria::Model,
-// ) -> CommandResult<()> {
-//     println!("{:?}", &record);
-//     let db = state.get_db();
-//     record.insert_one(&db).await?;
-//     Ok(())
-// }
-
-// #[tauri::command(rename_all = "snake_case")]
-// async fn get_all_proxies<'a>(
-//     state: State<'a, DatabaseState>,
-// ) -> CommandResult<KittyResponse<Vec<hysteria::Model>>> {
-//     println!("called get_all_proxies");
-//     let db = state.get_db();
-//     let hy_proxies = hysteria::Model::fetch_all(&db).await?;
-//     println!("hy_proxies: {:?}", hy_proxies);
-//     Ok(KittyResponse::from_data(hy_proxies))
-// }
-
-// #[tauri::command]
-// async fn start_hysteria<'a>(
-//     app_handle: AppHandle,
-//     // app: &'a mut tauri::App,
-//     db_state: State<'a, DatabaseState>,
-//     state: State<'a, ProcessManagerState>,
-// ) -> CommandResult<KittyResponse<Option<hysteria::Model>>> {
-//     println!("start_hysteria!!!");
-//     let db = db_state.get_db();
-//     let items = hysteria::Model::fetch_all(&db).await?;
-//     let base_config = base_config::Model::first(&db).await?;
-//     let base_config = base_config.unwrap();
-//     let config_path = if items.len() > 0 {
-//         let app_cache_dir = app_handle.path().app_cache_dir()?;
-//         if !app_cache_dir.exists() {
-//             fs::create_dir_all(&app_cache_dir).unwrap();
-//         }
-//         println!("app_tmp_dir: {:?}", app_cache_dir);
-//         let config_path: String =
-//             get_hysteria_tmp_config_path(&app_cache_dir, &(items[0]), Some(&base_config))?;
-//         Some(config_path)
-//     } else {
-//         None
-//     };
-//     println!("config_path: {:?}", &config_path);
-//     let mut process_manager = state.hy_process_manager.lock().await;
-//     let response = match config_path {
-//         Some(file) => {
-//             let _ = process_manager.start_backend(app_handle, "")?;
-//             let _ = process_manager.check_status()?;
-//             let _ = fs::remove_file(file)?;
-//             KittyResponse::from_data(None)
-//         }
-//         None => KittyResponse::from_msg(100, "hysteria config is empty, please ad"),
-//     };
-
-//     Ok(response)
-// }
-
-// #[tauri::command]
-// async fn query_base_config<'a>(
-//     state: State<'a, DatabaseState>,
-// ) -> CommandResult<KittyResponse<base_config::Model>> {
-//     let db = state.get_db();
-//     let record = base_config::Model::first(&db).await?;
-//     let response = match record {
-//         Some(record) => KittyResponse::<base_config::Model>::from_data(record),
-//         None => KittyResponse::from_msg(101, "base_config not exists"),
-//     };
-//     Ok(response)
-// }
-
-// #[tauri::command(rename_all = "snake_case")]
-// async fn update_base_config<'a>(
-//     state: State<'a, DatabaseState>,
-//     id: i32,
-//     record: base_config::Model,
-// ) -> CommandResult<KittyResponse<base_config::Model>> {
-//     let db = state.get_db();
-//     let updated_record = record.update(&db, id).await?;
-//     Ok(KittyResponse::<base_config::Model>::from_data(
-//         updated_record,
-//     ))
-// }
+use anyhow::Result;
+use entity::base_config;
+use protocols::CommandManagerTrait;
+use state::{DatabaseState, ProcessManagerState};
+use tauri::{
+    menu::{MenuBuilder, MenuItemBuilder},
+    tray::{ClickType, TrayIconBuilder}, Icon, WindowEvent,
+};
+use tauri::{Manager, State};
+use tauri_plugin_autostart::MacosLauncher;
+use tauri_plugin_notification::{NotificationExt, PermissionState};
+use tokio::sync::Mutex;
+use crate::state::KittyProxyState;
 
 fn set_system_tray<'a>(app: &'a mut tauri::App) -> Result<()> {
     let quit = MenuItemBuilder::with_id("quit", "Quit").build(app);
@@ -181,7 +66,6 @@ fn set_system_tray<'a>(app: &'a mut tauri::App) -> Result<()> {
 
 fn setup_db<'a>(app: &'a mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
     let handle = app.handle();
-
     let app_dir = handle
         .path()
         .app_local_data_dir()
@@ -213,8 +97,8 @@ fn setup_kitty_proxy<'a>(app: &'a mut tauri::App) -> Result<(), Box<dyn std::err
     let db = db_state.get_db();
     tauri::async_runtime::block_on(async move {
         let record = base_config::Model::first(&db).await.unwrap().unwrap();
-        let http_port = record.http_port;
-        let socks_port = record.socks_port;
+        let _http_port = record.http_port;
+        let _socks_port = record.socks_port;
         let geoip_file = resource_dir.join("geoip.dat");
         let geosite_file = resource_dir.join("geosite.dat");
         let _match_proxy =
@@ -237,12 +121,20 @@ async fn on_window_exit(event: tauri::GlobalWindowEvent) {
     match event.event() {
         WindowEvent::Destroyed => {
             println!("exit!!!");
-            let am: State<ProcessManagerState> = event.window().state();
-            let process_manager = am.hy_process_manager.lock().await;
-
-            let process_manager = process_manager.as_ref();
-            if let Some(mut process_manager) = process_manager {
-                process_manager.terminate_backend();
+            let state: State<ProcessManagerState> = event.window().state();
+            let mut process_manager = state.hy_process_manager.lock().await;
+            let process_manager = process_manager.as_mut();
+            if let Some(process_manager) = process_manager {
+                if process_manager.terminate_backend().is_err() {
+                    let app = event.window();
+                    if let Ok(PermissionState::Granted) = app.notification().permission_state() {
+                        app.notification()
+                            .builder()
+                            .body(format!("{} terminate failed.", process_manager.name()))
+                            .show()
+                            .unwrap();
+                    }
+                }
             }
         }
         _ => {}

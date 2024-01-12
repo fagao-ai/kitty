@@ -1,6 +1,6 @@
 use crate::types::{CommandResult, KittyResponse};
 use entity::base_config;
-use sea_orm::{ActiveModelBehavior, DatabaseConnection, EntityTrait, ModelTrait};
+use sea_orm::DatabaseConnection;
 
 pub trait APIServiceTrait {
     async fn query_base_config(
@@ -24,5 +24,4 @@ pub trait APIServiceTrait {
             updated_record,
         ))
     }
-
 }
