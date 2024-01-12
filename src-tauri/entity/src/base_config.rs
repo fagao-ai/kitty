@@ -21,7 +21,7 @@ impl ActiveModelBehavior for ActiveModel {}
 impl Model {
     pub async fn insert_one(&self, db: &DatabaseConnection) -> Result<Self, DbErr> {
         let json_value = serde_json::to_value(self).unwrap().into();
-        let base_config_record = self::ActiveModel::from_json(json_value)?;
+        let base_config_record = ActiveModel::from_json(json_value)?;
         let base_config_res = base_config_record.insert(db).await;
         base_config_res
     }

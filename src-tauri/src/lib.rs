@@ -3,6 +3,9 @@ mod proxy;
 mod state;
 mod types;
 mod utils;
+mod api_traits;
+mod xray_apis;
+mod hysteria_apis;
 
 use crate::proxy::system_proxy::clear_system_proxy;
 use anyhow::Result;
@@ -80,74 +83,6 @@ async fn get_all_proxies<'a>(
     let hy_proxies = hysteria::Model::fetch_all(&db).await?;
     println!("hy_proxies: {:?}", hy_proxies);
     Ok(KittyResponse::from_data(hy_proxies))
-}
-
-fn get_hashmap_from_struct<'a, T>(input_struct: &T) -> HashMap<String, Value>
-    where
-        T: Deserialize<'a> + Serialize,
-{
-    let main_config_json_string = serde_json::to_string(&input_struct).unwrap();
-    let json_value: Value = serde_json::from_str(&main_config_json_string).unwrap();
-    let mapping = json_value.as_object().unwrap().to_owned();
-    let hashmap: HashMap<String, Value> = mapping
-        .iter()
-        .map(|(k, v)| (k.clone(), v.clone()))
-        .collect();
-
-    hashmap
-}
-
-fn merge_hysteria_config(
-    hysteria_config: &hysteria::Model,
-    base_config: Option<&base_config::Model>,
-) -> HashMap<String, Value> {
-    let hysteria_config = HysteriaModelWithoutName::from(hysteria_config);
-    let mut hashmap = get_hashmap_from_struct(&hysteria_config);
-    let base_config_hashmap = match base_config {
-        Some(config) => {
-            let base_config = get_hashmap_from_struct(config);
-            let mut new_base_config = HashMap::new();
-            for (k, v) in base_config.into_iter() {
-                if k.to_string().eq("http_port") | k.to_string().eq("socks_port") {
-                    let mut tmp_hash_map = HashMap::new();
-                    tmp_hash_map.insert("listen", format!("127.0.0.1:{}", v));
-                    let json_value: Value =
-                        serde_json::to_value(tmp_hash_map).expect("Failed to convert to JSON");
-                    let new_k = if k.eq("http_port") { "http" } else { "socks5" };
-                    new_base_config.insert(new_k.to_string(), json_value);
-                } else {
-                    new_base_config.insert(k, v);
-                }
-            }
-            new_base_config
-        }
-        None => HashMap::new(),
-    };
-    hashmap.extend(base_config_hashmap);
-    hashmap
-}
-
-fn get_hysteria_tmp_config_path(
-    app_tmp_dir: &PathBuf,
-    hysteria_config: &hysteria::Model,
-    base_config: Option<&base_config::Model>,
-) -> Result<String> {
-    let uuid = Uuid::new_v4();
-    let uuid_string: String = uuid.to_string();
-
-    let temp_json_file = app_tmp_dir.join(format!("{}/hysteria_config.json", uuid_string));
-    fs::create_dir_all(temp_json_file.parent().unwrap())?;
-    println!("temp_json_file {:?}", temp_json_file);
-    let mut file = std::fs::File::create(&temp_json_file).expect("Failed to create temporary file");
-    let config_hashmap = merge_hysteria_config(hysteria_config, base_config);
-    let config_str = serde_json::to_string(&config_hashmap)?;
-    let config_bytes = config_str.as_bytes();
-    file.write_all(config_bytes)?;
-    let os_string = temp_json_file.into_os_string();
-    let temp_json_file = os_string
-        .into_string()
-        .expect("Failed temp_json_file convert to String");
-    Ok(temp_json_file)
 }
 
 #[tauri::command]

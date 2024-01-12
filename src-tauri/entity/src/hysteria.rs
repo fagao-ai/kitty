@@ -20,6 +20,7 @@ pub struct Model {
     bandwidth: Bandwidth,
 }
 
+
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, FromJsonQueryResult)]
 pub struct Tls {
     sni: String,
