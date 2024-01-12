@@ -12,7 +12,7 @@ use crate::state::{DatabaseState, ProcessManagerState};
 use crate::types::{CommandResult, KittyResponse};
 
 #[tauri::command(rename_all = "snake_case")]
-async fn get_hysteria_status<'a>(
+pub async fn get_hysteria_status<'a>(
     state: State<'a, ProcessManagerState>,
 ) -> CommandResult<KittyResponse<bool>> {
     let process_manager: tokio::sync::MutexGuard<'_, Option<protocols::HysteriaManager>> =
@@ -27,7 +27,7 @@ async fn get_hysteria_status<'a>(
 }
 
 #[tauri::command(rename_all = "snake_case")]
-async fn add_hy_item<'a>(
+pub async fn add_hy_item<'a>(
     state: State<'a, DatabaseState>,
     record: hysteria::Model,
 ) -> CommandResult<()> {
@@ -37,7 +37,7 @@ async fn add_hy_item<'a>(
 }
 
 #[tauri::command(rename_all = "snake_case")]
-async fn get_all_hysterias<'a>(
+pub async fn get_all_hysterias<'a>(
     state: State<'a, DatabaseState>,
 ) -> CommandResult<KittyResponse<Vec<hysteria::Model>>> {
     let db = state.get_db();
@@ -46,7 +46,7 @@ async fn get_all_hysterias<'a>(
 }
 
 #[tauri::command(rename_all = "snake_case")]
-async fn query_base_config<'a>(
+pub async fn query_base_config<'a>(
     state: State<'a, DatabaseState>,
 ) -> CommandResult<KittyResponse<base_config::Model>> {
     let db = state.get_db();
@@ -54,7 +54,7 @@ async fn query_base_config<'a>(
 }
 
 #[tauri::command(rename_all = "snake_case")]
-async fn update_base_config<'a>(
+pub async fn update_base_config<'a>(
     state: State<'a, DatabaseState>,
     id: i32,
     record: base_config::Model,

@@ -12,8 +12,12 @@ use kitty_proxy::{HttpProxy, MatchProxy, SocksProxy};
 
 use crate::state::KittyProxyState;
 use anyhow::Result;
-// #[cfg(feature = "hysteria")]
-// use tauri_apis::;
+#[cfg(feature = "hysteria")]
+use tauri_apis::hysteria as hysteria_api;
+
+#[cfg(feature = "xray")]
+use tauri_apis::xray as xray_api;
+
 use entity::base_config;
 use protocols::CommandManagerTrait;
 use state::{DatabaseState, ProcessManagerState};
@@ -168,25 +172,15 @@ pub fn run() {
         .setup(setup_db)
         .setup(setup_kitty_proxy)
         .on_window_event(on_window_exit_func)
-        .invoke_handler(tauri::generate_handler![
-            // hysteria_apis::,
-            // start_hysteria,
-            // add_hy_item,
-            // get_all_proxies,
-            // query_base_config,
-            // update_base_config,
-            // proxies_delay,
-            // get_hysteria_status,
-        ])
-        .invoke_handler(tauri::generate_handler![
-            // stop_hysteria,
-            // start_hysteria,
-            // add_hy_item,
-            // get_all_proxies,
-            // query_base_config,
-            // update_base_config,
-            // proxies_delay,
-            // get_hysteria_status,
+        .invoke_handler(
+            #[cfg(feature = "hysteria")]
+            tauri::generate_handler![
+            hysteria_api::get_hysteria_status,
+            hysteria_api::add_hy_item,
+            hysteria_api::get_all_hysterias,
+            hysteria_api::query_base_config,
+            hysteria_api::update_base_config,
+
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
