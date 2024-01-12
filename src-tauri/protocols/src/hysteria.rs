@@ -44,8 +44,8 @@ impl Drop for HysteriaManager {
 
 impl CommandManagerTrait for HysteriaManager {
     fn start_backend<T>(&mut self, config: T, config_dir: PathBuf) -> Result<()>
-    where
-        T: Serialize,
+        where
+            T: Serialize,
     {
         let config_content = serde_json::to_string(&config)?;
         let config_file_path = config_dir.join(format!("{}_{}.json", self.name, Uuid::new_v4()));
@@ -145,7 +145,7 @@ mod tests {
             PathBuf::from_str(
                 "E:\\opdensource\\kitty\\src-tauri\\binaries\\hysteria-x86_64-pc-windows-msvc.exe",
             )
-            .unwrap(),
+                .unwrap(),
         );
         let config = r#""#;
         let config: Value = serde_json::from_str(config).unwrap();

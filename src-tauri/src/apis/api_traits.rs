@@ -24,10 +24,12 @@ pub trait APIServiceTrait {
         ))
     }
 
-    async fn add_protocol_item<T: ActiveModelBehavior + EntityTrait>(db: &DatabaseConnection, record: T) -> CommandResult<()>;
+    async fn add_protocol_item<T: ActiveModelBehavior + EntityTrait>(db: &DatabaseConnection, record: T) -> CommandResult<()> {
+        record.insert_one(db).await?;
+        Ok(())
+    }
 
-    #[cfg(feature = "hysteria")]
-    async fn get_protocol_status<T: CommandManagerTrait>(
+    fn get_protocol_status<T: CommandManagerTrait>(
         command_manager: &T
     ) -> CommandResult<KittyResponse<bool>> {
         let res = command_manager.is_running();
