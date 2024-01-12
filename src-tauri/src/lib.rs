@@ -10,19 +10,22 @@ use std::{env, fs};
 
 use kitty_proxy::{HttpProxy, MatchProxy, SocksProxy};
 
+use crate::state::KittyProxyState;
 use anyhow::Result;
+// #[cfg(feature = "hysteria")]
+// use tauri_apis::;
 use entity::base_config;
 use protocols::CommandManagerTrait;
 use state::{DatabaseState, ProcessManagerState};
 use tauri::{
     menu::{MenuBuilder, MenuItemBuilder},
-    tray::{ClickType, TrayIconBuilder}, Icon, WindowEvent,
+    tray::{ClickType, TrayIconBuilder},
+    Icon, WindowEvent,
 };
 use tauri::{Manager, State};
 use tauri_plugin_autostart::MacosLauncher;
 use tauri_plugin_notification::{NotificationExt, PermissionState};
 use tokio::sync::Mutex;
-use crate::state::KittyProxyState;
 
 fn set_system_tray<'a>(app: &'a mut tauri::App) -> Result<()> {
     let quit = MenuItemBuilder::with_id("quit", "Quit").build(app);
@@ -165,6 +168,16 @@ pub fn run() {
         .setup(setup_db)
         .setup(setup_kitty_proxy)
         .on_window_event(on_window_exit_func)
+        .invoke_handler(tauri::generate_handler![
+            // hysteria_apis::,
+            // start_hysteria,
+            // add_hy_item,
+            // get_all_proxies,
+            // query_base_config,
+            // update_base_config,
+            // proxies_delay,
+            // get_hysteria_status,
+        ])
         .invoke_handler(tauri::generate_handler![
             // stop_hysteria,
             // start_hysteria,

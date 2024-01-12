@@ -1,6 +1,4 @@
-use std::borrow::Borrow;
-
-use tauri::{Manager, State};
+use tauri::State;
 
 use entity::{
     base_config,
@@ -17,7 +15,8 @@ use crate::types::{CommandResult, KittyResponse};
 async fn get_hysteria_status<'a>(
     state: State<'a, ProcessManagerState>,
 ) -> CommandResult<KittyResponse<bool>> {
-    let process_manager: tokio::sync::MutexGuard<'_, Option<protocols::HysteriaManager>> = state.hy_process_manager.lock().await;
+    let process_manager: tokio::sync::MutexGuard<'_, Option<protocols::HysteriaManager>> =
+        state.hy_process_manager.lock().await;
     let process_manager = process_manager.as_ref();
     if let Some(process_manager) = process_manager {
         let is_running = process_manager.is_running();
