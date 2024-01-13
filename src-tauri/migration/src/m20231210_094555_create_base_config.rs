@@ -18,6 +18,7 @@ impl MigrationTrait for Migration {
                             .auto_increment()
                             .primary_key(),
                     )
+                    .col(ColumnDef::new(BaseConfig::LocalIp).string().not_null())
                     .col(ColumnDef::new(BaseConfig::HttpPort).integer().not_null())
                     .col(ColumnDef::new(BaseConfig::SocksPort).integer().not_null())
                     .to_owned(),
@@ -25,8 +26,8 @@ impl MigrationTrait for Migration {
             .await;
         let insert = Query::insert()
             .into_table(BaseConfig::Table)
-            .columns([BaseConfig::SocksPort, BaseConfig::HttpPort])
-            .values_panic([10086.into(), 10087.into()])
+            .columns([BaseConfig::LocalIp, BaseConfig::SocksPort, BaseConfig::HttpPort])
+            .values_panic(["127.0.0.1".into(), 10086.into(), 10087.into()])
             .to_owned();
 
         manager.exec_stmt(insert).await?;
@@ -45,6 +46,7 @@ impl MigrationTrait for Migration {
 enum BaseConfig {
     Table,
     Id,
+    LocalIp,
     HttpPort,
     SocksPort,
 }

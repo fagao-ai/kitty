@@ -108,16 +108,17 @@ fn setup_kitty_proxy<'a>(app: &'a mut tauri::App) -> Result<(), Box<dyn std::err
         let socks_port = record.socks_port;
         let geoip_file = resource_dir.join("kitty_geoip.dat");
         let geosite_file = resource_dir.join("kitty_geosite.dat");
-        let _match_proxy =
+        let match_proxy =
             MatchProxy::from_geo_dat(Some(&geoip_file), Some(&geosite_file)).unwrap();
-        let http_proxy = HttpProxy::new("127.0.0.1", http_port, None)
+        let http_proxy = HttpProxy::new(record.local_ip.as_str(), http_port, None)
             .await
             .unwrap();
-        let socks_proxy = SocksProxy::new("127.0.0.1", socks_port, None)
+        let socks_proxy = SocksProxy::new(record.local_ip.as_str(), socks_port, None)
             .await
             .unwrap();
-        *app_state.socks_proxy.lock().await = socks_proxy;
-        *app_state.http_proxy.lock().await = http_proxy;
+        *app_state.socks_proxy.lock().await = Some(socks_proxy);
+        *app_state.http_proxy.lock().await = Some(http_proxy);
+        *app_state.match_proxy.lock().await = Some(match_proxy);
     });
 
     Ok(())
@@ -160,6 +161,11 @@ pub fn run() {
         .manage(ProcessManagerState {
             hy_process_manager: Mutex::new(None),
             xray_process_manager: Mutex::new(None),
+        })
+        .manage(KittyProxyState {
+            http_proxy: Mutex::new(None),
+            socks_proxy: Mutex::new(None),
+            match_proxy: Mutex::new(None),
         })
         .plugin(tauri_plugin_window::init())
         .plugin(tauri_plugin_autostart::init(

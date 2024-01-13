@@ -1,4 +1,4 @@
-use kitty_proxy::{HttpProxy, SocksProxy};
+use kitty_proxy::{HttpProxy, MatchProxy, SocksProxy};
 use protocols::{HysteriaManager, XrayManager};
 use sea_orm::DatabaseConnection;
 use tokio::sync::Mutex;
@@ -21,6 +21,7 @@ pub struct ProcessManagerState {
 }
 
 pub struct KittyProxyState {
-    pub http_proxy: Mutex<HttpProxy>,
-    pub socks_proxy: Mutex<SocksProxy>,
+    pub http_proxy: Mutex<Option<HttpProxy>>,
+    pub socks_proxy: Mutex<Option<SocksProxy>>,
+    pub match_proxy: Mutex<Option<MatchProxy>>,
 }

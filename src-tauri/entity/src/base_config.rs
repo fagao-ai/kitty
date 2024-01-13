@@ -9,6 +9,7 @@ pub struct Model {
     #[sea_orm(primary_key, auto_increment = true)]
     // #[serde(skip)]
     pub id: i32,
+    pub local_ip: String,
     pub http_port: u16,
     pub socks_port: u16,
 }
