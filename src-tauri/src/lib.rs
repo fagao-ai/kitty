@@ -104,21 +104,20 @@ fn setup_kitty_proxy<'a>(app: &'a mut tauri::App) -> Result<(), Box<dyn std::err
     let db = db_state.get_db();
     tauri::async_runtime::block_on(async move {
         let record = base_config::Model::first(&db).await.unwrap().unwrap();
-        let _http_port = record.http_port;
-        let _socks_port = record.socks_port;
-        let geoip_file = resource_dir.join("geoip.dat");
-        let geosite_file = resource_dir.join("geosite.dat");
+        let http_port = record.http_port;
+        let socks_port = record.socks_port;
+        let geoip_file = resource_dir.join("kitty_geoip.dat");
+        let geosite_file = resource_dir.join("kitty_geosite.dat");
         let _match_proxy =
             MatchProxy::from_geo_dat(Some(&geoip_file), Some(&geosite_file)).unwrap();
-        let http_proxy = HttpProxy::new("127.0.0.1", 10088, None, "127.0.0.1", 10809)
+        let http_proxy = HttpProxy::new("127.0.0.1", http_port, None)
             .await
             .unwrap();
-        let socks_proxy = SocksProxy::new("127.0.0.1", 10089, None, "127.0.0.1", 10809)
+        let socks_proxy = SocksProxy::new("127.0.0.1", socks_port, None)
             .await
             .unwrap();
         *app_state.socks_proxy.lock().await = socks_proxy;
         *app_state.http_proxy.lock().await = http_proxy;
-        // (http_proxy, socks_proxy)
     });
 
     Ok(())

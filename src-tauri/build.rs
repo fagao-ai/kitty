@@ -219,9 +219,9 @@ fn download_binaries() -> Result<()> {
     Ok(())
 }
 
-fn download_geo_file(file_name: &str) -> Result<()> {
+fn download_geo_file(source_name: &str, file_name: &str) -> Result<()> {
     let url = format!(
-        "https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/{file_name}"
+        "https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/{source_name}"
     );
     let mut geo_file = reqwest::blocking::get(url).expect("download geoip.dat failed!");
     let geo_file_path = get_file_path(file_name, FileEnum::Static);
@@ -231,9 +231,17 @@ fn download_geo_file(file_name: &str) -> Result<()> {
     Ok(())
 }
 
+fn create_empty_geo_file(file_name: &str) -> Result<()> {
+    let geo_file_path = get_file_path(file_name, FileEnum::Static);
+    let _ = File::create(&geo_file_path)?;
+    Ok(())
+}
+
 fn main() {
     // let _ = download_binaries();
-    // let _ = download_geo_file("geoip.dat");
-    // let _ = download_geo_file("geosite.dat");
+    let _ = download_geo_file("geoip.dat", "kitty_geoip.dat");
+    let _ = download_geo_file("geosite.dat", "kitty_geosite.dat");
+    let _ = create_empty_geo_file("geoip.dat");
+    let _ = create_empty_geo_file("geosite.dat");
     tauri_build::build()
 }
