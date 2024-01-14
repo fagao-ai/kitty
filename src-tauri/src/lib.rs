@@ -7,6 +7,7 @@ mod types;
 mod utils;
 
 use std::{env, fs};
+use std::collections::HashMap;
 
 use kitty_proxy::{HttpProxy, MatchProxy, SocksProxy};
 
