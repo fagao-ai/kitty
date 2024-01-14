@@ -159,8 +159,7 @@ pub fn run() {
             db: Default::default(),
         })
         .manage(ProcessManagerState {
-            hy_process_manager: Mutex::new(None),
-            xray_process_manager: Mutex::new(None),
+            process_manager: Mutex::new(HashMap::new()),
         })
         .manage(KittyProxyState {
             http_proxy: Mutex::new(None),

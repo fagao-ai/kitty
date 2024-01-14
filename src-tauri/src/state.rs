@@ -1,5 +1,6 @@
+use std::collections::HashMap;
 use kitty_proxy::{HttpProxy, MatchProxy, SocksProxy};
-use protocols::{HysteriaManager, XrayManager};
+use protocols::{CommandManagerTrait, HysteriaManager, XrayManager};
 use sea_orm::DatabaseConnection;
 use tokio::sync::Mutex;
 
@@ -15,9 +16,10 @@ impl DatabaseState {
     }
 }
 
-pub struct ProcessManagerState {
-    pub hy_process_manager: Mutex<Option<HysteriaManager>>,
-    pub xray_process_manager: Mutex<Option<XrayManager>>,
+pub struct ProcessManagerState<T>
+    where T: CommandManagerTrait
+{
+    pub process_manager: Mutex<HashMap<String, T>>,
 }
 
 pub struct KittyProxyState {
