@@ -16,33 +16,25 @@ impl DatabaseState {
     }
 }
 
-#[cfg(feature = "hysteria")]
-pub struct HysteriaProcessManagerState {
-    pub process_manager: Mutex<Option<HysteriaManager>>,
+pub struct ProcessManagerState {
+    #[cfg(feature = "hysteria")]
+    pub hy_process_manager: Mutex<Option<HysteriaManager>>,
+    #[cfg(feature = "xray")]
+    pub xray_process_manager: Mutex<Option<XrayManager>>,
 }
 
-#[cfg(feature = "hysteria")]
-impl Default for HysteriaProcessManagerState {
+impl Default for ProcessManagerState {
     fn default() -> Self {
         Self {
-            process_manager: Mutex::new(None),
+            #[cfg(feature = "hysteria")]
+            hy_process_manager: Mutex::new(None),
+
+            #[cfg(feature = "xray")]
+            xray_process_manager: Mutex::new(None),
         }
     }
 }
 
-#[cfg(feature = "xray")]
-pub struct XrayProcessManagerState {
-    pub process_manager: Mutex<Option<XrayManager>>,
-}
-
-#[cfg(feature = "xray")]
-impl Default for XrayProcessManagerState {
-    fn default() -> Self {
-        Self {
-            process_manager: Mutex::new(None),
-        }
-    }
-}
 pub struct KittyProxyState {
     pub http_proxy: Mutex<Option<HttpProxy>>,
     pub socks_proxy: Mutex<Option<SocksProxy>>,

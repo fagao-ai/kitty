@@ -21,7 +21,7 @@ use tauri_apis::xray as xray_api;
 
 use entity::base_config;
 use protocols::CommandManagerTrait;
-use state::{DatabaseState, HysteriaProcessManagerState, XrayProcessManagerState};
+use state::{DatabaseState, ProcessManagerState};
 use tauri::{
     menu::{MenuBuilder, MenuItemBuilder},
     tray::{ClickType, TrayIconBuilder},
@@ -30,7 +30,6 @@ use tauri::{
 use tauri::{Manager, State};
 use tauri_plugin_autostart::MacosLauncher;
 use tauri_plugin_notification::{NotificationExt, PermissionState};
-use tokio::sync::Mutex;
 
 fn set_system_tray<'a>(app: &'a mut tauri::App) -> Result<()> {
     let quit = MenuItemBuilder::with_id("quit", "Quit").build(app);
@@ -128,18 +127,41 @@ async fn on_window_exit(event: tauri::GlobalWindowEvent) {
     match event.event() {
         WindowEvent::Destroyed => {
             println!("exit!!!");
-            let state: State<HysteriaProcessManagerState> = event.window().state();
-            let mut process_manager = state.process_manager.lock().await;
-            let process_manager = process_manager.as_mut();
-            if let Some(process_manager) = process_manager {
-                if process_manager.terminate_backend().is_err() {
-                    let app = event.window();
-                    if let Ok(PermissionState::Granted) = app.notification().permission_state() {
-                        app.notification()
-                            .builder()
-                            .body(format!("{} terminate failed.", process_manager.name()))
-                            .show()
-                            .unwrap();
+            let state: State<ProcessManagerState> = event.window().state();
+            #[cfg(feature = "hysteria")]
+            {
+                let mut process_manager = state.hy_process_manager.lock().await;
+                let process_manager = process_manager.as_mut();
+                if let Some(process_manager) = process_manager {
+                    if process_manager.terminate_backend().is_err() {
+                        let app = event.window();
+                        if let Ok(PermissionState::Granted) = app.notification().permission_state()
+                        {
+                            app.notification()
+                                .builder()
+                                .body(format!("{} terminate failed.", process_manager.name()))
+                                .show()
+                                .unwrap();
+                        }
+                    }
+                }
+            }
+
+            #[cfg(feature = "xray")]
+            {
+                let mut process_manager = state.xray_process_manager.lock().await;
+                let process_manager = process_manager.as_mut();
+                if let Some(process_manager) = process_manager {
+                    if process_manager.terminate_backend().is_err() {
+                        let app = event.window();
+                        if let Ok(PermissionState::Granted) = app.notification().permission_state()
+                        {
+                            app.notification()
+                                .builder()
+                                .body(format!("{} terminate failed.", process_manager.name()))
+                                .show()
+                                .unwrap();
+                        }
                     }
                 }
             }
@@ -157,11 +179,7 @@ pub fn run() {
     let builder = tauri::Builder::default().manage(DatabaseState {
         db: Default::default(),
     });
-    #[cfg(feature = "hysteria")]
-    let builder = builder.manage(HysteriaProcessManagerState::default());
-    #[cfg(feature = "xray")]
-    let builder = builder.manage(XrayProcessManagerState::default());
-
+    let builder = builder.manage(ProcessManagerState::default());
     let builder = builder
         .manage(KittyProxyState::default())
         .plugin(tauri_plugin_window::init())

@@ -1,6 +1,6 @@
 use sea_orm::{entity::prelude::*, FromJsonQueryResult};
 
-use anyhow::Result;
+use anyhow::{anyhow, Error, Result};
 use port_scanner::local_port_available;
 use serde::{Deserialize, Serialize};
 use std::convert::TryFrom;
@@ -74,6 +74,11 @@ impl Model {
         let hysterias = self::Entity::find().all(db).await?;
         Ok(hysterias)
     }
+
+    pub async fn first(db: &DatabaseConnection) -> Result<Option<Self>, DbErr> {
+        let hysteria_record = self::Entity::find().one(db).await?;
+        Ok(hysteria_record)
+    }
 }
 
 #[derive(Serialize, Deserialize)]
@@ -90,7 +95,7 @@ impl ListenAddr {
 }
 
 #[derive(Serialize, Deserialize)]
-struct CommandHysteria {
+pub struct CommandHysteria {
     pub server: String,
     pub auth: String,
     pub bandwidth: Bandwidth,
@@ -100,26 +105,26 @@ struct CommandHysteria {
 }
 
 impl CommandHysteria {
-    fn get_http_port(&self) -> u16 {
+    pub fn get_http_port(&self) -> u16 {
         let http_addr = &self.http.listen;
         http_addr.split(":").nth(1).unwrap().parse::<u16>().unwrap()
     }
 
-    fn get_socks_port(&self) -> u16 {
+    pub fn get_socks_port(&self) -> u16 {
         let http_addr = &self.socks5.listen;
         http_addr.split(":").nth(1).unwrap().parse::<u16>().unwrap()
     }
 }
 
 impl TryFrom<&Model> for CommandHysteria {
-    type Error = String;
+    type Error = Error;
 
     fn try_from(record: &Model) -> Result<Self, Self::Error> {
         let http_port = 11186;
         let socks_port = 11186;
         for port in [http_port, socks_port] {
             if !local_port_available(port) {
-                return Err(format!("port {port} already used."));
+                return Err(anyhow!(format!("port {port} already used.")));
             }
         }
         Ok(Self {
