@@ -6,8 +6,8 @@ mod tauri_apis;
 mod types;
 mod utils;
 
-use std::{env, fs};
 use std::collections::HashMap;
+use std::{env, fs};
 
 use kitty_proxy::{HttpProxy, MatchProxy, SocksProxy};
 
@@ -21,7 +21,7 @@ use tauri_apis::xray as xray_api;
 
 use entity::base_config;
 use protocols::CommandManagerTrait;
-use state::{DatabaseState, ProcessManagerState};
+use state::{DatabaseState, HysteriaProcessManagerState, XrayProcessManagerState};
 use tauri::{
     menu::{MenuBuilder, MenuItemBuilder},
     tray::{ClickType, TrayIconBuilder},
@@ -109,8 +109,7 @@ fn setup_kitty_proxy<'a>(app: &'a mut tauri::App) -> Result<(), Box<dyn std::err
         let socks_port = record.socks_port;
         let geoip_file = resource_dir.join("kitty_geoip.dat");
         let geosite_file = resource_dir.join("kitty_geosite.dat");
-        let match_proxy =
-            MatchProxy::from_geo_dat(Some(&geoip_file), Some(&geosite_file)).unwrap();
+        let match_proxy = MatchProxy::from_geo_dat(Some(&geoip_file), Some(&geosite_file)).unwrap();
         let http_proxy = HttpProxy::new(record.local_ip.as_str(), http_port, None)
             .await
             .unwrap();
@@ -129,8 +128,8 @@ async fn on_window_exit(event: tauri::GlobalWindowEvent) {
     match event.event() {
         WindowEvent::Destroyed => {
             println!("exit!!!");
-            let state: State<ProcessManagerState> = event.window().state();
-            let mut process_manager = state.hy_process_manager.lock().await;
+            let state: State<HysteriaProcessManagerState> = event.window().state();
+            let mut process_manager = state.process_manager.lock().await;
             let process_manager = process_manager.as_mut();
             if let Some(process_manager) = process_manager {
                 if process_manager.terminate_backend().is_err() {
@@ -155,18 +154,16 @@ fn on_window_exit_func(event: tauri::GlobalWindowEvent) {
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    let builder = tauri::Builder::default()
-        .manage(DatabaseState {
-            db: Default::default(),
-        })
-        .manage(ProcessManagerState {
-            process_manager: Mutex::new(HashMap::new()),
-        })
-        .manage(KittyProxyState {
-            http_proxy: Mutex::new(None),
-            socks_proxy: Mutex::new(None),
-            match_proxy: Mutex::new(None),
-        })
+    let builder = tauri::Builder::default().manage(DatabaseState {
+        db: Default::default(),
+    });
+    #[cfg(feature = "hysteria")]
+    let builder = builder.manage(HysteriaProcessManagerState::default());
+    #[cfg(feature = "xray")]
+    let builder = builder.manage(XrayProcessManagerState::default());
+
+    let builder = builder
+        .manage(KittyProxyState::default())
         .plugin(tauri_plugin_window::init())
         .plugin(tauri_plugin_autostart::init(
             MacosLauncher::LaunchAgent,

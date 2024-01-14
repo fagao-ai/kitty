@@ -8,14 +8,14 @@ use protocols::CommandManagerTrait;
 
 use crate::apis::api_traits::APIServiceTrait;
 use crate::apis::hysteria_apis::HysteriaAPI;
-use crate::state::{DatabaseState, ProcessManagerState};
+use crate::state::{DatabaseState, HysteriaProcessManagerState};
 use crate::types::{CommandResult, KittyResponse};
 
 #[tauri::command(rename_all = "snake_case")]
 pub async fn get_hysteria_status<'a>(
-    state: State<'a, ProcessManagerState>,
+    state: State<'a, HysteriaProcessManagerState>,
 ) -> CommandResult<KittyResponse<bool>> {
-    let process_manager = state.hy_process_manager.lock().await;
+    let process_manager = state.process_manager.lock().await;
     let process_manager = process_manager.as_ref();
     if let Some(process_manager) = process_manager {
         let is_running = process_manager.is_running();
