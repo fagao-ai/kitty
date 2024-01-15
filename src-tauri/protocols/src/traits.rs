@@ -1,10 +1,11 @@
 use anyhow::Result;
 use serde::Serialize;
 use std::path::PathBuf;
+use crate::types::NodeInfo;
 
 pub trait CommandManagerTrait {
     fn start_backend<T: Serialize>(&mut self, config: T, config_dir: PathBuf) -> Result<()>;
-    fn start_backend_from_path(&mut self, config_path: PathBuf) -> Result<()>;
+    fn start_backend_from_path(&mut self, node_info: &NodeInfo, config_path: PathBuf) -> Result<()>;
     fn check_status(&self) -> Result<()>;
     fn terminate_backend(&mut self) -> Result<()>;
     fn restart_backend(&mut self) -> Result<()>;

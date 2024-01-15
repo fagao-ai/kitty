@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::fs::{self, File};
 use std::io::Write;
 use std::io::{self, BufRead};
@@ -9,23 +10,24 @@ use serde::Serialize;
 use serde_json::Value;
 use shared_child::SharedChild;
 use std::process::{Command, Stdio};
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 use uuid::Uuid;
+use crate::types::NodeInfo;
 
 pub struct HysteriaManager {
     name: String,
     bin_path: PathBuf,
-    child: Option<Arc<SharedChild>>,
-    config_path: Option<PathBuf>,
+    child: HashMap<NodeInfo, Arc<SharedChild>>,
+    config_path: Arc<HashMap<NodeInfo, PathBuf>>,
 }
 
 impl HysteriaManager {
     pub fn new(bin_path: PathBuf) -> Self {
         Self {
             name: "hysteria".into(),
-            child: None,
+            child: HashMap::new(),
             bin_path,
-            config_path: None,
+            config_path: Arc::new(HashMap::new()),
         }
     }
 }
@@ -35,27 +37,31 @@ impl Drop for HysteriaManager {
         println!("Executing extra code before dropping HysteriaManager");
         let config_path_clone = self.config_path.clone();
         if let Some(config_path) = config_path_clone {
-            if config_path.exists() {
-                fs::remove_file(config_path).expect("config_path remove failed.");
+            for (_node_info, config_path) in config_path.iter() {
+                if config_path.exists() {
+                    fs::remove_file(config_path).expect("config_path remove failed.");
+                }
             }
         }
     }
 }
 
 impl CommandManagerTrait for HysteriaManager {
-    fn start_backend<T>(&mut self, config: T, config_dir: PathBuf) -> Result<()>
+    fn start_backend<T>(&mut self, config: HashMap<NodeInfo, T>, config_dir: PathBuf) -> Result<()>
         where
             T: Serialize,
     {
-        let config_content = serde_json::to_string(&config)?;
-        let config_file_path = config_dir.join(format!("{}_{}.json", self.name, Uuid::new_v4()));
-        let mut file = File::create(&config_file_path)?;
-        file.write_all(config_content.as_bytes())?;
-        self.start_backend_from_path(config_file_path)?;
+        for (node_info, config) in config.iter() {
+            let config_content = serde_json::to_string(&config)?;
+            let config_file_path = config_dir.join(format!("{}_{}.json", self.name, Uuid::new_v4()));
+            let mut file = File::create(&config_file_path)?;
+            file.write_all(config_content.as_bytes())?;
+            self.start_backend_from_path(node_info, config_file_path)?;
+        }
         Ok(())
     }
 
-    fn start_backend_from_path(&mut self, config_path: PathBuf) -> Result<()> {
+    fn start_backend_from_path(&mut self, node_info: &NodeInfo, config_path: PathBuf) -> Result<()> {
         let command_str = self.bin_path.as_os_str();
         let mut command = Command::new(command_str);
         let command = command.args(["client", "--config"]);
@@ -65,15 +71,14 @@ impl CommandManagerTrait for HysteriaManager {
             .stderr(Stdio::piped());
         let share_child = SharedChild::spawn(command)?;
         let child_arc = Arc::new(share_child);
-        self.child = Some(child_arc);
+        self.child.insert(*node_info, child_arc);
         println!("config_file_path: {:?}", config_path);
-        self.config_path = Some(config_path);
+        self.config_path.insert(*node_info, config_path);
         Ok(())
     }
 
     fn check_status(&self) -> Result<()> {
-        let child_clone = self.child.clone();
-        if let Some(child) = child_clone {
+        for (_node_info, child) in self.child.iter() {
             if let Ok(None) = child.try_wait() {
                 let std_err = &mut child.take_stderr();
                 if let Some(stderr) = std_err {
@@ -92,30 +97,51 @@ impl CommandManagerTrait for HysteriaManager {
         Err(anyhow!("{} start failed!", self.name))
     }
 
+    fn check_status_by_node_info(&self, node: &NodeInfo) -> Result<()> {
+        let child = self.child.get(node);
+        if let Ok(None) = child.try_wait() {
+            let std_err = &mut child.take_stderr();
+            if let Some(stderr) = std_err {
+                let reader = io::BufReader::new(stderr);
+                for line in reader.lines() {
+                    if let Ok(line) = line {
+                        println!("{line}");
+                        if line.contains("server listening") {
+                            return Ok(());
+                        }
+                    }
+                }
+            }
+        }
+        Ok(())
+    }
+
     fn terminate_backend(&mut self) -> Result<()> {
-        let child_clone = self.child.clone();
-        if let Some(child) = child_clone {
+        for (node_info, child) in self.child.iter() {
             child.kill()?;
-            self.child = None;
+            self.child.remove(node_info);
         }
         Ok(())
     }
 
     fn restart_backend(&mut self) -> Result<()> {
-        if self.is_running() {
-            let _terminate_result = self.terminate_backend()?;
-            let config_path_clone = self.config_path.clone();
-            if let Some(config_path) = config_path_clone {
-                let file = File::open(&config_path)?;
-                let reader: io::BufReader<File> = io::BufReader::new(file);
-                let config: Value = serde_json::from_reader(reader)?;
-                println!("config: {:?}", config);
-                let _ = self.start_backend_from_path(config_path)?;
+        for (node_info, child) in self.child.iter() {
+            if child.is_running() {
+                let _terminate_result = self.terminate_backend()?;
+                let config_path_clone = self.config_path.clone();
+                if let Some(config_path) = config_path_clone {
+                    let file = File::open(&config_path)?;
+                    let reader: io::BufReader<File> = io::BufReader::new(file);
+                    let config: Value = serde_json::from_reader(reader)?;
+                    println!("config: {:?}", config);
+                    let _ = self.start_backend_from_path(&node_info, config_path)?;
+                }
+                Ok(())
+            } else {
+                return Err(anyhow!("{} not be runing!", self.name));
             }
-            Ok(())
-        } else {
-            return Err(anyhow!("{} not be runing!", self.name));
         }
+        Ok(())
     }
 
     fn is_running(&self) -> bool {

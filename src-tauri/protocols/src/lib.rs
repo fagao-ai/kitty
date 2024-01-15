@@ -10,4 +10,6 @@ pub use hysteria::HysteriaManager;
 pub use xray::XrayManager;
 
 pub mod traits;
+mod types;
+
 pub use traits::CommandManagerTrait;
