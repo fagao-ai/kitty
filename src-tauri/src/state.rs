@@ -1,7 +1,8 @@
+use std::sync::Arc;
 use kitty_proxy::{HttpProxy, MatchProxy, SocksProxy};
-use protocols::{CommandManagerTrait, HysteriaManager, XrayManager};
+use protocols::{KittyCommandGroup};
 use sea_orm::DatabaseConnection;
-use tokio::sync::watch::Receiver;
+use tokio::sync::watch::Sender;
 use tokio::sync::Mutex;
 
 pub struct DatabaseState {
@@ -18,9 +19,9 @@ impl DatabaseState {
 
 pub struct ProcessManagerState {
     #[cfg(feature = "hysteria")]
-    pub hy_process_manager: Mutex<Option<HysteriaManager>>,
+    pub hy_process_manager: Mutex<Option<KittyCommandGroup>>,
     #[cfg(feature = "xray")]
-    pub xray_process_manager: Mutex<Option<XrayManager>>,
+    pub xray_process_manager: Mutex<Option<KittyCommandGroup>>,
 }
 
 impl Default for ProcessManagerState {
@@ -38,9 +39,9 @@ impl Default for ProcessManagerState {
 pub struct KittyProxyState {
     pub http_proxy: Mutex<Option<HttpProxy>>,
     pub socks_proxy: Mutex<Option<SocksProxy>>,
-    pub match_proxy: Mutex<Option<MatchProxy>>,
-    pub http_proxy_sx: Mutex<Option<Receiver<bool>>>,
-    pub socks_proxy_sx: Mutex<Option<Receiver<bool>>>,
+    pub match_proxy: Mutex<Option<Arc<MatchProxy>>>,
+    pub http_proxy_sx: Mutex<Option<Sender<bool>>>,
+    pub socks_proxy_sx: Mutex<Option<Sender<bool>>>,
 }
 
 impl Default for KittyProxyState {

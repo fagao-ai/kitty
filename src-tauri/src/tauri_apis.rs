@@ -2,8 +2,9 @@ use std::{
     collections::HashMap,
     path::{Path, PathBuf},
 };
+use std::sync::Arc;
 
-use protocols::{CommandManagerTrait, HysteriaManager, XrayManager};
+use protocols::{KittyCommandGroup};
 use tauri::{Manager, State};
 
 use crate::{
@@ -11,7 +12,9 @@ use crate::{
     types::{CommandResult, KittyResponse},
 };
 use anyhow::{anyhow, Result};
+use kitty_proxy::MatchProxy;
 use tauri::utils::platform;
+use tokio::sync::watch;
 
 use entity::{
     base_config,
@@ -45,18 +48,28 @@ pub async fn set_system_proxy<'a>(
 
     let config_dir = app.app_handle().path().config_dir()?;
     #[cfg(feature = "hysteria")]
+        let (kill_tx, mut kill_rx) = watch::channel(false);
+    #[cfg(feature = "hysteria")]
     {
         let hysteria_record = hysteria_entity::Model::first(&db).await?.unwrap();
         let command_hysteria = CommandHysteria::try_from(&hysteria_record)?;
         let hysteria_bin_path = relative_command_path("hysteria".as_ref())?;
-        let mut hy_manager = HysteriaManager::new(hysteria_bin_path);
-        hy_manager.start_backend(command_hysteria, config_dir.clone())?;
-        *state.hy_process_manager.lock().await = Some(hy_manager);
-        // let http_port = command_hysteria.get_http_port();
-        // let socks_port = command_hysteria.get_socks_port();
-        // let http_proxy = proxy_state.http_proxy.lock().await.unwrap();
-        // tokio::spawn(future)
-        // http_proxy.serve(match_proxy, rx, vpn_node_infos)
+        let mut hysteria_command_group = KittyCommandGroup::new(String::from("hysteria"), hysteria_bin_path, config_dir);
+        let mut config_hash_map = HashMap::new();
+        let _http_port = command_hysteria.get_http_port();
+        let _socks_port = command_hysteria.get_socks_port();
+        config_hash_map.insert(command_hysteria.server.clone(), command_hysteria);
+        let _ = hysteria_command_group.start_commands(config_hash_map, None);
+        *state.hy_process_manager.lock().await = Some(hysteria_command_group);
+        let mut http_proxy = proxy_state.http_proxy.lock().await.unwrap();
+        let match_proxy = proxy_state.match_proxy.lock().await;
+        let match_proxy_clone = match_proxy.clone().unwrap();
+
+        let vpn_node_infos = vec![];
+        tokio::spawn(async move {
+            http_proxy.serve(match_proxy_clone, &mut kill_rx, vpn_node_infos)
+        });
+        *proxy_state.http_proxy_sx.lock().await = Some(kill_tx);
     }
 
     #[cfg(feature = "xray")]
@@ -70,9 +83,9 @@ pub async fn set_system_proxy<'a>(
             "XRAY_LOCATION_ASSET".to_string(),
             resource_dir.to_string_lossy().to_string(),
         );
-        let mut xray_manager = XrayManager::new(xray_bin_path, env_var);
-        xray_manager.start_backend(command_xray, config_dir)?;
-        *state.xray_process_manager.lock().await = Some(xray_manager);
+        // let mut xray_manager = XrayManager::new(xray_bin_path, env_var);
+        // xray_manager.start_backend(command_xray, config_dir)?;
+        // *state.xray_process_manager.lock().await = Some(xray_manager);
     }
 
     Ok(KittyResponse::from_data(false))

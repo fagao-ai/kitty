@@ -151,7 +151,7 @@ impl TryFrom<&Model> for CommandHysteria {
     type Error = Error;
 
     fn try_from(record: &Model) -> Result<Self, Self::Error> {
-        let http_port = 11186;
+        let http_port = 11185;
         let socks_port = 11186;
         for port in [http_port, socks_port] {
             if !local_port_available(port) {

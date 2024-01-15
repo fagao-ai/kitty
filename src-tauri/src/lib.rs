@@ -8,11 +8,14 @@ mod utils;
 
 use std::collections::HashMap;
 use std::{env, fs};
+use std::sync::Arc;
 
 use kitty_proxy::{HttpProxy, MatchProxy, SocksProxy};
 
 use crate::state::KittyProxyState;
 use anyhow::Result;
+use tauri_plugin_autostart::MacosLauncher;
+
 #[cfg(feature = "hysteria")]
 use tauri_apis::hysteria as hysteria_api;
 
@@ -20,7 +23,6 @@ use tauri_apis::hysteria as hysteria_api;
 use tauri_apis::xray as xray_api;
 
 use entity::base_config;
-use protocols::CommandManagerTrait;
 use state::{DatabaseState, ProcessManagerState};
 use tauri::{
     menu::{MenuBuilder, MenuItemBuilder},
@@ -28,7 +30,6 @@ use tauri::{
     Icon, WindowEvent,
 };
 use tauri::{Manager, State};
-use tauri_plugin_autostart::MacosLauncher;
 use tauri_plugin_notification::{NotificationExt, PermissionState};
 
 fn set_system_tray<'a>(app: &'a mut tauri::App) -> Result<()> {
@@ -96,6 +97,7 @@ fn setup_db<'a>(app: &'a mut tauri::App) -> Result<(), Box<dyn std::error::Error
     Ok(())
 }
 
+
 fn setup_kitty_proxy<'a>(app: &'a mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
     let handle = app.handle();
     let resource_dir = handle.path().resource_dir()?;
@@ -117,7 +119,7 @@ fn setup_kitty_proxy<'a>(app: &'a mut tauri::App) -> Result<(), Box<dyn std::err
             .unwrap();
         *app_state.socks_proxy.lock().await = Some(socks_proxy);
         *app_state.http_proxy.lock().await = Some(http_proxy);
-        *app_state.match_proxy.lock().await = Some(match_proxy);
+        *app_state.match_proxy.lock().await = Some(Arc::new(match_proxy));
     });
 
     Ok(())
