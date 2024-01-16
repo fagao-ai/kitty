@@ -1,10 +1,13 @@
 <script setup lang="ts">
 import { NButton } from 'naive-ui'
-import { reactive, ref } from 'vue'
-import ProxyCard from '@/views/proxy/ProxyCard.vue'
-import type { ProxyCard as Card, HysteriaProxy } from '@/types/proxy'
+import { reactive, ref, watch } from 'vue'
+import { ProxyType } from '@/types/proxy'
 import AddProxyModal from '@/views/proxy/AddProxyModal.vue'
-import { invoke } from '@/utils/invoke'
+import type { ProxyCard as Card, HysteriaProxy } from '@/types/proxy'
+import { proxyStore } from '@/views/proxy/store'
+import HysteriaProxyView from '@/views/proxy/HysteriaProxy.vue'
+import XrayProxy from '@/views/proxy/XrayProxy.vue'
+import { batchGetProxy } from '@/apis/proxy'
 
 const showInsertModal = ref(false)
 
@@ -22,25 +25,24 @@ const formValue = reactive<HysteriaProxy>({
   },
 })
 
-const cards = ref<Card[]>([])
+const hysterias = ref<Card[]>([])
+const xrays = ref<Card[]>([])
 
-async function batchGetProxy() {
-  const res = await invoke<Card[]>('get_all_proxies')
-  cards.value = res.data.map(item => ({
-    tag: 'hysteria',
-    name: item.name,
-    delay: 200,
-    protocol: 'TCP',
-  }))
-  // cards.value.push({
-  //   tag: 'hysteria',
-  //   name: 'test',
-  //   delay: 200,
-  //   protocol: 'TCP',
-  // })
+async function initHysteria() {
+  hysterias.value = await batchGetProxy()
 }
 
-batchGetProxy()
+async function initXray() {
+  xrays.value = []
+}
+
+watch(proxyStore, () => {
+  if (proxyStore.value.currentProxy === ProxyType.Hysteria) {
+    initHysteria()
+    return
+  }
+  initXray()
+}, { immediate: true, deep: true })
 </script>
 
 <template>
@@ -58,32 +60,23 @@ batchGetProxy()
         </n-button>
       </div>
     </div>
-    <div
-      v-if="cards.length !== 0"
-      class="flex-1 w-full"
-    >
-      <div class="grid grid-cols-5 auto-rows-fr gap-4 xl:grid-cols-6 xxl:grid-cols-7 xxxl:grid-cols-8 tv:grid-cols-10">
-        <template
-          v-for="card, index in cards"
-          :key="index"
-        >
-          <proxy-card
-            :name="card.name"
-            :delay="card.delay"
-            :tag="card.tag"
-            :protocol="card.protocol"
-          />
-        </template>
-      </div>
+    <div class="h-8 flex justify-center items-center">
+      <n-radio-group
+        v-model:value="proxyStore.currentProxy"
+        name="proxyGroup"
+        :on-update-value="() => {}"
+      >
+        <n-radio-button class="w-20" :value="ProxyType.Hysteria">
+          {{ ProxyType.Hysteria }}
+        </n-radio-button>
+        <n-radio-button class="w-20" :value="ProxyType.Xray">
+          {{ ProxyType.Xray }}
+        </n-radio-button>
+      </n-radio-group>
     </div>
-    <div
-      v-else
-      class="flex-1 w-full flex justify-center items-center"
-    >
-      <n-empty
-        size="huge"
-        description="No Proxy Found"
-      />
+    <div class="flex-1 w-full">
+      <hysteria-proxy-view v-if="proxyStore.currentProxy === ProxyType.Hysteria" :data="hysterias" />
+      <xray-proxy v-if="proxyStore.currentProxy === ProxyType.Xray" :data="xrays" />
     </div>
   </div>
   <add-proxy-modal
@@ -92,3 +85,11 @@ batchGetProxy()
     @insert-submit="batchGetProxy"
   />
 </template>
+
+<style lang="scss" scoped>
+:deep(.n-radio-button) {
+  .n-radio__label {
+    @apply flex items-center justify-center;
+  }
+}
+</style>

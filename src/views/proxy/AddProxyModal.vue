@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { NButton, NForm, NFormItem, NInput } from 'naive-ui'
+import { NButton, NForm, NFormItem, NInput, NTabPane, NTabs } from 'naive-ui'
 import { useVModel } from '@vueuse/core'
 import type { ProxyAdd } from '@/types/proxy'
 import { invoke } from '@/utils/invoke'
@@ -38,58 +38,75 @@ function onCancelInsert() {
     :bordered="false"
     :segmented="true"
   >
-    <n-form
-      :model="form"
-      size="medium"
-      label-placement="left"
-      label-width="auto"
+    <n-tabs
+      type="line"
+      animated
     >
-      <n-form-item
-        label="代理名称"
-        path="name"
+      <n-tab-pane
+        name="hysteria"
+        tab="hysteria"
       >
-        <n-input v-model:value="form.name" />
-      </n-form-item>
-      <n-form-item
-        label="服务地址"
-        path="server"
+        <n-form
+          :model="form"
+          size="medium"
+          label-placement="left"
+          label-width="auto"
+        >
+          <n-form-item
+            label="代理名称"
+            path="name"
+          >
+            <n-input v-model:value="form.name" />
+          </n-form-item>
+          <n-form-item
+            label="服务地址"
+            path="server"
+          >
+            <n-input v-model:value="form.server" />
+          </n-form-item>
+          <n-form-item
+            label="认证"
+            path="auth"
+          >
+            <n-input
+              v-model:value="form.auth"
+              placeholder="认证密码"
+            />
+          </n-form-item>
+          <n-form-item
+            label="上行"
+            path="bandwidth.up"
+          >
+            <n-input v-model:value="form.bandwidth.up" />
+          </n-form-item>
+          <n-form-item
+            label="下行"
+            path="bandwidth.down"
+          >
+            <n-input v-model:value="form.bandwidth.down" />
+          </n-form-item>
+          <n-form-item
+            label="sni"
+            path="tls.sni"
+          >
+            <n-input v-model:value="form.tls.sni" />
+          </n-form-item>
+          <n-form-item
+            label="安全连接"
+            path="tls.insecure"
+          >
+            <n-switch v-model:value="form.tls.insecure" />
+          </n-form-item>
+        </n-form>
+      </n-tab-pane>
+      <n-tab-pane
+        name="Xray"
+        tab="Xray"
       >
-        <n-input v-model:value="form.server" />
-      </n-form-item>
-      <n-form-item
-        label="认证"
-        path="auth"
-      >
-        <n-input
-          v-model:value="form.auth"
-          placeholder="认证密码"
-        />
-      </n-form-item>
-      <n-form-item
-        label="上行"
-        path="bandwidth.up"
-      >
-        <n-input v-model:value="form.bandwidth.up" />
-      </n-form-item>
-      <n-form-item
-        label="下行"
-        path="bandwidth.down"
-      >
-        <n-input v-model:value="form.bandwidth.down" />
-      </n-form-item>
-      <n-form-item
-        label="sni"
-        path="tls.sni"
-      >
-        <n-input v-model:value="form.tls.sni" />
-      </n-form-item>
-      <n-form-item
-        label="安全连接"
-        path="tls.insecure"
-      >
-        <n-switch v-model:value="form.tls.insecure" />
-      </n-form-item>
-    </n-form>
+        Xray
+      </n-tab-pane>
+    </n-tabs>
+
     <template #footer>
       <div class="w-full flex flex-center gap-16">
         <n-button
@@ -109,3 +126,17 @@ function onCancelInsert() {
     </template>
   </n-modal>
 </template>
+
+<style>
+.n-card-header {
+  padding: 12px 24px !important;
+}
+
+.n-card__content {
+  padding: 0 24px !important;
+}
+
+.n-card__footer {
+  padding: 12px 24px !important;
+}
+</style>

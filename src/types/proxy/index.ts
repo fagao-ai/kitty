@@ -31,3 +31,8 @@ export interface ProxyAdd {
   showModal: boolean
   formData: HysteriaProxy
 }
+
+export enum ProxyType {
+  Hysteria = 'hysteria',
+  Xray = 'xray',
+}
