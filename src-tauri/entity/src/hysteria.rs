@@ -1,9 +1,12 @@
 use sea_orm::{entity::prelude::*, FromJsonQueryResult};
 
 use anyhow::{anyhow, Error, Result};
-use port_scanner::local_port_available;
+use port_scanner::scan_port;
 use serde::{Deserialize, Serialize};
-use std::convert::TryFrom;
+use std::{convert::TryFrom, ops::Range};
+
+const START_PORT: u16 = 20000;
+const END_PORT: u16 = 30000;
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, DeriveEntityModel)]
 #[sea_orm(table_name = "hysteria")]
@@ -88,7 +91,7 @@ macro_rules! generate_model_functions {
         pub async fn fetch_all(db: &DatabaseConnection) -> Result<Vec<Model>, DbErr> {
             let results = self::Entity::find().all(db).await?;
             Ok(results)
-    }
+        }
     };
 }
 
@@ -151,20 +154,30 @@ impl TryFrom<&Model> for CommandHysteria {
     type Error = Error;
 
     fn try_from(record: &Model) -> Result<Self, Self::Error> {
-        let http_port = 11185;
-        let socks_port = 11186;
-        for port in [http_port, socks_port] {
-            if !local_port_available(port) {
-                return Err(anyhow!(format!("port {port} already used.")));
+        let mut available_ports = (0, 0);
+        let mut available_count = 0;
+        for port in START_PORT..END_PORT {
+            if scan_port(port) {
+                if available_count == 0 {
+                    available_ports.0 = port;
+                } else {
+                    available_ports.1 = port;
+                }
+
+                available_count += 1;
             }
         }
+        if available_count != 2 {
+            return Err(anyhow!(format!("not have engouh port")));
+        }
+
         Ok(Self {
             server: record.server.clone(),
             auth: record.auth.clone(),
             bandwidth: record.bandwidth.clone(),
             tls: record.tls.clone(),
-            socks5: ListenAddr::new(socks_port),
-            http: ListenAddr::new(http_port),
+            socks5: ListenAddr::new(available_ports.0),
+            http: ListenAddr::new(available_ports.1),
         })
     }
 }
