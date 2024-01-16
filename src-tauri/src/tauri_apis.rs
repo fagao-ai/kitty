@@ -80,11 +80,11 @@ async fn init_state<'a>(
 #[tauri::command(rename_all = "snake_case")]
 pub async fn set_system_proxy<'a>(
     app: tauri::App,
-    state: State<'a, ProcessManagerState>,
+    process_state: State<'a, ProcessManagerState>,
     proxy_state: State<'a, KittyProxyState>,
     db_state: State<'a, DatabaseState>,
 ) -> CommandResult<KittyResponse<bool>> {
-    let _ = init_state(process_state, proxy_state)?;
+    let _ = init_state(process_state, proxy_state).await?;
     let db = db_state.get_db();
     let config_dir = app.app_handle().path().config_dir()?;
     let mut http_vpn_node_infos = Vec::new();
@@ -104,7 +104,7 @@ pub async fn set_system_proxy<'a>(
         let socks_port = command_hysteria.get_socks_port();
         config_hash_map.insert(command_hysteria.server.clone(), command_hysteria);
         let _ = hysteria_command_group.start_commands(config_hash_map, None);
-        *state.hy_process_manager.lock().await = Some(hysteria_command_group);
+        *process_state.hy_process_manager.lock().await = Some(hysteria_command_group);
         http_vpn_node_infos.push(NodeInfo::new(
             IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)),
             http_port,
@@ -136,7 +136,7 @@ pub async fn set_system_proxy<'a>(
             KittyCommandGroup::new(String::from("xray"), xray_bin_path, config_dir);
         config_hash_map.insert(command_xray.server.clone(), command_xray);
         let _ = xray_command_group.start_commands(config_hash_map, None);
-        *state.hy_process_manager.lock().await = Some(xray_command_group);
+        *process_state.hy_process_manager.lock().await = Some(xray_command_group);
         http_vpn_node_infos.push(NodeInfo::new(
             IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)),
             http_port,
