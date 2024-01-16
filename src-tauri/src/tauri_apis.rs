@@ -40,8 +40,8 @@ fn relative_command_path(command: &Path) -> Result<PathBuf> {
 }
 
 async fn init_state<'a>(
-    process_state: State<'a, ProcessManagerState>,
-    proxy_state: State<'a, KittyProxyState>,
+    process_state: &State<'a, ProcessManagerState>,
+    proxy_state: &State<'a, KittyProxyState>,
 ) -> Result<()> {
     #[cfg(feature = "hysteria")]
     {
@@ -84,7 +84,7 @@ pub async fn set_system_proxy<'a>(
     proxy_state: State<'a, KittyProxyState>,
     db_state: State<'a, DatabaseState>,
 ) -> CommandResult<KittyResponse<bool>> {
-    let _ = init_state(process_state, proxy_state).await?;
+    let _ = init_state(&process_state,&proxy_state).await?;
     let db = db_state.get_db();
     let config_dir = app.app_handle().path().config_dir()?;
     let mut http_vpn_node_infos = Vec::new();
