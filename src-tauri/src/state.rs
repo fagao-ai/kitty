@@ -37,8 +37,8 @@ impl Default for ProcessManagerState {
 }
 
 pub struct KittyProxyState {
-    pub http_proxy: Mutex<Option<HttpProxy>>,
-    pub socks_proxy: Mutex<Option<SocksProxy>>,
+    // pub http_proxy: Mutex<Option<HttpProxy>>,
+    // pub socks_proxy: Mutex<Option<SocksProxy>>,
     pub match_proxy: Mutex<Option<Arc<MatchProxy>>>,
     pub http_proxy_sx: Mutex<Option<Sender<bool>>>,
     pub socks_proxy_sx: Mutex<Option<Sender<bool>>>,
@@ -47,8 +47,8 @@ pub struct KittyProxyState {
 impl Default for KittyProxyState {
     fn default() -> Self {
         Self {
-            http_proxy: Mutex::new(None),
-            socks_proxy: Mutex::new(None),
+            // http_proxy: Mutex::new(None),
+            // socks_proxy: Mutex::new(None),
             match_proxy: Mutex::new(None),
             http_proxy_sx: Mutex::new(None),
             socks_proxy_sx: Mutex::new(None),

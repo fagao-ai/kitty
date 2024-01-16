@@ -103,22 +103,14 @@ fn setup_kitty_proxy<'a>(app: &'a mut tauri::App) -> Result<(), Box<dyn std::err
     let resource_dir = handle.path().resource_dir()?;
     let app_state: State<KittyProxyState> = handle.state();
     let db_state: State<DatabaseState> = handle.state();
-    let db = db_state.get_db();
     tauri::async_runtime::block_on(async move {
-        let record = base_config::Model::first(&db).await.unwrap().unwrap();
-        let http_port = record.http_port;
-        let socks_port = record.socks_port;
+        
         let geoip_file = resource_dir.join("kitty_geoip.dat");
         let geosite_file = resource_dir.join("kitty_geosite.dat");
         let match_proxy = MatchProxy::from_geo_dat(Some(&geoip_file), Some(&geosite_file)).unwrap();
-        let http_proxy = HttpProxy::new(record.local_ip.as_str(), http_port, None)
-            .await
-            .unwrap();
-        let socks_proxy = SocksProxy::new(record.local_ip.as_str(), socks_port, None)
-            .await
-            .unwrap();
-        *app_state.socks_proxy.lock().await = Some(socks_proxy);
-        *app_state.http_proxy.lock().await = Some(http_proxy);
+        
+        // *app_state.socks_proxy.lock().await = Some(socks_proxy);
+        // *app_state.http_proxy.lock().await = Some(http_proxy);
         *app_state.match_proxy.lock().await = Some(Arc::new(match_proxy));
     });
 
@@ -135,7 +127,7 @@ async fn on_window_exit(event: tauri::GlobalWindowEvent) {
                 let mut process_manager = state.hy_process_manager.lock().await;
                 let process_manager = process_manager.as_mut();
                 if let Some(process_manager) = process_manager {
-                    if process_manager.terminate_backend().is_err() {
+                    if process_manager.terminate_backends().is_err() {
                         let app = event.window();
                         if let Ok(PermissionState::Granted) = app.notification().permission_state()
                         {
@@ -154,7 +146,7 @@ async fn on_window_exit(event: tauri::GlobalWindowEvent) {
                 let mut process_manager = state.xray_process_manager.lock().await;
                 let process_manager = process_manager.as_mut();
                 if let Some(process_manager) = process_manager {
-                    if process_manager.terminate_backend().is_err() {
+                    if process_manager.terminate_backends().is_err() {
                         let app = event.window();
                         if let Ok(PermissionState::Granted) = app.notification().permission_state()
                         {
@@ -197,7 +189,6 @@ pub fn run() {
     let builder = builder.invoke_handler(
         #[cfg(feature = "hysteria")]
         tauri::generate_handler![
-            hysteria_api::get_hysteria_status,
             hysteria_api::add_hy_item,
             hysteria_api::get_all_hysterias,
             hysteria_api::query_base_config,
