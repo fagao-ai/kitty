@@ -32,7 +32,7 @@ pub enum StreamSettings {
     #[serde(untagged)]
     Grpc(GrpcProtocol),
     #[serde(untagged)]
-    Mkcp,
+    Kcp(KcpProtocol),
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -96,7 +96,7 @@ struct TcpSettings {
 }
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 struct TcpHeader {
-    r#type: Type,
+    r#type: TcpType,
     #[serde(skip_serializing_if = "Option::is_none")]
     request: Option<TcpRequest>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -104,7 +104,7 @@ struct TcpHeader {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
-enum Type {
+enum TcpType {
     #[serde(rename = "none")]
     None,
     #[serde(rename = "http")]
@@ -263,6 +263,88 @@ impl Default for Http2Settings {
     }
 }
 
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub struct KcpProtocol {
+    network: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    security: Option<Security>,
+    #[serde(rename = "tlsSettings")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    tls_settings: Option<TLSSettings>,
+    #[serde(rename = "kcpSettings")]
+    kcp_settings: KcpSettings,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+struct KcpSettings {
+    mtu: u16,
+    tti: u16,
+    #[serde(rename = "uplinkCapacity")]
+    uplink_capacity: u16,
+    #[serde(rename = "downlinkCapacity")]
+    downlink_capacity: u16,
+    congestion: bool,
+    #[serde(rename = "readBufferSize")]
+    read_buffer_size: u16,
+    #[serde(rename = "writeBufferSize")]
+    write_buffer_size: u16,
+    header: KcpHeader,
+    seed: Option<String>,
+}
+
+impl Default for KcpSettings {
+    fn default() -> Self {
+        Self {
+            mtu: 1350,
+            tti: 20,
+            uplink_capacity: 5,
+            downlink_capacity: 20,
+            congestion: false,
+            read_buffer_size: 2,
+            write_buffer_size: 2,
+            header: KcpHeader::default(),
+            seed: None,
+        }
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+struct KcpHeader {
+    r#type: KcpType,
+    domain: String,
+}
+impl Default for KcpHeader {
+    fn default() -> Self {
+        Self {
+            r#type: KcpType::default(),
+            domain: "www.example.com".into(),
+        }
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+enum KcpType {
+    #[serde(rename = "none")]
+    None,
+    #[serde(rename = "srtp")]
+    Srtp,
+    #[serde(rename = "utp")]
+    Utp,
+    #[serde(rename = "wechat-video")]
+    WechatVideo,
+    #[serde(rename = "dtls")]
+    Dtls,
+    #[serde(rename = "wireguard")]
+    Wireguard,
+    #[serde(rename = "dns")]
+    Dns,
+}
+
+impl Default for KcpType {
+    fn default() -> Self {
+        KcpType::None
+    }
+}
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
 pub enum Relation {}
 
