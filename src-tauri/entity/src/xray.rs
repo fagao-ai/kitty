@@ -349,3 +349,118 @@ impl Default for KcpType {
 pub enum Relation {}
 
 impl ActiveModelBehavior for ActiveModel {}
+
+pub struct XrayConfig {
+    log: XrayLog,
+    inbounds: Vec<Inbound>,
+    outbounds: Vec<Outbound>,
+}
+
+struct XrayLog {
+    access: String,
+    error: String,
+    loglevel: String,
+}
+
+impl Default for XrayLog {
+    fn default() -> Self {
+        Self {
+            access: "".into(),
+            error: "".into(),
+            loglevel: "info".into(),
+        }
+    }
+}
+
+struct Inbound {
+    port: u16,
+    protocol: String,
+    listen: String,
+    settings: InboundSettings,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+enum InboundSettings {
+    #[serde(untagged)]
+    HttpInboundSettings(HttpInboundSettings),
+    #[serde(untagged)]
+    SocksInboundSettings(SocksInboundSettings),
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+struct HttpInboundSettings {
+    timeout: u16,
+    allow_transparent: bool,
+}
+
+impl Default for HttpInboundSettings {
+    fn default() -> Self {
+        Self {
+            timeout: 300,
+            allow_transparent: false,
+        }
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+struct SocksInboundSettings {
+    auth: String,
+    udp: bool,
+    ip: String,
+}
+
+impl Default for SocksInboundSettings {
+    fn default() -> Self {
+        Self {
+            auth: "noauth".into(),
+            udp: true,
+            ip: "127.0.0.1".into(),
+        }
+    }
+}
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+struct Outbound {
+    protocol: String,
+    settings: OutboundSettings,
+    stream_settings: StreamSettings,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+struct OutboundSettings {
+    vnext: Vec<Vnext>,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+struct Vnext {
+    address: String,
+    port: u16,
+    users: Vec<User>,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+struct User {
+    id: String,
+    encryption: String,
+    flow: String,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+enum UserFlow {
+    #[serde(rename = "none")]
+    None,
+    #[serde(rename = "xtls-rprx-vision")]
+    XtlsRprxVision,
+    #[serde(rename = "xtls-rprx-vision-udp443")]
+    XtlsRprxVisionUdp443,
+}
+
+struct Routing {
+    domain_strategy: String,
+    domain_matcher: String,
+    balancers: Vec<String>,
+}
+
+
+struct Balancer{
+    
+}

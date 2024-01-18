@@ -1,0 +1,129 @@
+{
+    "log": {
+        "access": "",
+        "error": "none",
+        "loglevel": "debug"
+    },
+    "inbounds": [
+        {
+            "port": 20179,
+            "protocol": "socks",
+            "listen": "127.0.0.1",
+            "sniffing": {
+                "enabled": false,
+                "destOverride": [
+                    "http",
+                    "tls"
+                ],
+                "metadataOnly": false
+            },
+            "settings": {
+                "auth": "noauth",
+                "udp": true
+            },
+            "streamSettings": null,
+            "tag": "socks_ipv4"
+        },
+        {
+            "port": 20178,
+            "protocol": "http",
+            "listen": "127.0.0.1",
+            "sniffing": {
+                "enabled": false,
+                "destOverride": [
+                    "http",
+                    "tls"
+                ],
+                "metadataOnly": false
+            },
+            "streamSettings": null,
+            "tag": "http_ipv4"
+        }
+    ],
+    "outbounds": [
+        {
+            "tag": "proxy",
+            "protocol": "vless",
+            "settings": {
+                "vnext": [
+                    {
+                        "address": "104.27.50.219",
+                        "port": 443,
+                        "users": [
+                            {
+                                "id": "7c844d36-0a00-4b62-8dfd-967b97e94e15",
+                                "encryption": "none"
+                            }
+                        ]
+                    }
+                ]
+            },
+            "streamSettings": {
+                "network": "ws",
+                "security": "tls",
+                "tlsSettings": {
+                    "allowInsecure": false,
+                    "serverName": "www.hezz.eu.org"
+                },
+                "wsSettings": {
+                    "path": "/hezz",
+                    "headers": {
+                        "Host": "www.hezz.eu.org"
+                    }
+                },
+                "sockopt": {
+                    "mark": 128
+                }
+            }
+        },
+        {
+            "tag": "direct",
+            "protocol": "freedom",
+            "settings": {
+                "domainStrategy": "UseIP"
+            },
+            "streamSettings": {
+                "sockopt": {
+                    "mark": 128
+                }
+            }
+        },
+        {
+            "tag": "block",
+            "protocol": "blackhole",
+            "settings": {}
+        },
+        {
+            "tag": "dns-out",
+            "protocol": "dns",
+            "settings": {
+                "port": 53,
+                "address": "119.29.29.29",
+                "network": "udp"
+            },
+            "streamSettings": {
+                "sockopt": {
+                    "mark": 128
+                }
+            }
+        }
+    ],
+    "routing": {
+        "domainStrategy": "IPOnDemand",
+        "domainMatcher": "mph",
+        "rules": [{
+            "type": "field",
+            "inboundTag": ["http_ipv4"],
+            "balancerTag": "balancer"
+        }],
+        "balancers": [
+            {
+                "tag": "balancer",
+                "selector": [
+                    "proxy",
+                    "direct"
+                ]
+            }
+        ]
+    }
+}
