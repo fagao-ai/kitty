@@ -1309,6 +1309,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "port_scanner",
+ "rand 0.8.5",
  "sea-orm",
  "serde",
  "serde_json",

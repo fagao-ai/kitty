@@ -2,6 +2,9 @@ use sea_orm::{entity::prelude::*, FromJsonQueryResult};
 
 use anyhow::{anyhow, Error, Result};
 use serde::{Deserialize, Serialize};
+use std::collections::HashSet;
+
+use crate::utils::get_random_port;
 const START_PORT: u16 = 20000;
 const END_PORT: u16 = 30000;
 
@@ -354,6 +357,24 @@ pub struct XrayConfig {
     log: XrayLog,
     inbounds: Vec<Inbound>,
     outbounds: Vec<Outbound>,
+    routing: Routing,
+}
+impl XrayConfig {
+    pub fn new(http_port: u16, socks_port: u16, outbounds: Vec<Outbound>) -> Self {
+        let mut selector_outbound_tags = Vec::new();
+        for outbound in outbounds.iter() {
+            selector_outbound_tags.push(outbound.tag.clone())
+        }
+        Self {
+            log: XrayLog::default(),
+            inbounds: vec![
+                Inbound::from_http_port(http_port),
+                Inbound::from_socks_port(socks_port),
+            ],
+            outbounds,
+            routing: Routing::new(selector_outbound_tags),
+        }
+    }
 }
 
 struct XrayLog {
@@ -373,10 +394,33 @@ impl Default for XrayLog {
 }
 
 struct Inbound {
+    tag: String,
     port: u16,
     protocol: String,
     listen: String,
     settings: InboundSettings,
+}
+
+impl Inbound {
+    fn from_http_port(http_port: u16) -> Self {
+        Self {
+            tag: "http_ipv4".into(),
+            port: http_port,
+            protocol: "http".into(),
+            listen: "127.0.0.1".into(),
+            settings: InboundSettings::HttpInboundSettings(HttpInboundSettings::default()),
+        }
+    }
+
+    fn from_socks_port(http_port: u16) -> Self {
+        Self {
+            tag: "socks_ipv4".into(),
+            port: http_port,
+            protocol: "socks".into(),
+            listen: "127.0.0.1".into(),
+            settings: InboundSettings::SocksInboundSettings(SocksInboundSettings::default()),
+        }
+    }
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -420,14 +464,37 @@ impl Default for SocksInboundSettings {
 }
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 struct Outbound {
+    tag: String,
     protocol: String,
     settings: OutboundSettings,
     stream_settings: StreamSettings,
 }
 
+impl Outbound {
+    pub fn new(
+        tag: String,
+        protocol: String,
+        settings: OutboundSettings,
+        stream_settings: StreamSettings,
+    ) -> Self {
+        Self {
+            tag,
+            protocol,
+            settings,
+            stream_settings,
+        }
+    }
+}
+
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 struct OutboundSettings {
     vnext: Vec<Vnext>,
+}
+
+impl OutboundSettings {
+    fn new(vnexts: Vec<Vnext>) -> Self {
+        Self { vnext: vnexts }
+    }
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -437,11 +504,30 @@ struct Vnext {
     users: Vec<User>,
 }
 
+impl Vnext {
+    pub fn new(address: String, port: u16, user: User) -> Self {
+        Self {
+            address,
+            port,
+            users: vec![user],
+        }
+    }
+}
+
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 struct User {
     id: String,
     encryption: String,
-    flow: String,
+    flow: UserFlow,
+}
+impl User {
+    pub fn new(uuid: String) -> Self {
+        Self {
+            id: uuid,
+            encryption: "none".into(),
+            flow: UserFlow::default(),
+        }
+    }
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -454,13 +540,59 @@ enum UserFlow {
     XtlsRprxVisionUdp443,
 }
 
-struct Routing {
-    domain_strategy: String,
-    domain_matcher: String,
-    balancers: Vec<String>,
+impl Default for UserFlow {
+    fn default() -> Self {
+        Self::None
+    }
 }
 
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+struct Routing {
+    domain_strategy: String,
+    rules: Vec<Rule>,
+    balancers: Vec<Balancer>,
+}
 
-struct Balancer{
-    
+impl Routing {
+    pub fn new(selector: Vec<String>) -> Self {
+        Self {
+            domain_strategy: "AsIs".into(),
+            rules: vec![Rule::default()],
+            balancers: vec![Balancer::new(selector)],
+        }
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+struct Rule {
+    r#type: String,
+    #[serde(rename = "inboundTag")]
+    inbound_tag: Vec<String>,
+    #[serde(rename = "bclancerTag")]
+    bclancer_tag: String,
+}
+
+impl Default for Rule {
+    fn default() -> Self {
+        Self {
+            r#type: "field".into(),
+            inbound_tag: vec!["http_ipv4".into(), "socks_ipv4".into()],
+            bclancer_tag: "balancer".into(),
+        }
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+struct Balancer {
+    tag: String,
+    selector: Vec<String>,
+}
+
+impl Balancer {
+    pub fn new(selector: Vec<String>) -> Self {
+        Self {
+            tag: "balancer".into(),
+            selector,
+        }
+    }
 }

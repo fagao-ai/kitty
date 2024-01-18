@@ -3,7 +3,7 @@ use sea_orm::{entity::prelude::*, FromJsonQueryResult};
 use anyhow::{anyhow, Error, Result};
 use port_scanner::scan_port;
 use serde::{Deserialize, Serialize};
-use std::{convert::TryFrom, ops::Range};
+use std::convert::TryFrom;
 
 const START_PORT: u16 = 20000;
 const END_PORT: u16 = 30000;
