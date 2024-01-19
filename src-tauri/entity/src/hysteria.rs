@@ -65,54 +65,8 @@ impl<'a> From<&'a Model> for HysteriaModelWithoutName {
     }
 }
 
-macro_rules! generate_model_functions {
-    () => {
-        pub async fn insert_one(&self, db: &DatabaseConnection) -> Result<Self, DbErr> {
-            let json_value = serde_json::to_value(self).unwrap().into();
-            let record = ActiveModel::from_json(json_value)?;
-            let res = record.insert(db).await;
-            res
-        }
-
-        pub async fn first(db: &DatabaseConnection) -> Result<Option<Self>, DbErr> {
-            let record = self::Entity::find().one(db).await?;
-            Ok(record)
-        }
-
-        pub async fn update(&self, db: &DatabaseConnection, id: i32) -> Result<self::Model, DbErr> {
-            let json_value = serde_json::to_value(self).unwrap();
-            let record = self::Entity::find_by_id(id).one(db).await?;
-            let mut record: self::ActiveModel = record.unwrap().into();
-            let _ = record.set_from_json(json_value);
-            let res = record.update(db).await?;
-            Ok(res)
-        }
-
-        pub async fn fetch_all(db: &DatabaseConnection) -> Result<Vec<Model>, DbErr> {
-            let results = self::Entity::find().all(db).await?;
-            Ok(results)
-        }
-    };
-}
-
 impl Model {
     generate_model_functions!();
-    // pub async fn insert_one(&self, db: &DatabaseConnection) -> Result<Model, DbErr> {
-    //     let json_value = serde_json::to_value(self).unwrap();
-    //     let hysteria_record = self::ActiveModel::from_json(json_value)?;
-    //     let hysteria_res = hysteria_record.insert(db).await;
-    //     hysteria_res
-    // }
-    //
-    // pub async fn fetch_all(db: &DatabaseConnection) -> Result<Vec<Model>, DbErr> {
-    //     let hysterias = self::Entity::find().all(db).await?;
-    //     Ok(hysterias)
-    // }
-    //
-    // pub async fn first(db: &DatabaseConnection) -> Result<Option<Self>, DbErr> {
-    //     let hysteria_record = self::Entity::find().one(db).await?;
-    //     Ok(hysteria_record)
-    // }
 }
 
 #[derive(Serialize, Deserialize)]
@@ -168,7 +122,7 @@ impl TryFrom<&Model> for CommandHysteria {
             }
         }
         if available_count != 2 {
-            return anyhow::bail!("not have engouh port");
+            return Err(anyhow!("not have engouh port"));
         }
 
         Ok(Self {

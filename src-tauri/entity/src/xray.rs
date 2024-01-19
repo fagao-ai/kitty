@@ -1,16 +1,15 @@
+use base64::{engine::general_purpose, Engine as _};
 use sea_orm::{entity::prelude::*, FromJsonQueryResult};
 
-use anyhow::{anyhow, Error, Result};
+use anyhow::{anyhow, Result};
 use serde::{Deserialize, Serialize};
-use url::{ParseError, Url};
+use url::Url;
 
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 use std::str::FromStr;
 
-use crate::hysteria::Tls;
-use crate::utils::get_random_port;
-const START_PORT: u16 = 20000;
-const END_PORT: u16 = 30000;
+use crate::types::ShareJsonStruct;
+use crate::types::ShareWithProtocol;
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, DeriveEntityModel)]
 #[sea_orm(table_name = "xray")]
@@ -25,6 +24,10 @@ pub struct Model {
     pub port: u16,
     #[sea_orm(column_type = "Text")]
     stream_settings: StreamSettings,
+}
+
+impl Model {
+    generate_model_functions!();
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, FromJsonQueryResult)]
@@ -74,11 +77,10 @@ impl TryFrom<url::form_urlencoded::Parse<'_>> for StreamSettings {
             .get("sni")
             .ok_or(anyhow!("get sni failed from url"))?
             .to_owned();
-
+        let security: Security = Security::from_str(security.as_str())?;
+        let tls_settings = TLSSettings::new(allow_insecure, server_name);
         match r#type.as_str() {
             "ws" => {
-                let security: Security = Security::from_str(security.as_str())?;
-                let tls_settings = TLSSettings::new(allow_insecure, server_name);
                 let ws_protocol: WebSocketProtocol = WebSocketProtocol::new(
                     r#type,
                     Some(security),
@@ -88,24 +90,16 @@ impl TryFrom<url::form_urlencoded::Parse<'_>> for StreamSettings {
                 );
                 Ok(StreamSettings::WebSocket(ws_protocol))
             }
-            // "tcp" => Some(()),
+            "tcp" => {
+                let tcp_protocol: TcpProtocol =
+                    TcpProtocol::new(r#type, Some(security), Some(tls_settings));
+                Ok(StreamSettings::Tcp(tcp_protocol))
+            }
             _ => Err(anyhow!("convert stream_settings failed.")),
         }
     }
 }
 
-impl FromStr for StreamSettings {
-    type Err = anyhow::Error;
-    fn from_str(s: &str) -> Result<Self> {
-        let url = Url::parse(s)?;
-        let uuid_or_base64 = url.username();
-        if uuid_or_base64 == "" {
-            let decoded = base64::decode(uuid_or_base64).unwrap();
-            let decoded_str = String::from_utf8(decoded).unwrap();
-        }
-
-    }
-}
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct WebSocketProtocol {
     network: String,
@@ -146,6 +140,18 @@ pub struct TcpProtocol {
     tls_settings: Option<TLSSettings>,
     #[serde(rename = "tcpSettings")]
     tcp_settings: TcpSettings,
+}
+
+impl TcpProtocol {
+    fn new(network: String, security: Option<Security>, tls_settings: Option<TLSSettings>) -> Self {
+        let tcp_settings = TcpSettings::default();
+        Self {
+            network,
+            security,
+            tls_settings,
+            tcp_settings,
+        }
+    }
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -218,6 +224,13 @@ impl Headers {
 struct TcpSettings {
     header: TcpHeader,
 }
+impl Default for TcpSettings {
+    fn default() -> Self {
+        Self {
+            header: TcpHeader::default(),
+        }
+    }
+}
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 struct TcpHeader {
     r#type: TcpType,
@@ -227,12 +240,27 @@ struct TcpHeader {
     response: Option<TcpResponse>,
 }
 
+impl Default for TcpHeader {
+    fn default() -> Self {
+        Self {
+            r#type: TcpType::default(),
+            request: Some(TcpRequest::default()),
+            response: Some(TcpResponse::default()),
+        }
+    }
+}
+
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 enum TcpType {
     #[serde(rename = "none")]
     None,
     #[serde(rename = "http")]
     Http,
+}
+impl Default for TcpType {
+    fn default() -> Self {
+        Self::None
+    }
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -474,6 +502,7 @@ pub enum Relation {}
 
 impl ActiveModelBehavior for ActiveModel {}
 
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct XrayConfig {
     log: XrayLog,
     inbounds: Vec<Inbound>,
@@ -498,6 +527,7 @@ impl XrayConfig {
     }
 }
 
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 struct XrayLog {
     access: String,
     error: String,
@@ -514,6 +544,7 @@ impl Default for XrayLog {
     }
 }
 
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 struct Inbound {
     tag: String,
     port: u16,
@@ -528,7 +559,7 @@ impl Inbound {
             tag: "http_ipv4".into(),
             port: http_port,
             protocol: "http".into(),
-            listen: "127.0.0.1".into(),
+            listen: "0.0.0.0".into(),
             settings: InboundSettings::HttpInboundSettings(HttpInboundSettings::default()),
         }
     }
@@ -538,7 +569,7 @@ impl Inbound {
             tag: "socks_ipv4".into(),
             port: http_port,
             protocol: "socks".into(),
-            listen: "127.0.0.1".into(),
+            listen: "0.0.0.0".into(),
             settings: InboundSettings::SocksInboundSettings(SocksInboundSettings::default()),
         }
     }
@@ -588,6 +619,7 @@ struct Outbound {
     tag: String,
     protocol: String,
     settings: OutboundSettings,
+    #[serde(rename = "streamSettings")]
     stream_settings: StreamSettings,
 }
 
@@ -653,7 +685,7 @@ impl User {
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 enum UserFlow {
-    #[serde(rename = "none")]
+    #[serde(rename = "")]
     None,
     #[serde(rename = "xtls-rprx-vision")]
     XtlsRprxVision,
@@ -669,6 +701,7 @@ impl Default for UserFlow {
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 struct Routing {
+    #[serde(rename = "domainStrategy")]
     domain_strategy: String,
     rules: Vec<Rule>,
     balancers: Vec<Balancer>,
@@ -689,7 +722,7 @@ struct Rule {
     r#type: String,
     #[serde(rename = "inboundTag")]
     inbound_tag: Vec<String>,
-    #[serde(rename = "bclancerTag")]
+    #[serde(rename = "balancerTag")]
     bclancer_tag: String,
 }
 
@@ -732,21 +765,105 @@ impl From<Model> for Outbound {
     }
 }
 
-// vless://7c844d36-0a00-4b62-8dfd-967b97e94e15@104.18.238.169:443?allowInsecure=false&headerType=http&host=www.hezz.eu.org&path=%2Fhezz&security=tls&sni=www.hezz.eu.org&type=tcp#104.18.238.169
 impl TryFrom<Url> for Model {
     type Error = anyhow::Error;
     fn try_from(url: Url) -> Result<Model> {
         let protocol = url.scheme();
         let uuid = url.username();
-        let domain = url.domain().unwrap();
+        let address = url.domain().unwrap();
         let port = url.port().unwrap();
-        let mut pairs: url::form_urlencoded::Parse<'_> = url.query_pairs();
+        let pairs: url::form_urlencoded::Parse<'_> = url.query_pairs();
+        let stream_settings = StreamSettings::try_from(pairs)?;
         Ok(Self {
+            id: Default::default(),
             name: "default".into(),
             protocol: protocol.into(),
             uuid: uuid.into(),
-            address: domain.into(),
+            address: address.into(),
             port,
+            stream_settings,
         })
+    }
+}
+
+impl TryFrom<ShareWithProtocol> for Model {
+    type Error = anyhow::Error;
+    fn try_from(value: ShareWithProtocol) -> Result<Model> {
+        let share = value.share;
+        let network = share.net.clone();
+        let uuid = share.id;
+        let address = share.add;
+        let port: u16 = share.port.parse().unwrap();
+        let name = share.ps;
+        let security: Security = Security::from_str("tls")?;
+        let tls_settings = TLSSettings::new(true, share.host.clone());
+        let res = match network.as_str() {
+            "ws" => {
+                let ws_protocol: WebSocketProtocol = WebSocketProtocol::new(
+                    share.net,
+                    Some(security),
+                    share.host,
+                    Some(share.path),
+                    Some(tls_settings),
+                );
+                Ok(StreamSettings::WebSocket(ws_protocol))
+            }
+            "tcp" => {
+                let tcp_protocol: TcpProtocol =
+                    TcpProtocol::new(share.net, Some(security), Some(tls_settings));
+                Ok(StreamSettings::Tcp(tcp_protocol))
+            }
+            _ => Err(anyhow!("not support this protocol.")),
+        };
+
+        Ok(Self {
+            id: Default::default(),
+            name,
+            protocol: value.protocol,
+            uuid,
+            address,
+            port,
+            stream_settings: res?,
+        })
+    }
+}
+
+impl FromStr for Model {
+    type Err = anyhow::Error;
+    fn from_str(url: &str) -> Result<Self> {
+        let url = Url::parse(url)?;
+        let username = url.username();
+        println!("uuid_or_base64: {username}");
+        if username == "" {
+            let decode_bytes = general_purpose::STANDARD.decode(url.domain().unwrap())?;
+            let share_json = String::from_utf8(decode_bytes).expect("Invalid UTF-8 sequence");
+            let share_struct: ShareJsonStruct = serde_json::from_str(share_json.as_str())?;
+            let share = ShareWithProtocol::new(url.scheme().into(), share_struct);
+            Model::try_from(share)
+        } else {
+            Model::try_from(url)
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::fs;
+
+    #[test]
+    fn test_add() {
+        let aa = r#"vless://uuid@ip:port?encryption=none&security=tls&sni=www.example.com&type=ws&host=www.example.com&path=%2Fhezz#aa        "#;
+        let model = Model::from_str(aa).unwrap();
+        println!("{:?}", model);
+
+        let outbound = Outbound::from(model);
+        let xrray_config = XrayConfig::new(10086, 10087, vec![outbound.clone()]);
+        // println!("outbound: {:?}", serde_json::to_string_pretty(&outbound).unwrap());
+        fs::write(
+            "output.json",
+            serde_json::to_string_pretty(&xrray_config).unwrap(),
+        )
+        .unwrap();
     }
 }
