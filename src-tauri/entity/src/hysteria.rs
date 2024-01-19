@@ -168,7 +168,7 @@ impl TryFrom<&Model> for CommandHysteria {
             }
         }
         if available_count != 2 {
-            return Err(anyhow!(format!("not have engouh port")));
+            return anyhow::bail!("not have engouh port");
         }
 
         Ok(Self {

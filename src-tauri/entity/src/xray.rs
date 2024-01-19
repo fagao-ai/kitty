@@ -2,8 +2,12 @@ use sea_orm::{entity::prelude::*, FromJsonQueryResult};
 
 use anyhow::{anyhow, Error, Result};
 use serde::{Deserialize, Serialize};
-use std::collections::HashSet;
+use url::{ParseError, Url};
 
+use std::collections::{HashMap, HashSet};
+use std::str::FromStr;
+
+use crate::hysteria::Tls;
 use crate::utils::get_random_port;
 const START_PORT: u16 = 20000;
 const END_PORT: u16 = 30000;
@@ -38,6 +42,70 @@ pub enum StreamSettings {
     Kcp(KcpProtocol),
 }
 
+impl TryFrom<url::form_urlencoded::Parse<'_>> for StreamSettings {
+    type Error = anyhow::Error;
+    fn try_from(query_pairs: url::form_urlencoded::Parse<'_>) -> Result<Self> {
+        let query_params: HashMap<String, String> = query_pairs
+            .map(|(key, value)| (key.into_owned(), value.into_owned()))
+            .collect();
+        let allow_insecure = bool::from_str(
+            query_params
+                .get("allowInsecure")
+                .unwrap_or(&"true".to_string()),
+        )
+        .unwrap();
+        let host = query_params
+            .get("host")
+            .ok_or(anyhow!("get host failed from url"))?
+            .to_owned();
+        let path = query_params
+            .get("path")
+            .ok_or(anyhow!("get path failed from url"))?
+            .to_owned();
+        let security = query_params
+            .get("security")
+            .ok_or(anyhow!("get security failed from url"))?
+            .to_owned();
+        let r#type = query_params
+            .get("type")
+            .ok_or(anyhow!("get type failed from url"))?
+            .to_owned();
+        let server_name = query_params
+            .get("sni")
+            .ok_or(anyhow!("get sni failed from url"))?
+            .to_owned();
+
+        match r#type.as_str() {
+            "ws" => {
+                let security: Security = Security::from_str(security.as_str())?;
+                let tls_settings = TLSSettings::new(allow_insecure, server_name);
+                let ws_protocol: WebSocketProtocol = WebSocketProtocol::new(
+                    r#type,
+                    Some(security),
+                    host,
+                    Some(path),
+                    Some(tls_settings),
+                );
+                Ok(StreamSettings::WebSocket(ws_protocol))
+            }
+            // "tcp" => Some(()),
+            _ => Err(anyhow!("convert stream_settings failed.")),
+        }
+    }
+}
+
+impl FromStr for StreamSettings {
+    type Err = anyhow::Error;
+    fn from_str(s: &str) -> Result<Self> {
+        let url = Url::parse(s)?;
+        let uuid_or_base64 = url.username();
+        if uuid_or_base64 == "" {
+            let decoded = base64::decode(uuid_or_base64).unwrap();
+            let decoded_str = String::from_utf8(decoded).unwrap();
+        }
+
+    }
+}
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct WebSocketProtocol {
     network: String,
@@ -48,6 +116,24 @@ pub struct WebSocketProtocol {
     tls_settings: Option<TLSSettings>,
     #[serde(rename = "wsSettings")]
     ws_settings: WsSettings,
+}
+
+impl WebSocketProtocol {
+    fn new(
+        network: String,
+        security: Option<Security>,
+        host: String,
+        path: Option<String>,
+        tls_settings: Option<TLSSettings>,
+    ) -> Self {
+        let ws_settings = WsSettings::new(host, path);
+        Self {
+            network,
+            security,
+            tls_settings,
+            ws_settings,
+        }
+    }
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -72,25 +158,60 @@ pub enum Security {
     Reality,
 }
 
+impl FromStr for Security {
+    type Err = anyhow::Error;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "tls" => Ok(Security::Tls),
+            "none" => Ok(Security::None),
+            "reality" => Ok(Security::Reality),
+            _ => Err(anyhow!("error")),
+        }
+    }
+}
+
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 struct TLSSettings {
     #[serde(rename = "allowInsecure")]
     allow_insecure: bool,
     #[serde(rename = "serverName")]
     server_name: String,
-    fingerprint: String,
+}
+
+impl TLSSettings {
+    fn new(allow_insecure: bool, server_name: String) -> Self {
+        Self {
+            allow_insecure,
+            server_name,
+        }
+    }
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 struct WsSettings {
-    path: String,
     headers: Headers,
+    path: String,
+}
+
+impl WsSettings {
+    fn new(host: String, path: Option<String>) -> Self {
+        Self {
+            path: path.unwrap_or("".into()),
+            headers: Headers::new(host),
+        }
+    }
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 struct Headers {
     #[serde(rename = "Host")]
     host: String,
+}
+
+impl Headers {
+    fn new(host: String) -> Self {
+        Self { host }
+    }
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -594,5 +715,38 @@ impl Balancer {
             tag: "balancer".into(),
             selector,
         }
+    }
+}
+
+impl From<Model> for Outbound {
+    fn from(source: Model) -> Self {
+        let user = User::new(source.uuid);
+        let out_bound_settings =
+            OutboundSettings::new(vec![Vnext::new(source.address, source.port, user)]);
+        Outbound::new(
+            source.name,
+            source.protocol,
+            out_bound_settings,
+            source.stream_settings,
+        )
+    }
+}
+
+// vless://7c844d36-0a00-4b62-8dfd-967b97e94e15@104.18.238.169:443?allowInsecure=false&headerType=http&host=www.hezz.eu.org&path=%2Fhezz&security=tls&sni=www.hezz.eu.org&type=tcp#104.18.238.169
+impl TryFrom<Url> for Model {
+    type Error = anyhow::Error;
+    fn try_from(url: Url) -> Result<Model> {
+        let protocol = url.scheme();
+        let uuid = url.username();
+        let domain = url.domain().unwrap();
+        let port = url.port().unwrap();
+        let mut pairs: url::form_urlencoded::Parse<'_> = url.query_pairs();
+        Ok(Self {
+            name: "default".into(),
+            protocol: protocol.into(),
+            uuid: uuid.into(),
+            address: domain.into(),
+            port,
+        })
     }
 }

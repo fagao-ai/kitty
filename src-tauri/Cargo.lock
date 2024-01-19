@@ -1308,11 +1308,13 @@ name = "entity"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "base64",
  "port_scanner",
  "rand 0.8.5",
  "sea-orm",
  "serde",
  "serde_json",
+ "url",
 ]
 
 [[package]]
