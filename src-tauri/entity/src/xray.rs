@@ -50,6 +50,7 @@ impl Model {
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, FromJsonQueryResult)]
 #[serde(rename = "streamSettings")]
+#[serde(tag = "type")]
 pub enum StreamSettings {
     #[serde(untagged)]
     WebSocket(WebSocketProtocol),
