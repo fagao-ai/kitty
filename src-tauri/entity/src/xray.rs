@@ -28,9 +28,9 @@ pub struct Model {
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
 pub enum Relation {
     #[sea_orm(
-        belongs_to = "super::subscribe::Entity",
-        from = "Column::SubscribeId",
-        to = "super::subscribe::Column::Id"
+    belongs_to = "super::subscribe::Entity",
+    from = "Column::SubscribeId",
+    to = "super::subscribe::Column::Id"
     )]
     Subscribe,
 }
@@ -74,7 +74,7 @@ impl TryFrom<url::form_urlencoded::Parse<'_>> for StreamSettings {
                 .get("allowInsecure")
                 .unwrap_or(&"true".to_string()),
         )
-        .unwrap();
+            .unwrap();
         let host = query_params
             .get("host")
             .ok_or(anyhow!("get host failed from url"))?
@@ -530,8 +530,10 @@ pub struct XrayConfig {
     routing: Routing,
 }
 
+
 impl XrayConfig {
-    pub fn new(http_port: u16, socks_port: u16, outbounds: Vec<Outbound>) -> Self {
+    pub fn new(http_port: u16, socks_port: u16, models: Vec<Model>) -> Self {
+        let outbounds: Vec<Outbound> = models.iter().map(|x| x.to_owned().into()).collect();
         let mut selector_outbound_tags = Vec::new();
         for outbound in outbounds.iter() {
             selector_outbound_tags.push(outbound.tag.clone())
@@ -881,6 +883,10 @@ impl Model {
             StreamSettings::Kcp(_) => "Kcp",
         }
     }
+
+    pub fn get_server(&self) -> String {
+        format!("{}:{}", self.address, self.port)
+    }
 }
 
 #[cfg(test)]
@@ -898,14 +904,12 @@ mod tests {
         let stream_settings = serde_json::to_string(&model.stream_settings);
         println!("stream_settings：: {:?}", stream_settings);
 
-        let outbound = Outbound::from(model);
-
-        let xrray_config = XrayConfig::new(10086, 10087, vec![outbound.clone()]);
+        let xrray_config = XrayConfig::new(10086, 10087, vec![model]);
         // println!("outbound: {:?}", serde_json::to_string_pretty(&outbound).unwrap());
         fs::write(
             "output.json",
             serde_json::to_string_pretty(&xrray_config).unwrap(),
         )
-        .unwrap();
+            .unwrap();
     }
 }

@@ -1,4 +1,5 @@
-use kitty_proxy::{HttpProxy, MatchProxy, SocksProxy};
+use std::collections::HashSet;
+use kitty_proxy::MatchProxy;
 use protocols::KittyCommandGroup;
 use sea_orm::DatabaseConnection;
 use std::sync::Arc;
@@ -42,6 +43,7 @@ pub struct KittyProxyState {
     pub match_proxy: Mutex<Option<Arc<MatchProxy>>>,
     pub http_proxy_sx: Mutex<Option<Sender<bool>>>,
     pub socks_proxy_sx: Mutex<Option<Sender<bool>>>,
+    pub used_ports: Mutex<HashSet<u16>>,
 }
 
 impl Default for KittyProxyState {
@@ -52,6 +54,7 @@ impl Default for KittyProxyState {
             match_proxy: Mutex::new(None),
             http_proxy_sx: Mutex::new(None),
             socks_proxy_sx: Mutex::new(None),
+            used_ports: Mutex::new(HashSet::new()),
         }
     }
 }

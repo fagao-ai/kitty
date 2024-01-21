@@ -1,8 +1,8 @@
-use anyhow::{anyhow, Error, Result};
-use port_scanner::scan_port;
+use anyhow::Result;
 use sea_orm::{entity::prelude::*, FromJsonQueryResult};
 use serde::{Deserialize, Serialize};
 use std::convert::TryFrom;
+use std::io::BufRead;
 
 const START_PORT: u16 = 20000;
 const END_PORT: u16 = 30000;
@@ -82,7 +82,7 @@ impl ListenAddr {
 }
 
 #[derive(Serialize, Deserialize)]
-pub struct CommandHysteria {
+pub struct HysteriaConfig {
     pub server: String,
     pub auth: String,
     pub bandwidth: Bandwidth,
@@ -91,7 +91,17 @@ pub struct CommandHysteria {
     pub http: ListenAddr,
 }
 
-impl CommandHysteria {
+impl HysteriaConfig {
+    pub fn new(http_port: u16, socks_port: u16, record: Model) -> Self {
+        Self {
+            server: record.server,
+            auth: record.auth,
+            bandwidth: record.bandwidth,
+            tls: record.tls,
+            socks5: ListenAddr::new(socks_port),
+            http: ListenAddr::new(http_port),
+        }
+    }
     pub fn get_http_port(&self) -> u16 {
         let http_addr = &self.http.listen;
         http_addr.split(":").nth(1).unwrap().parse::<u16>().unwrap()
@@ -103,34 +113,3 @@ impl CommandHysteria {
     }
 }
 
-impl TryFrom<&Model> for CommandHysteria {
-    type Error = Error;
-
-    fn try_from(record: &Model) -> Result<Self, Self::Error> {
-        let mut available_ports = (0, 0);
-        let mut available_count = 0;
-        for port in START_PORT..END_PORT {
-            if scan_port(port) {
-                if available_count == 0 {
-                    available_ports.0 = port;
-                } else {
-                    available_ports.1 = port;
-                }
-
-                available_count += 1;
-            }
-        }
-        if available_count != 2 {
-            return Err(anyhow!("not have engouh port"));
-        }
-
-        Ok(Self {
-            server: record.server.clone(),
-            auth: record.auth.clone(),
-            bandwidth: record.bandwidth.clone(),
-            tls: record.tls.clone(),
-            socks5: ListenAddr::new(available_ports.0),
-            http: ListenAddr::new(available_ports.1),
-        })
-    }
-}
