@@ -105,7 +105,7 @@ pub async fn set_system_proxy<'a>(
     {
         let hysteria_record = hysteria_entity::Model::first(&db).await?.unwrap();
         let (http_port, socks_port) = get_http_socks_ports(&mut used_ports);
-        let command_hysteria = HysteriaConfig::new(http_port, socks_port, hysteria_record);
+        let hysteria_config = HysteriaConfig::new(http_port, socks_port, hysteria_record);
         let hysteria_bin_path = relative_command_path("hysteria".as_ref())?;
         let mut hysteria_command_group = KittyCommandGroup::new(
             String::from("hysteria"),
@@ -113,7 +113,7 @@ pub async fn set_system_proxy<'a>(
             config_dir.clone(),
         );
         let mut config_hash_map: HashMap<String, HysteriaConfig> = HashMap::new();
-        config_hash_map.insert(command_hysteria.server.clone(), command_hysteria);
+        config_hash_map.insert(hysteria_config.server.clone(), hysteria_config);
         let _ = hysteria_command_group.start_commands(config_hash_map, None);
         *process_state.hy_process_manager.lock().await = Some(hysteria_command_group);
         http_vpn_node_infos.push(NodeInfo::new(
@@ -131,9 +131,10 @@ pub async fn set_system_proxy<'a>(
     #[cfg(feature = "xray")]
     {
         let xray_records = xray_entity::Model::fetch_all(&db).await?;
+        let node_number = xray_records.len();
         let (http_port, socks_port) = get_http_socks_ports(&mut used_ports);
         let server_key: String = xray_records.iter().map(|x| x.get_server()).collect::<Vec<String>>().join("_");
-        let command_xray = XrayConfig::new(http_port, socks_port, xray_records);
+        let xray_config = XrayConfig::new(http_port, socks_port, xray_records);
         let xray_bin_path = relative_command_path("xray".as_ref())?;
         let resource_dir = app.app_handle().path().resource_dir()?;
         let mut env_var = HashMap::new();
@@ -145,18 +146,18 @@ pub async fn set_system_proxy<'a>(
         let mut xray_command_group =
             KittyCommandGroup::new(String::from("xray"), xray_bin_path, config_dir);
 
-        config_hash_map.insert(server_key, command_xray);
+        config_hash_map.insert(server_key, xray_config);
         let _ = xray_command_group.start_commands(config_hash_map, None);
         *process_state.hy_process_manager.lock().await = Some(xray_command_group);
         http_vpn_node_infos.push(NodeInfo::new(
             IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)),
             http_port,
-            1,
+            node_number.try_into().unwrap(),
         ));
         socks_vpn_node_infos.push(NodeInfo::new(
             IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)),
             socks_port,
-            1,
+            node_number.try_into().unwrap(),
         ));
     }
 

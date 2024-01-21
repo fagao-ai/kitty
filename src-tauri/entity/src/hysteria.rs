@@ -4,9 +4,6 @@ use serde::{Deserialize, Serialize};
 use std::convert::TryFrom;
 use std::io::BufRead;
 
-const START_PORT: u16 = 20000;
-const END_PORT: u16 = 30000;
-
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, DeriveEntityModel)]
 #[sea_orm(table_name = "hysteria")]
 pub struct Model {
