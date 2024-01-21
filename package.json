@@ -18,7 +18,9 @@
     "@tauri-apps/plugin-notification": "2.0.0-alpha.5",
     "@tauri-apps/plugin-shell": "^2.0.0-alpha.3",
     "@vueuse/core": "^10.6.1",
+    "class-transformer": "^0.5.1",
     "humps": "^2.0.1",
+    "reflect-metadata": "^0.2.1",
     "vue": "^3.3.4",
     "vue-i18n": "9",
     "vue-router": "^4.2.5"

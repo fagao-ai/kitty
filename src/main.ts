@@ -4,6 +4,7 @@ import '@/styles.scss'
 import App from '@/App.vue'
 import router from '@/routers'
 import { i18n } from '@/translations'
+import 'reflect-metadata'
 
 const app = createApp(App)
 
