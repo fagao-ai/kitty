@@ -126,7 +126,7 @@ pub async fn set_system_proxy<'a>(
         let mut env_var = HashMap::new();
         env_var.insert(
             "XRAY_LOCATION_ASSET".to_string(),
-            resource_dir.to_string_lossy().to_string(),
+            resource_dir.to_string_lossy().to_string(), 
         );
         let mut config_hash_map: HashMap<String, CommandHysteria> = HashMap::new();
 

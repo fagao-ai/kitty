@@ -1,8 +1,9 @@
 // use rand::Rng;
+use anyhow::Result;
+use rand::prelude::*;
+use reqwest;
 use std::collections::HashSet;
 use std::net::TcpListener;
-use rand::prelude::*;
-
 
 const START_PORT: u16 = 20000;
 const END_PORT: u16 = 30000;
