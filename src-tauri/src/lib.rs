@@ -96,17 +96,15 @@ fn setup_db<'a>(app: &'a mut tauri::App) -> Result<(), Box<dyn std::error::Error
 
 fn setup_kitty_proxy<'a>(app: &'a mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
     let handle = app.handle();
-    let resource_dir = handle.path().resource_dir()?;
+    let resource_dir = handle.path().resource_dir()?.join("static");
     let app_state: State<KittyProxyState> = handle.state();
-    let db_state: State<DatabaseState> = handle.state();
     tauri::async_runtime::block_on(async move {
-        
+        println!("resource_dir: {:?}, exists: {}", resource_dir, resource_dir.exists());
         let geoip_file = resource_dir.join("kitty_geoip.dat");
         let geosite_file = resource_dir.join("kitty_geosite.dat");
+        println!("geoip_file: {:?}", geoip_file);
+        println!("geosite_file: {:?}", geosite_file);
         let match_proxy = MatchProxy::from_geo_dat(Some(&geoip_file), Some(&geosite_file)).unwrap();
-        
-        // *app_state.socks_proxy.lock().await = Some(socks_proxy);
-        // *app_state.http_proxy.lock().await = Some(http_proxy);
         *app_state.match_proxy.lock().await = Some(Arc::new(match_proxy));
     });
 

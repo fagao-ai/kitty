@@ -22,7 +22,26 @@ pub struct Model {
     pub port: u16,
     #[sea_orm(column_type = "Text")]
     stream_settings: StreamSettings,
+    pub subscribe_id: Option<i32>,
 }
+
+#[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
+pub enum Relation {
+    #[sea_orm(
+    belongs_to = "super::xray::Entity",
+    from = "Column::SubscribeId",
+    to = "super::subscribe::Column::Id"
+    )]
+    Subscribe,
+}
+
+impl Related<super::subscribe::Entity> for Entity {
+    fn to() -> RelationDef {
+        Relation::Subscribe.def()
+    }
+}
+
+impl ActiveModelBehavior for ActiveModel {}
 
 impl Model {
     generate_model_functions!();
@@ -54,7 +73,7 @@ impl TryFrom<url::form_urlencoded::Parse<'_>> for StreamSettings {
                 .get("allowInsecure")
                 .unwrap_or(&"true".to_string()),
         )
-        .unwrap();
+            .unwrap();
         let host = query_params
             .get("host")
             .ok_or(anyhow!("get host failed from url"))?
@@ -222,6 +241,7 @@ impl Headers {
 struct TcpSettings {
     header: TcpHeader,
 }
+
 impl Default for TcpSettings {
     fn default() -> Self {
         Self {
@@ -229,6 +249,7 @@ impl Default for TcpSettings {
         }
     }
 }
+
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 struct TcpHeader {
     r#type: TcpType,
@@ -255,6 +276,7 @@ enum TcpType {
     #[serde(rename = "http")]
     Http,
 }
+
 impl Default for TcpType {
     fn default() -> Self {
         Self::None
@@ -279,6 +301,7 @@ impl Default for TcpRequest {
         }
     }
 }
+
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 struct TcpRequestHeaders {
     #[serde(rename = "Host")]
@@ -326,6 +349,7 @@ impl Default for TcpResponse {
         }
     }
 }
+
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 struct TcpResponseHeaders {
     #[serde(rename = "Content-Type")]
@@ -463,6 +487,7 @@ struct KcpHeader {
     r#type: KcpType,
     domain: String,
 }
+
 impl Default for KcpHeader {
     fn default() -> Self {
         Self {
@@ -495,10 +520,6 @@ impl Default for KcpType {
         KcpType::None
     }
 }
-#[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
-pub enum Relation {}
-
-impl ActiveModelBehavior for ActiveModel {}
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct XrayConfig {
@@ -507,6 +528,7 @@ pub struct XrayConfig {
     outbounds: Vec<Outbound>,
     routing: Routing,
 }
+
 impl XrayConfig {
     pub fn new(http_port: u16, socks_port: u16, outbounds: Vec<Outbound>) -> Self {
         let mut selector_outbound_tags = Vec::new();
@@ -612,6 +634,7 @@ impl Default for SocksInboundSettings {
         }
     }
 }
+
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 struct Outbound {
     tag: String,
@@ -671,6 +694,7 @@ struct User {
     encryption: String,
     flow: UserFlow,
 }
+
 impl User {
     pub fn new(uuid: String) -> Self {
         Self {
@@ -863,6 +887,6 @@ mod tests {
             "output.json",
             serde_json::to_string_pretty(&xrray_config).unwrap(),
         )
-        .unwrap();
+            .unwrap();
     }
 }

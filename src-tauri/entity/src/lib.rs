@@ -11,3 +11,4 @@ pub mod hysteria;
 
 #[cfg(feature = "xray")]
 pub mod xray;
+mod subscribe;
