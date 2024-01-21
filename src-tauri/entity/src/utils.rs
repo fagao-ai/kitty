@@ -1,7 +1,6 @@
 // use rand::Rng;
 use anyhow::Result;
 use rand::prelude::*;
-use reqwest;
 use std::collections::HashSet;
 use std::net::TcpListener;
 
