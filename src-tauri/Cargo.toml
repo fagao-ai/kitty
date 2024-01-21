@@ -2,7 +2,7 @@
 name = "kitty"
 version = "0.0.0"
 description = "A Tauri App"
-authors = ["you"]
+authors = [ "you" ]
 license = ""
 repository = ""
 edition = "2021"
@@ -11,12 +11,16 @@ edition = "2021"
 
 [lib]
 name = "kitty_lib"
-crate-type = ["staticlib", "cdylib", "rlib"]
+crate-type = [
+  "staticlib",
+  "cdylib",
+  "rlib"
+]
 
 [build-dependencies]
 tauri-build = { version = "2.0.0-alpha", features = [] }
-anyhow = { version = "1", features = ["backtrace"] }
-reqwest = { version = "0.11.22", features = ["blocking"] }
+anyhow = { version = "1", features = [ "backtrace" ] }
+reqwest = { version = "0.11.22", features = [ "blocking" ] }
 build-target = "0.4.0"
 zip = "0.5"
 
@@ -39,23 +43,32 @@ sea-orm = { version = "0.12", features = [
 entity = { path = "./entity" }
 protocols = { path = "./protocols" }
 migration = { path = "./migration" }
-tokio = { version = "1.34.0", features = ["macros"] }
+tokio = { version = "1.34.0", features = [ "macros" ] }
 tauri-plugin-process = "2.0.0-alpha"
 thiserror = "1.0.50"
 anyhow = "1"
 sysproxy = "0.3.0"
 tauri-plugin-autostart = "2.0.0-alpha"
 tauri-plugin-notification = "2.0.0-alpha.7"
-reqwest = { version = "0.11.22", features = ["json"] }
+reqwest = { version = "0.11.22", features = [ "json" ] }
 kitty_proxy = { git = "https://github.com/hezhaozhao-git/kitty_proxy.git", version = "0.1.0" }
+base64 = { version = "0.21.7", optional = true, features = [ "std" ] }
 
 [workspace]
-members = [".", "migration", "entity", "protocols"]
+members = [
+  ".",
+  "migration",
+  "entity",
+  "protocols"
+]
 
 [features]
 # this feature is used for production builds or when `devPath` points to the filesystem
 # DO NOT REMOVE!!
-custom-protocol = ["tauri/custom-protocol"]
-default = ["xray", "hysteria"]
-xray = []
+custom-protocol = [ "tauri/custom-protocol" ]
+default = [
+  "xray",
+  "hysteria"
+]
+xray = [ "dep:base64" ]
 hysteria = []

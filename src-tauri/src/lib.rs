@@ -2,13 +2,13 @@ use anyhow::Result;
 use entity::base_config;
 use kitty_proxy::{HttpProxy, MatchProxy, SocksProxy};
 use state::{DatabaseState, ProcessManagerState};
-use std::{env, fs};
 use std::collections::HashMap;
 use std::sync::Arc;
+use std::{env, fs};
 use tauri::{
-    Icon,
     menu::{MenuBuilder, MenuItemBuilder},
-    tray::{ClickType, TrayIconBuilder}, WindowEvent,
+    tray::{ClickType, TrayIconBuilder},
+    Icon, WindowEvent,
 };
 use tauri::{Manager, State};
 #[cfg(feature = "hysteria")]
@@ -93,13 +93,16 @@ fn setup_db<'a>(app: &'a mut tauri::App) -> Result<(), Box<dyn std::error::Error
     Ok(())
 }
 
-
 fn setup_kitty_proxy<'a>(app: &'a mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
     let handle = app.handle();
     let resource_dir = handle.path().resource_dir()?.join("static");
     let app_state: State<KittyProxyState> = handle.state();
     tauri::async_runtime::block_on(async move {
-        println!("resource_dir: {:?}, exists: {}", resource_dir, resource_dir.exists());
+        println!(
+            "resource_dir: {:?}, exists: {}",
+            resource_dir,
+            resource_dir.exists()
+        );
         let geoip_file = resource_dir.join("kitty_geoip.dat");
         let geosite_file = resource_dir.join("kitty_geosite.dat");
         println!("geoip_file: {:?}", geoip_file);
@@ -180,15 +183,20 @@ pub fn run() {
         .setup(setup_db)
         .setup(setup_kitty_proxy)
         .on_window_event(on_window_exit_func);
-    let builder = builder.invoke_handler(
-        #[cfg(feature = "hysteria")]
-        tauri::generate_handler![
-            hysteria_api::add_hy_item,
-            hysteria_api::get_all_hysterias,
-            hysteria_api::query_base_config,
-            hysteria_api::update_base_config,
-        ],
-    );
+    #[cfg(feature = "hysteria")]
+    let builder = builder.invoke_handler(tauri::generate_handler![
+        hysteria_api::add_hy_item,
+        hysteria_api::get_all_hysterias,
+        hysteria_api::query_base_config,
+        hysteria_api::update_base_config,
+    ]);
+
+    #[cfg(feature = "xray")]
+    let builder = builder.invoke_handler(tauri::generate_handler![
+        xray_api::add_xray_item,
+        xray_api::get_all_xrays,
+        xray_api::import_by_subscribe_url,
+    ]);
 
     builder
         .run(tauri::generate_context!())

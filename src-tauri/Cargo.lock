@@ -2511,6 +2511,7 @@ name = "kitty"
 version = "0.0.0"
 dependencies = [
  "anyhow",
+ "base64",
  "build-target",
  "entity",
  "kitty_proxy",

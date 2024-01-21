@@ -26,5 +26,19 @@ macro_rules! generate_model_functions {
             let results = self::Entity::find().all(db).await?;
             Ok(results)
         }
+
+        pub async fn insert_many(
+            db: &DatabaseConnection,
+            records: Vec<Model>,
+        ) -> Result<(), DbErr> {
+            let mut active_models = Vec::with_capacity(records.len());
+            for record in records {
+                let json_value = serde_json::to_value(record).unwrap().into();
+                let record = ActiveModel::from_json(json_value)?;
+                active_models.push(record)
+            }
+            let _ = self::Entity::insert_many(active_models).exec(db).await?;
+            Ok(())
+        }
     };
 }

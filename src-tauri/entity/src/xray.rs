@@ -28,13 +28,14 @@ pub struct Model {
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
 pub enum Relation {
     #[sea_orm(
-    belongs_to = "super::xray::Entity",
+    belongs_to = "super::subscribe::Entity",
     from = "Column::SubscribeId",
     to = "super::subscribe::Column::Id"
     )]
     Subscribe,
 }
 
+// `Related` trait has to be implemented by hand
 impl Related<super::subscribe::Entity> for Entity {
     fn to() -> RelationDef {
         Relation::Subscribe.def()
@@ -804,6 +805,7 @@ impl TryFrom<Url> for Model {
             address: address.into(),
             port,
             stream_settings,
+            subscribe_id: None,
         })
     }
 }
@@ -846,6 +848,7 @@ impl TryFrom<ShareWithProtocol> for Model {
             address,
             port,
             stream_settings: res?,
+            subscribe_id: None,
         })
     }
 }
