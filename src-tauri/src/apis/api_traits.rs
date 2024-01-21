@@ -1,6 +1,7 @@
-use crate::types::{CommandResult, KittyResponse};
 use entity::base_config;
 use sea_orm::DatabaseConnection;
+
+use crate::types::{CommandResult, KittyResponse};
 
 pub trait APIServiceTrait {
     async fn query_base_config(

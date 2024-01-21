@@ -1,6 +1,6 @@
+use anyhow::Result;
 use entity::xray;
 use sea_orm::DatabaseConnection;
-use anyhow::Result;
 
 use crate::apis::api_traits::APIServiceTrait;
 

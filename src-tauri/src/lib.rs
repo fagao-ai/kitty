@@ -1,3 +1,25 @@
+use anyhow::Result;
+use entity::base_config;
+use kitty_proxy::{HttpProxy, MatchProxy, SocksProxy};
+use state::{DatabaseState, ProcessManagerState};
+use std::{env, fs};
+use std::collections::HashMap;
+use std::sync::Arc;
+use tauri::{
+    Icon,
+    menu::{MenuBuilder, MenuItemBuilder},
+    tray::{ClickType, TrayIconBuilder}, WindowEvent,
+};
+use tauri::{Manager, State};
+#[cfg(feature = "hysteria")]
+use tauri_apis::hysteria as hysteria_api;
+#[cfg(feature = "xray")]
+use tauri_apis::xray as xray_api;
+use tauri_plugin_autostart::MacosLauncher;
+use tauri_plugin_notification::{NotificationExt, PermissionState};
+
+use crate::state::KittyProxyState;
+
 mod apis;
 mod database;
 mod proxy;
@@ -5,32 +27,6 @@ mod state;
 mod tauri_apis;
 mod types;
 mod utils;
-
-use std::collections::HashMap;
-use std::{env, fs};
-use std::sync::Arc;
-
-use kitty_proxy::{HttpProxy, MatchProxy, SocksProxy};
-
-use crate::state::KittyProxyState;
-use anyhow::Result;
-use tauri_plugin_autostart::MacosLauncher;
-
-#[cfg(feature = "hysteria")]
-use tauri_apis::hysteria as hysteria_api;
-
-#[cfg(feature = "xray")]
-use tauri_apis::xray as xray_api;
-
-use entity::base_config;
-use state::{DatabaseState, ProcessManagerState};
-use tauri::{
-    menu::{MenuBuilder, MenuItemBuilder},
-    tray::{ClickType, TrayIconBuilder},
-    Icon, WindowEvent,
-};
-use tauri::{Manager, State};
-use tauri_plugin_notification::{NotificationExt, PermissionState};
 
 fn set_system_tray<'a>(app: &'a mut tauri::App) -> Result<()> {
     let quit = MenuItemBuilder::with_id("quit", "Quit").build(app);

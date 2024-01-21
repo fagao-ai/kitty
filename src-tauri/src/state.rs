@@ -1,9 +1,9 @@
-use std::sync::Arc;
 use kitty_proxy::{HttpProxy, MatchProxy, SocksProxy};
-use protocols::{KittyCommandGroup};
+use protocols::KittyCommandGroup;
 use sea_orm::DatabaseConnection;
-use tokio::sync::watch::Sender;
+use std::sync::Arc;
 use tokio::sync::Mutex;
+use tokio::sync::watch::Sender;
 
 pub struct DatabaseState {
     pub db: std::sync::Mutex<Option<DatabaseConnection>>,

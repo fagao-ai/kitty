@@ -1,11 +1,10 @@
 use anyhow::{anyhow, Result};
 use build_target::{Arch, Os, Target};
 use reqwest;
+use std::{env, io};
 use std::fs::{self, File};
 use std::io::{Read, Write};
-
 use std::path::{Path, PathBuf};
-use std::{env, io};
 use zip::ZipArchive;
 
 fn set_execute_permission(binaries_path: &PathBuf) {
@@ -79,7 +78,7 @@ fn download_file_from_zip(
         };
         if target_zip_file_name == extract_target_file.as_str() {
             let binaries_path = get_file_path(save_file_name, FileEnum::Binary);
-            let mut extracted_file = std::fs::File::create(&binaries_path).unwrap();
+            let mut extracted_file = File::create(&binaries_path).unwrap();
             std::io::copy(&mut file, &mut extracted_file).unwrap();
             eprintln!("download success: {:?}", binaries_path);
             return Ok(binaries_path);
@@ -241,7 +240,5 @@ fn main() {
     // let _ = download_binaries();
     let _ = download_geo_file("geoip.dat", "kitty_geoip.dat");
     let _ = download_geo_file("geosite.dat", "kitty_geosite.dat");
-    let _ = create_empty_geo_file("geoip.dat");
-    let _ = create_empty_geo_file("geosite.dat");
     tauri_build::build()
 }

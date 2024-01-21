@@ -1,7 +1,6 @@
-use std::time::Instant;
-
 use reqwest::{Client, Proxy};
 use serde::{Deserialize, Serialize};
+use std::time::Instant;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ProxyInfo {

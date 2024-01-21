@@ -1,12 +1,10 @@
-use base64::{engine::general_purpose, Engine as _};
-use sea_orm::{entity::prelude::*, FromJsonQueryResult};
-
 use anyhow::{anyhow, Result};
+use base64::{Engine as _, engine::general_purpose};
+use sea_orm::{entity::prelude::*, FromJsonQueryResult};
 use serde::{Deserialize, Serialize};
-use url::Url;
-
 use std::collections::HashMap;
 use std::str::FromStr;
+use url::Url;
 
 use crate::types::ShareJsonStruct;
 use crate::types::ShareWithProtocol;
@@ -848,8 +846,9 @@ impl FromStr for Model {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use std::fs;
+
+    use super::*;
 
     #[test]
     fn test_add() {

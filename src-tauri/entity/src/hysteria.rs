@@ -1,7 +1,6 @@
-use sea_orm::{entity::prelude::*, FromJsonQueryResult};
-
 use anyhow::{anyhow, Error, Result};
 use port_scanner::scan_port;
+use sea_orm::{entity::prelude::*, FromJsonQueryResult};
 use serde::{Deserialize, Serialize};
 use std::convert::TryFrom;
 

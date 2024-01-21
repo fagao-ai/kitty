@@ -1,26 +1,24 @@
-use std::borrow::{Borrow, BorrowMut};
-use std::sync::Arc;
+use anyhow::{anyhow, Result};
+use entity::{
+    base_config,
+    hysteria::{CommandHysteria, self as hysteria_entity},
+};
+use kitty_proxy::{HttpProxy, MatchProxy, NodeInfo, SocksProxy};
+use protocols::KittyCommandGroup;
 use std::{
     collections::HashMap,
     net::{IpAddr, Ipv4Addr},
     path::{Path, PathBuf},
 };
-
-use protocols::KittyCommandGroup;
-use tauri::{utils::html::NodeRef, Manager, State};
+use std::borrow::{Borrow, BorrowMut};
+use std::sync::Arc;
+use tauri::{Manager, State, utils::html::NodeRef};
+use tauri::utils::platform;
+use tokio::sync::watch;
 
 use crate::{
     state::{DatabaseState, KittyProxyState, ProcessManagerState},
     types::{CommandResult, KittyResponse},
-};
-use anyhow::{anyhow, Result};
-use kitty_proxy::{HttpProxy, MatchProxy, NodeInfo, SocksProxy};
-use tauri::utils::platform;
-use tokio::sync::watch;
-
-use entity::{
-    base_config,
-    hysteria::{self as hysteria_entity, CommandHysteria},
 };
 
 #[cfg(feature = "hysteria")]

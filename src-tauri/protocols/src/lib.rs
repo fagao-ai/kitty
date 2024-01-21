@@ -1,12 +1,12 @@
-mod kitty_command;
-
-
+use anyhow::Result;
+use serde::Serialize;
 use std::collections::HashMap;
 use std::path::PathBuf;
 
-use anyhow::Result;
-use serde::Serialize;
 use crate::kitty_command::KittyCommand;
+
+mod kitty_command;
+
 
 pub struct KittyCommandGroup {
     name: String,

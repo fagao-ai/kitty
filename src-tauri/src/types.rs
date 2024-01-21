@@ -1,4 +1,4 @@
-use serde::{ser::Serializer, Deserialize, Serialize};
+use serde::{Deserialize, ser::Serializer, Serialize};
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct KittyResponse<T> {

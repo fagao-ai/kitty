@@ -1,7 +1,8 @@
-use crate::apis::api_traits::APIServiceTrait;
 use anyhow::Result;
 use entity::hysteria;
 use sea_orm::DatabaseConnection;
+
+use crate::apis::api_traits::APIServiceTrait;
 
 pub struct HysteriaAPI;
 

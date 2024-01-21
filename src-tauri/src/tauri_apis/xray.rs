@@ -1,14 +1,12 @@
-use tauri::State;
-
 use entity::{
     base_config,
     xray::{self},
 };
+use tauri::State;
 
 use crate::apis::api_traits::APIServiceTrait;
 use crate::apis::xray_apis;
 use crate::apis::xray_apis::XrayAPI;
-
 use crate::state::{DatabaseState, ProcessManagerState};
 use crate::types::{CommandResult, KittyResponse};
 

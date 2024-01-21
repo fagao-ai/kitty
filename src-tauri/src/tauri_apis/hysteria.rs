@@ -1,9 +1,8 @@
-use tauri::State;
-
 use entity::{
     base_config,
     hysteria::{self},
 };
+use tauri::State;
 
 use crate::apis::api_traits::APIServiceTrait;
 use crate::apis::hysteria_apis::HysteriaAPI;
