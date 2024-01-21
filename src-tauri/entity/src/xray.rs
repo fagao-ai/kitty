@@ -1,5 +1,5 @@
 use anyhow::{anyhow, Result};
-use base64::{Engine as _, engine::general_purpose};
+use base64::{engine::general_purpose, Engine as _};
 use sea_orm::{entity::prelude::*, FromJsonQueryResult};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -28,9 +28,9 @@ pub struct Model {
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
 pub enum Relation {
     #[sea_orm(
-    belongs_to = "super::subscribe::Entity",
-    from = "Column::SubscribeId",
-    to = "super::subscribe::Column::Id"
+        belongs_to = "super::subscribe::Entity",
+        from = "Column::SubscribeId",
+        to = "super::subscribe::Column::Id"
     )]
     Subscribe,
 }
@@ -50,7 +50,6 @@ impl Model {
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, FromJsonQueryResult)]
 #[serde(rename = "streamSettings")]
-#[serde(tag = "type")]
 pub enum StreamSettings {
     #[serde(untagged)]
     WebSocket(WebSocketProtocol),
@@ -75,7 +74,7 @@ impl TryFrom<url::form_urlencoded::Parse<'_>> for StreamSettings {
                 .get("allowInsecure")
                 .unwrap_or(&"true".to_string()),
         )
-            .unwrap();
+        .unwrap();
         let host = query_params
             .get("host")
             .ok_or(anyhow!("get host failed from url"))?
@@ -872,6 +871,18 @@ impl FromStr for Model {
     }
 }
 
+impl Model {
+    pub fn get_network_type(&self) -> &'static str {
+        match self.stream_settings {
+            StreamSettings::WebSocket(_) => "WebSocket",
+            StreamSettings::Tcp(_) => "Tcp",
+            StreamSettings::Http2(_) => "Http2",
+            StreamSettings::Grpc(_) => "Grpc",
+            StreamSettings::Kcp(_) => "Kcp",
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use std::fs;
@@ -880,17 +891,21 @@ mod tests {
 
     #[test]
     fn test_add() {
-        let aa = r#"vless://uuid@ip:port?encryption=none&security=tls&sni=www.example.com&type=ws&host=www.example.com&path=%2Fhezz#aa        "#;
+        let aa = r#"vless://uuid@ip:10086?encryption=none&security=tls&sni=www.example.com&type=ws&host=www.example.com&path=%2Fhezz#aa"#;
         let model = Model::from_str(aa).unwrap();
         println!("{:?}", model);
 
+        let stream_settings = serde_json::to_string(&model.stream_settings);
+        println!("stream_settings：: {:?}", stream_settings);
+
         let outbound = Outbound::from(model);
+
         let xrray_config = XrayConfig::new(10086, 10087, vec![outbound.clone()]);
         // println!("outbound: {:?}", serde_json::to_string_pretty(&outbound).unwrap());
         fs::write(
             "output.json",
             serde_json::to_string_pretty(&xrray_config).unwrap(),
         )
-            .unwrap();
+        .unwrap();
     }
 }

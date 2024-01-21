@@ -1,0 +1,87 @@
+{
+  "log": {
+    "access": "",
+    "error": "",
+    "loglevel": "info"
+  },
+  "inbounds": [
+    {
+      "tag": "http_ipv4",
+      "port": 10086,
+      "protocol": "http",
+      "listen": "0.0.0.0",
+      "settings": {
+        "timeout": 300,
+        "allow_transparent": false
+      }
+    },
+    {
+      "tag": "socks_ipv4",
+      "port": 10087,
+      "protocol": "socks",
+      "listen": "0.0.0.0",
+      "settings": {
+        "auth": "noauth",
+        "udp": true,
+        "ip": "127.0.0.1"
+      }
+    }
+  ],
+  "outbounds": [
+    {
+      "tag": "default",
+      "protocol": "vless",
+      "settings": {
+        "vnext": [
+          {
+            "address": "ip",
+            "port": 10086,
+            "users": [
+              {
+                "id": "uuid",
+                "encryption": "none",
+                "flow": ""
+              }
+            ]
+          }
+        ]
+      },
+      "streamSettings": {
+        "type": "WebSocket",
+        "network": "ws",
+        "security": "tls",
+        "tlsSettings": {
+          "allowInsecure": true,
+          "serverName": "www.example.com"
+        },
+        "wsSettings": {
+          "headers": {
+            "Host": "www.example.com"
+          },
+          "path": "/hezz"
+        }
+      }
+    }
+  ],
+  "routing": {
+    "domainStrategy": "AsIs",
+    "rules": [
+      {
+        "type": "field",
+        "inboundTag": [
+          "http_ipv4",
+          "socks_ipv4"
+        ],
+        "balancerTag": "balancer"
+      }
+    ],
+    "balancers": [
+      {
+        "tag": "balancer",
+        "selector": [
+          "default"
+        ]
+      }
+    ]
+  }
+}

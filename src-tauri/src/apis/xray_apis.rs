@@ -5,17 +5,37 @@ use entity::xray;
 use sea_orm::ActiveModelTrait;
 use sea_orm::DatabaseConnection;
 use sea_orm::Set;
+use serde::Deserialize;
+use serde::Serialize;
 use std::str::FromStr;
 
 use crate::apis::api_traits::APIServiceTrait;
 
 pub struct XrayAPI;
 
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub struct XrayRecord {
+    model: xray::Model,
+    network_type: String,
+}
+
+impl From<xray::Model> for XrayRecord {
+    fn from(value: xray::Model) -> Self {
+        let network_type = value.get_network_type().to_string();
+        Self {
+            model: value,
+            network_type,
+        }
+    }
+}
+
 impl APIServiceTrait for XrayAPI {}
 impl XrayAPI {
-    pub async fn get_all(&self, db: &DatabaseConnection) -> Result<Vec<xray::Model>> {
+    pub async fn get_all(&self, db: &DatabaseConnection) -> Result<Vec<XrayRecord>> {
         let xray_proxies = xray::Model::fetch_all(&db).await?;
         println!("xray_proxies: {:?}", xray_proxies);
+        let xray_proxies: Vec<XrayRecord> =
+            xray_proxies.into_iter().map(|model| model.into()).collect();
         Ok(xray_proxies)
     }
 
