@@ -19,6 +19,11 @@ impl MigrationTrait for Migration {
                             .primary_key(),
                     )
                     .col(ColumnDef::new(Xray::Name).string().not_null())
+                    .col(ColumnDef::new(Xray::Protocol).string().not_null())
+                    .col(ColumnDef::new(Xray::Uuid).string().not_null())
+                    .col(ColumnDef::new(Xray::Address).string().not_null())
+                    .col(ColumnDef::new(Xray::Port).integer().not_null())
+                    .col(ColumnDef::new(Xray::StreamSettings).json().not_null())
                     .to_owned(),
             )
             .await
@@ -36,4 +41,9 @@ enum Xray {
     Table,
     Id,
     Name,
+    Protocol,
+    Uuid,
+    Address,
+    Port,
+    StreamSettings,
 }
