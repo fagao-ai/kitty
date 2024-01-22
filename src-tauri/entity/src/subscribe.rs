@@ -1,6 +1,5 @@
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};
-use serde_json;
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, DeriveEntityModel)]
 #[sea_orm(table_name = "subscribe")]

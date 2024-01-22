@@ -28,9 +28,9 @@ pub struct Model {
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
 pub enum Relation {
     #[sea_orm(
-    belongs_to = "super::subscribe::Entity",
-    from = "Column::SubscribeId",
-    to = "super::subscribe::Column::Id"
+        belongs_to = "super::subscribe::Entity",
+        from = "Column::SubscribeId",
+        to = "super::subscribe::Column::Id"
     )]
     Subscribe,
 }
@@ -61,6 +61,8 @@ pub enum StreamSettings {
     Grpc(GrpcProtocol),
     #[serde(untagged)]
     Kcp(KcpProtocol),
+    #[serde(untagged)]
+    Trojan(TrojanProtocol),
 }
 
 impl TryFrom<url::form_urlencoded::Parse<'_>> for StreamSettings {
@@ -74,7 +76,7 @@ impl TryFrom<url::form_urlencoded::Parse<'_>> for StreamSettings {
                 .get("allowInsecure")
                 .unwrap_or(&"true".to_string()),
         )
-            .unwrap();
+        .unwrap();
         let host = query_params
             .get("host")
             .ok_or(anyhow!("get host failed from url"))?
@@ -530,7 +532,6 @@ pub struct XrayConfig {
     routing: Routing,
 }
 
-
 impl XrayConfig {
     pub fn new(http_port: u16, socks_port: u16, models: Vec<Model>) -> Self {
         let outbounds: Vec<Outbound> = models.iter().map(|x| x.to_owned().into()).collect();
@@ -881,11 +882,40 @@ impl Model {
             StreamSettings::Http2(_) => "Http2",
             StreamSettings::Grpc(_) => "Grpc",
             StreamSettings::Kcp(_) => "Kcp",
+            StreamSettings::Trojan(_) => "Kcp",
         }
     }
 
     pub fn get_server(&self) -> String {
         format!("{}:{}", self.address, self.port)
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, FromJsonQueryResult)]
+pub struct TrojanProtocol {
+    servers: Vec<TrojanServer>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    tls_settings: Option<TLSSettings>,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, FromJsonQueryResult)]
+pub struct TrojanServer {
+    address: String,
+    port: u16,
+    password: String,
+    email: String,
+    level: i8,
+}
+
+impl TrojanServer {
+    pub fn new(address: String, port: u16, password: String, email: String) -> Self {
+        Self {
+            address,
+            port,
+            password,
+            email,
+            level: 0,
+        }
     }
 }
 
@@ -910,6 +940,6 @@ mod tests {
             "output.json",
             serde_json::to_string_pretty(&xrray_config).unwrap(),
         )
-            .unwrap();
+        .unwrap();
     }
 }
