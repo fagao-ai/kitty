@@ -28,9 +28,9 @@ pub struct Model {
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
 pub enum Relation {
     #[sea_orm(
-        belongs_to = "super::subscribe::Entity",
-        from = "Column::SubscribeId",
-        to = "super::subscribe::Column::Id"
+    belongs_to = "super::subscribe::Entity",
+    from = "Column::SubscribeId",
+    to = "super::subscribe::Column::Id"
     )]
     Subscribe,
 }
@@ -664,7 +664,9 @@ impl Outbound {
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 enum OutboundSettings {
+    #[serde(rename = "vnext")]
     Vnext(Vec<Vnext>),
+    #[serde(rename = "servers")]
     Servers(Vec<TrojanServer>),
 }
 
@@ -923,11 +925,6 @@ impl TrojanProtocol {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, FromJsonQueryResult)]
-pub struct TrojanSettings {
-    pub servers: Vec<TrojanServer>,
-}
-
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, FromJsonQueryResult)]
 pub struct TrojanServer {
     address: String,
     port: u16,
@@ -964,6 +961,6 @@ mod tests {
             "output.json",
             serde_json::to_string_pretty(&xrray_config).unwrap(),
         )
-        .unwrap();
+            .unwrap();
     }
 }
