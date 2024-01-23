@@ -71,48 +71,47 @@ impl TryFrom<url::form_urlencoded::Parse<'_>> for StreamSettings {
         let query_params: HashMap<String, String> = query_pairs
             .map(|(key, value)| (key.into_owned(), value.into_owned()))
             .collect();
-        let allow_insecure = bool::from_str(
-            query_params
-                .get("allowInsecure")
-                .unwrap_or(&"true".to_string()),
-        )
-        .unwrap();
+
+        let allow_insecure = query_params
+            .get("allowInsecure")
+            .map(|x| x.as_str())
+            .unwrap_or("false");
+        let allow_insecure = matches!(allow_insecure, "true" | "1");
         let host = query_params
             .get("host")
-            .ok_or(anyhow!("get host failed from url"))?
-            .to_owned();
-        let path = query_params
-            .get("path")
-            .ok_or(anyhow!("get path failed from url"))?
-            .to_owned();
+            .map(|x| x.to_string())
+            .unwrap_or("".into());
+        let path = query_params.get("path").map(|x| x.as_str()).unwrap_or("");
         let security = query_params
             .get("security")
-            .ok_or(anyhow!("get security failed from url"))?
-            .to_owned();
+            .map(|x| x.as_str())
+            .unwrap_or("");
         let r#type = query_params
             .get("type")
-            .ok_or(anyhow!("get type failed from url"))?
-            .to_owned();
-        let server_name = query_params
-            .get("sni")
-            .ok_or(anyhow!("get sni failed from url"))?
-            .to_owned();
-        let security: Security = Security::from_str(security.as_str())?;
-        let tls_settings = TLSSettings::new(allow_insecure, server_name);
-        match r#type.as_str() {
+            .map(|x| x.as_str())
+            .unwrap_or("tcp");
+        let sni_key = if query_params.contains_key("peer") {
+            "peer"
+        } else {
+            "sni"
+        };
+        let server_name = query_params.get(sni_key).map(|x| x.as_str()).unwrap_or("");
+        let security: Security = Security::from_str(security)?;
+        let tls_settings = TLSSettings::new(allow_insecure, server_name.into());
+        match r#type {
             "ws" => {
                 let ws_protocol: WebSocketProtocol = WebSocketProtocol::new(
-                    r#type,
+                    r#type.into(),
                     Some(security),
                     host,
-                    Some(path),
+                    Some(path.into()),
                     Some(tls_settings),
                 );
                 Ok(StreamSettings::WebSocket(ws_protocol))
             }
             "tcp" => {
                 let tcp_protocol: TcpProtocol =
-                    TcpProtocol::new(r#type, Some(security), Some(tls_settings));
+                    TcpProtocol::new(r#type.into(), Some(security), Some(tls_settings));
                 Ok(StreamSettings::Tcp(tcp_protocol))
             }
             _ => Err(anyhow!("convert stream_settings failed.")),
@@ -189,15 +188,14 @@ impl FromStr for Security {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
             "tls" => Ok(Security::Tls),
-            "none" => Ok(Security::None),
             "reality" => Ok(Security::Reality),
-            _ => Err(anyhow!("error")),
+            _ => Ok(Security::None),
         }
     }
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
-struct TLSSettings {
+pub struct TLSSettings {
     #[serde(rename = "allowInsecure")]
     allow_insecure: bool,
     #[serde(rename = "serverName")]
@@ -665,13 +663,18 @@ impl Outbound {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
-struct OutboundSettings {
-    vnext: Vec<Vnext>,
+enum OutboundSettings {
+    Vnext(Vec<Vnext>),
+    Servers(Vec<TrojanServer>),
 }
 
 impl OutboundSettings {
-    fn new(vnexts: Vec<Vnext>) -> Self {
-        Self { vnext: vnexts }
+    pub fn from_vnexts(vnexts: Vec<Vnext>) -> Self {
+        Self::Vnext(vnexts)
+    }
+
+    pub fn from_servers(servers: Vec<TrojanServer>) -> Self {
+        Self::Servers(servers)
     }
 }
 
@@ -779,9 +782,17 @@ impl Balancer {
 
 impl From<Model> for Outbound {
     fn from(source: Model) -> Self {
-        let user = User::new(source.uuid);
-        let out_bound_settings =
-            OutboundSettings::new(vec![Vnext::new(source.address, source.port, user)]);
+        let out_bound_settings = match source.protocol.as_str() {
+            "trojan" => OutboundSettings::from_servers(vec![TrojanServer::new(
+                source.address,
+                source.port,
+                source.uuid,
+            )]),
+            _ => {
+                let user = User::new(source.uuid);
+                OutboundSettings::from_vnexts(vec![Vnext::new(source.address, source.port, user)])
+            }
+        };
         Outbound::new(
             source.name,
             source.protocol,
@@ -882,7 +893,7 @@ impl Model {
             StreamSettings::Http2(_) => "Http2",
             StreamSettings::Grpc(_) => "Grpc",
             StreamSettings::Kcp(_) => "Kcp",
-            StreamSettings::Trojan(_) => "Kcp",
+            StreamSettings::Trojan(_) => "Trojan",
         }
     }
 
@@ -893,9 +904,27 @@ impl Model {
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, FromJsonQueryResult)]
 pub struct TrojanProtocol {
-    servers: Vec<TrojanServer>,
+    network: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    security: Option<Security>,
+    #[serde(rename = "tlsSettings")]
     #[serde(skip_serializing_if = "Option::is_none")]
     tls_settings: Option<TLSSettings>,
+}
+
+impl TrojanProtocol {
+    pub fn new(tls_settings: Option<TLSSettings>) -> Self {
+        Self {
+            network: "tcp".into(),
+            security: Some(Security::None),
+            tls_settings,
+        }
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, FromJsonQueryResult)]
+pub struct TrojanSettings {
+    pub servers: Vec<TrojanServer>,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, FromJsonQueryResult)]
@@ -903,18 +932,14 @@ pub struct TrojanServer {
     address: String,
     port: u16,
     password: String,
-    email: String,
-    level: i8,
 }
 
 impl TrojanServer {
-    pub fn new(address: String, port: u16, password: String, email: String) -> Self {
+    pub fn new(address: String, port: u16, password: String) -> Self {
         Self {
             address,
             port,
             password,
-            email,
-            level: 0,
         }
     }
 }
@@ -927,15 +952,14 @@ mod tests {
 
     #[test]
     fn test_add() {
-        let aa = r#"vless://uuid@ip:10086?encryption=none&security=tls&sni=www.example.com&type=ws&host=www.example.com&path=%2Fhezz#aa"#;
+        let aa = r#"trojan://uuid@ip:60195?sni=address#aa"#;
         let model = Model::from_str(aa).unwrap();
         println!("{:?}", model);
 
         let stream_settings = serde_json::to_string(&model.stream_settings);
-        println!("stream_settings：: {:?}", stream_settings);
+        println!("stream_settings: {:?}", stream_settings);
 
         let xrray_config = XrayConfig::new(10086, 10087, vec![model]);
-        // println!("outbound: {:?}", serde_json::to_string_pretty(&outbound).unwrap());
         fs::write(
             "output.json",
             serde_json::to_string_pretty(&xrray_config).unwrap(),
