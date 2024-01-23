@@ -17,7 +17,7 @@ use std::{
 };
 use std::collections::HashSet;
 use tauri::utils::platform;
-use tauri::{Manager, State};
+use tauri::{Manager, State, AppHandle, Runtime};
 use tokio::sync::watch;
 use entity::utils::get_random_port;
 
@@ -90,15 +90,15 @@ fn get_http_socks_ports(used_ports: &mut HashSet<u16>) -> (u16, u16) {
 }
 
 #[tauri::command(rename_all = "snake_case")]
-pub async fn set_system_proxy<'a>(
-    app: tauri::App,
+pub async fn set_system_proxy<'a, R: Runtime>(
+    app_handle: AppHandle<R>,
     process_state: State<'a, ProcessManagerState>,
     proxy_state: State<'a, KittyProxyState>,
     db_state: State<'a, DatabaseState>,
 ) -> CommandResult<KittyResponse<bool>> {
     let _ = init_state(&process_state, &proxy_state).await?;
     let db = db_state.get_db();
-    let config_dir = app.app_handle().path().config_dir()?;
+    let config_dir = app_handle.path().config_dir()?;
     let mut http_vpn_node_infos = Vec::new();
     let mut socks_vpn_node_infos = Vec::new();
     let mut used_ports = proxy_state.used_ports.lock().await;
@@ -137,7 +137,7 @@ pub async fn set_system_proxy<'a>(
         let server_key: String = xray_records.iter().map(|x| x.get_server()).collect::<Vec<String>>().join("_");
         let xray_config = XrayConfig::new(http_port, socks_port, xray_records);
         let xray_bin_path = relative_command_path("xray".as_ref())?;
-        let resource_dir = app.app_handle().path().resource_dir()?;
+        let resource_dir = app_handle.path().resource_dir()?;
         let mut env_var = HashMap::new();
         env_var.insert(
             "XRAY_LOCATION_ASSET".to_string(),

@@ -9,7 +9,7 @@ impl CommonAPI {
 
     #[cfg(any(target_os = "macos", target_os = "linux", target_os="windows"))]
     pub async fn copy_proxy_env(db: &DatabaseConnection) -> Result<String> {
-        let record = base_config::Model::first(&db).await?.unwrap();
+        let record = base_config::Model::first(db).await?.unwrap();
         let http_port = record.http_port;
         let socks_port = record.socks_port;
         #[cfg(target_os = "windows")]

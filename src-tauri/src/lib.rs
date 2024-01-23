@@ -180,6 +180,7 @@ pub fn run() {
         ))
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_notification::init())
+        .plugin(tauri_plugin_clipboard_manager::init())
         .setup(setup_db)
         .setup(setup_kitty_proxy)
         .on_window_event(on_window_exit_func);
@@ -187,7 +188,7 @@ pub fn run() {
     let builder = builder.invoke_handler(tauri::generate_handler![
         common_api::query_base_config,
         common_api::update_base_config,
-        common_api::copy_proxy_env,
+        tauri_apis::set_system_proxy,
     ]);
     #[cfg(any(target_os = "macos", target_os = "linux", target_os = "windows"))]
     let builder = builder.invoke_handler(tauri::generate_handler![common_api::copy_proxy_env,]);

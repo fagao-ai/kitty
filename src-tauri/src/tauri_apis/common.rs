@@ -3,15 +3,26 @@ use crate::state::DatabaseState;
 use crate::types::{CommandResult, KittyResponse};
 use entity::base_config;
 use tauri::State;
+use tauri_plugin_clipboard_manager::ClipboardExt;
+
+#[cfg(any(target_os = "macos", target_os = "linux", target_os = "windows"))]
+use tauri::AppHandle;
+use tauri::Runtime;
 
 #[cfg(any(target_os = "macos", target_os = "linux", target_os = "windows"))]
 #[tauri::command(rename_all = "snake_case")]
-pub async fn copy_proxy_env<'a>(
+pub async fn copy_proxy_env<'a, R: Runtime>(
+    app_handle: AppHandle<R>,
     state: State<'a, DatabaseState>,
 ) -> CommandResult<KittyResponse<String>> {
     let db = state.get_db();
     let proxy_string = CommonAPI::copy_proxy_env(&db).await?;
-    Ok(KittyResponse::from_data(proxy_string))
+    let clipboard_content = tauri_plugin_clipboard_manager::ClipKind::PlainText {
+        label: Some("Label".to_string()),
+        text: proxy_string,
+    };
+    app_handle.clipboard().write(clipboard_content).unwrap();
+    Ok(KittyResponse::default())
 }
 
 #[tauri::command(rename_all = "snake_case")]
