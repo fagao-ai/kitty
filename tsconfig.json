@@ -28,7 +28,8 @@
   "exclude": [
     "node_modules",
     "dist",
-    "postcss.config.cjs"
+    "postcss.config.cjs",
+    "*.json"
   ],
   "include": [
     "src/**/*.ts",
@@ -37,6 +38,8 @@
     "src/**/*.vue",
     "src/**/**/*.vue",
     "src/**/**/*.ts",
+    "src/**/**/**/*.ts",
+    "src/**/**/**/*.vue",
     "src/*.vue",
     "src/*.ts",
     "tailwind.config.ts",

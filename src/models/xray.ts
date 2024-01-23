@@ -1,10 +1,10 @@
-import { Transform, Type } from 'class-transformer'
+import { Type } from 'class-transformer'
 
-enum Security {
-  tls,
-  none,
-  reality,
-}
+// enum Security {
+//   tls,
+//   none,
+//   reality,
+// }
 
 class TLSSetting {
   allowInsecure!: boolean
@@ -14,7 +14,7 @@ class TLSSetting {
 class ProtocolSetting {
   network!: string
 
-  security?: Security
+  security?: 'tls' | 'none' | 'reality' | undefined
 
   tlsSettings?: TLSSetting
 }
@@ -32,67 +32,8 @@ class WebSocketProtocol extends ProtocolSetting {
   wsSettings!: WebSocketProtocolSetting
 }
 
-enum TcpType {
-  none,
-  http,
-}
-
-class TcpRequestHeader {
-  @Transform(params => params.obj?.Host ?? [] as string[])
-  host!: string[]
-
-  @Transform(params => params.obj?.['User-Agent'] ?? [] as string[])
-  userAgent!: string[]
-
-  @Transform(params => params.obj?.['Accept-Encoding'] ?? [] as string[])
-  acceptEncoding!: string[]
-
-  @Transform(params => params.obj?.Connection ?? [] as string[])
-  connection!: string[]
-
-  @Transform(params => params.obj?.Pragma ?? '' as string)
-  pragma!: string
-}
-
-class TcpRequest {
-  version!: string
-  method!: string
-  path!: string
-  headers!: TcpRequestHeader
-}
-
-class TcpResponseHeader {
-  @Transform((params: any) => params.obj?.['Content-Type'] ?? [])
-  contentType!: string[]
-
-  @Transform(params => params.obj?.['transfer-Encoding'] ?? [])
-  transferEncoding!: string[]
-
-  @Transform(params => params.obj?.Connection ?? [])
-  connection!: string[]
-
-  @Transform(pragma => pragma.obj?.Pragma ?? '')
-  pragma!: string
-}
-
-class TcpResponse {
-  version!: string
-  status!: number
-  reason!: string
-  headers!: TcpResponseHeader
-}
-
-class TcpHeader {
-  type!: TcpType
-  request?: TcpRequest
-  response?: TcpResponse
-}
-class TcpProtocolSetting {
-  header!: TcpHeader
-}
-
 class TcpProtocol extends ProtocolSetting {
-  tcpSettings!: TcpProtocolSetting
+  tcpSettings!: Record<string, any>
 }
 
 class Http2ProtocolSetting {

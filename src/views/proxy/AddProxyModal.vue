@@ -3,6 +3,7 @@ import { NButton, NForm, NFormItem, NInput, NTabPane, NTabs } from 'naive-ui'
 import { useVModel } from '@vueuse/core'
 import type { ProxyAdd } from '@/types/proxy'
 import { invoke } from '@/utils/invoke'
+import XrayView from '@/views/proxy/xray/XrayView.vue'
 
 const props = withDefaults(defineProps<ProxyAdd>(), { showModal: false })
 
@@ -14,10 +15,12 @@ interface Emits {
 
 const showInsertModal = useVModel(props, 'showModal')
 
-const form = useVModel(props, 'formData')
+const hysteriaFormState = useVModel(props, 'hysteriaForm')
+
+const xrayFormState = useVModel(props, 'xrayForm')
 
 async function onInsertSubmit() {
-  await invoke('add_hy_item', { record: form.value })
+  await invoke('add_hy_item', { record: hysteriaFormState.value })
   emits('insertSubmit')
   showInsertModal.value = false
 }
@@ -47,7 +50,7 @@ function onCancelInsert() {
         tab="hysteria"
       >
         <n-form
-          :model="form"
+          :model="hysteriaFormState"
           size="medium"
           label-placement="left"
           label-width="auto"
@@ -56,20 +59,20 @@ function onCancelInsert() {
             label="代理名称"
             path="name"
           >
-            <n-input v-model:value="form.name" />
+            <n-input v-model:value="hysteriaFormState.name" />
           </n-form-item>
           <n-form-item
             label="服务地址"
             path="server"
           >
-            <n-input v-model:value="form.server" />
+            <n-input v-model:value="hysteriaFormState.server" />
           </n-form-item>
           <n-form-item
             label="认证"
             path="auth"
           >
             <n-input
-              v-model:value="form.auth"
+              v-model:value="hysteriaFormState.auth"
               placeholder="认证密码"
             />
           </n-form-item>
@@ -77,25 +80,25 @@ function onCancelInsert() {
             label="上行"
             path="bandwidth.up"
           >
-            <n-input v-model:value="form.bandwidth.up" />
+            <n-input v-model:value="hysteriaFormState.bandwidth.up" />
           </n-form-item>
           <n-form-item
             label="下行"
             path="bandwidth.down"
           >
-            <n-input v-model:value="form.bandwidth.down" />
+            <n-input v-model:value="hysteriaFormState.bandwidth.down" />
           </n-form-item>
           <n-form-item
             label="sni"
             path="tls.sni"
           >
-            <n-input v-model:value="form.tls.sni" />
+            <n-input v-model:value="hysteriaFormState.tls.sni" />
           </n-form-item>
           <n-form-item
             label="安全连接"
             path="tls.insecure"
           >
-            <n-switch v-model:value="form.tls.insecure" />
+            <n-switch v-model:value="hysteriaFormState.tls.insecure" />
           </n-form-item>
         </n-form>
       </n-tab-pane>
@@ -103,7 +106,7 @@ function onCancelInsert() {
         name="Xray"
         tab="Xray"
       >
-        Xray
+        <xray-view v-model:form="xrayFormState" />
       </n-tab-pane>
     </n-tabs>
 

@@ -1,3 +1,5 @@
+import type { Xray } from '@/models/xray'
+
 export interface ProxyCard {
   tag: string
   name: string
@@ -27,9 +29,14 @@ export interface HysteriaProxy {
   tls: TLS
 }
 
+export type XrayProxy = {
+  [K in keyof Xray]: Xray[K];
+}
+
 export interface ProxyAdd {
   showModal: boolean
-  formData: HysteriaProxy
+  hysteriaForm: HysteriaProxy
+  xrayForm: XrayProxy
 }
 
 export enum ProxyType {
