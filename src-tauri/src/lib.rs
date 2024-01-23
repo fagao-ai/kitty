@@ -1,8 +1,6 @@
 use anyhow::Result;
-use entity::base_config;
-use kitty_proxy::{HttpProxy, MatchProxy, SocksProxy};
+use kitty_proxy::MatchProxy;
 use state::{DatabaseState, ProcessManagerState};
-use std::collections::HashMap;
 use std::sync::Arc;
 use std::{env, fs};
 use tauri::{
@@ -15,6 +13,8 @@ use tauri::{Manager, State};
 use tauri_apis::hysteria as hysteria_api;
 #[cfg(feature = "xray")]
 use tauri_apis::xray as xray_api;
+
+use tauri_apis::common as common_api;
 use tauri_plugin_autostart::MacosLauncher;
 use tauri_plugin_notification::{NotificationExt, PermissionState};
 
@@ -183,12 +183,18 @@ pub fn run() {
         .setup(setup_db)
         .setup(setup_kitty_proxy)
         .on_window_event(on_window_exit_func);
+
+    let builder = builder.invoke_handler(tauri::generate_handler![
+        common_api::query_base_config,
+        common_api::update_base_config,
+        common_api::copy_proxy_env,
+    ]);
+    #[cfg(any(target_os = "macos", target_os = "linux", target_os = "windows"))]
+    let builder = builder.invoke_handler(tauri::generate_handler![common_api::copy_proxy_env,]);
     #[cfg(feature = "hysteria")]
     let builder = builder.invoke_handler(tauri::generate_handler![
         hysteria_api::add_hy_item,
         hysteria_api::get_all_hysterias,
-        hysteria_api::query_base_config,
-        hysteria_api::update_base_config,
     ]);
 
     #[cfg(feature = "xray")]

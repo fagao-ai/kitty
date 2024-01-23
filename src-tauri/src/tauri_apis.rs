@@ -31,6 +31,7 @@ pub mod hysteria;
 
 #[cfg(feature = "xray")]
 pub mod xray;
+pub mod common;
 
 fn relative_command_path(command: &Path) -> Result<PathBuf> {
     match platform::current_exe()?.parent() {
