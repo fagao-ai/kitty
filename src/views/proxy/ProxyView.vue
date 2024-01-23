@@ -1,57 +1,15 @@
 <script setup lang="ts">
 import { NButton } from 'naive-ui'
-import { reactive, ref, watch } from 'vue'
+import { ref, watch } from 'vue'
 import { ProxyType } from '@/types/proxy'
 import AddProxyModal from '@/views/proxy/AddProxyModal.vue'
-import type { ProxyCard as Card, HysteriaProxy, XrayProxy as XrayProxyForm } from '@/types/proxy'
+import type { ProxyCard as Card } from '@/types/proxy'
 import { proxyStore } from '@/views/proxy/store'
 import HysteriaProxyView from '@/views/proxy/HysteriaProxy.vue'
 import XrayProxy from '@/views/proxy/XrayProxy.vue'
 import { batchGetProxy } from '@/apis/proxy'
 
 const showInsertModal = ref(false)
-
-const hysteriaForm = reactive<HysteriaProxy>({
-  name: '名称',
-  server: 'ip:port',
-  auth: 'password',
-  bandwidth: {
-    up: '10 mbps',
-    down: '100 mbps',
-  },
-  tls: {
-    sni: 'bing.com',
-    insecure: true,
-  },
-})
-
-const xrayForm = reactive<XrayProxyForm>({
-  id: 0,
-  name: '名称',
-  protocol: 'VLESS',
-  uuid: 'xxxx-xxxx-xxxx-xxxx',
-  address: 'ip',
-  port: 443,
-  streamSettings: {
-    network: '',
-    security: 'tls',
-    tlsSettings: {
-      allowInsecure: true,
-      serverName: 'bing.com',
-    },
-    // ws
-    host: '',
-    // tcp
-    tcpSettings: {},
-    // http2
-    http2Settings: {},
-    // grpc
-    grpcSettings: {},
-    // kcp
-    kcpSettings: {},
-  } as any,
-  subscribeId: 0,
-})
 
 const hysterias = ref<Card[]>([])
 const xrays = ref<Card[]>([])
@@ -109,8 +67,6 @@ watch(proxyStore, () => {
   </div>
   <add-proxy-modal
     v-model:showModal="showInsertModal"
-    :hysteria-form="hysteriaForm"
-    :xray-form="xrayForm"
     @insert-submit="batchGetProxy"
   />
 </template>

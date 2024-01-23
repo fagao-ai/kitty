@@ -33,11 +33,11 @@ export type XrayProxy = {
   [K in keyof Xray]: Xray[K];
 }
 
-export interface ProxyAdd {
-  showModal: boolean
-  hysteriaForm: HysteriaProxy
-  xrayForm: XrayProxy
-}
+// export interface ProxyAdd {
+//   showModal: boolean
+//   hysteriaForm: HysteriaProxy
+//   xrayForm: XrayProxy
+// }
 
 export enum ProxyType {
   Hysteria = 'hysteria',

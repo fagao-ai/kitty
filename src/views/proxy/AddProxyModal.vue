@@ -1,13 +1,60 @@
 <script setup lang="ts">
+import { reactive } from 'vue'
 import { NButton, NForm, NFormItem, NInput, NTabPane, NTabs } from 'naive-ui'
 import { useVModel } from '@vueuse/core'
-import type { ProxyAdd } from '@/types/proxy'
+import type { HysteriaProxy, XrayProxy } from '@/types/proxy'
 import { invoke } from '@/utils/invoke'
 import XrayView from '@/views/proxy/xray/XrayView.vue'
 
-const props = withDefaults(defineProps<ProxyAdd>(), { showModal: false })
+interface Props {
+  showModal: boolean
+}
+
+const props = withDefaults(defineProps<Props>(), { showModal: false })
 
 const emits = defineEmits<Emits>()
+
+const hysteriaFormState = reactive<HysteriaProxy>({
+  name: '名称',
+  server: 'ip:port',
+  auth: 'password',
+  bandwidth: {
+    up: '10 mbps',
+    down: '100 mbps',
+  },
+  tls: {
+    sni: 'bing.com',
+    insecure: true,
+  },
+})
+
+const xrayFormState = reactive<XrayProxy>({
+  id: 0,
+  name: '名称',
+  protocol: 'VLESS',
+  uuid: 'xxxx-xxxx-xxxx-xxxx',
+  address: 'ip',
+  port: 443,
+  streamSettings: {
+    network: '',
+    security: 'tls',
+    tlsSettings: {
+      allowInsecure: true,
+      serverName: 'bing.com',
+    },
+    // ws
+    host: '',
+    // tcp
+    tcpSettings: {},
+    // http2
+    http2Settings: {},
+    // grpc
+    grpcSettings: {},
+    // kcp
+    kcpSettings: {},
+  } as any,
+  subscribeId: 0,
+})
 
 interface Emits {
   (e: 'insertSubmit'): void
@@ -15,12 +62,8 @@ interface Emits {
 
 const showInsertModal = useVModel(props, 'showModal')
 
-const hysteriaFormState = useVModel(props, 'hysteriaForm')
-
-const xrayFormState = useVModel(props, 'xrayForm')
-
 async function onInsertSubmit() {
-  await invoke('add_hy_item', { record: hysteriaFormState.value })
+  await invoke('add_hy_item', { record: hysteriaFormState })
   emits('insertSubmit')
   showInsertModal.value = false
 }
