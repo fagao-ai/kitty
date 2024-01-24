@@ -1,3 +1,4 @@
+use anyhow::Error;
 use anyhow::{anyhow, Result};
 use base64::{engine::general_purpose, Engine as _};
 use sea_orm::{entity::prelude::*, FromJsonQueryResult};
@@ -9,14 +10,16 @@ use url::Url;
 use crate::types::ShareJsonStruct;
 use crate::types::ShareWithProtocol;
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, DeriveEntityModel)]
+#[derive(
+    Clone, Debug, PartialEq, Eq, Serialize, Deserialize, DeriveEntityModel, FromJsonQueryResult,
+)]
 #[sea_orm(table_name = "xray")]
 pub struct Model {
     #[sea_orm(primary_key, auto_increment = true)]
     #[serde(skip)]
     pub id: i32,
     pub name: String,
-    pub protocol: String,
+    pub protocol: Protocol,
     pub uuid: String,
     pub address: String,
     pub port: u16,
@@ -25,12 +28,38 @@ pub struct Model {
     pub subscribe_id: Option<i32>,
 }
 
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, EnumIter, DeriveActiveEnum)]
+#[sea_orm(rs_type = "String", db_type = "String(Some(1))")]
+pub enum Protocol {
+    #[serde(rename = "vless")]
+    #[sea_orm(string_value = "vless")]
+    Vless,
+    #[sea_orm(string_value = "vmess")]
+    #[serde(rename = "vmess")]
+    Vmess,
+    #[sea_orm(string_value = "trojan")]
+    #[serde(rename = "trojan")]
+    Trojan,
+}
+
+impl FromStr for Protocol {
+    type Err = Error;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "vless" => Ok(Protocol::Vless),
+            "vmess" => Ok(Protocol::Vmess),
+            "trojan" => Ok(Protocol::Trojan),
+            _ => Err(anyhow!("convert error")),
+        }
+    }
+}
+
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
 pub enum Relation {
     #[sea_orm(
-    belongs_to = "super::subscribe::Entity",
-    from = "Column::SubscribeId",
-    to = "super::subscribe::Column::Id"
+        belongs_to = "super::subscribe::Entity",
+        from = "Column::SubscribeId",
+        to = "super::subscribe::Column::Id"
     )]
     Subscribe,
 }
@@ -784,7 +813,7 @@ impl Balancer {
 
 impl From<Model> for Outbound {
     fn from(source: Model) -> Self {
-        let out_bound_settings = match source.protocol.as_str() {
+        let out_bound_settings = match source.protocol.to_value().as_str() {
             "trojan" => OutboundSettings::from_servers(vec![TrojanServer::new(
                 source.address,
                 source.port,
@@ -797,7 +826,7 @@ impl From<Model> for Outbound {
         };
         Outbound::new(
             source.name,
-            source.protocol,
+            source.protocol.to_value(),
             out_bound_settings,
             source.stream_settings,
         )
@@ -816,7 +845,7 @@ impl TryFrom<Url> for Model {
         Ok(Self {
             id: Default::default(),
             name: "default".into(),
-            protocol: protocol.into(),
+            protocol: Protocol::from_str(protocol)?,
             uuid: uuid.into(),
             address: address.into(),
             port,
@@ -859,7 +888,7 @@ impl TryFrom<ShareWithProtocol> for Model {
         Ok(Self {
             id: Default::default(),
             name,
-            protocol: value.protocol,
+            protocol: Protocol::from_str(value.protocol.as_str())?,
             uuid,
             address,
             port,
@@ -961,6 +990,6 @@ mod tests {
             "output.json",
             serde_json::to_string_pretty(&xrray_config).unwrap(),
         )
-            .unwrap();
+        .unwrap();
     }
 }

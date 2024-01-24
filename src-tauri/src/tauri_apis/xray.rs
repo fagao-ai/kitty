@@ -26,6 +26,7 @@ pub async fn add_xray_item<'a>(
     record: xray::Model,
 ) -> CommandResult<()> {
     let db = state.get_db();
+    println!("{:?}", record);
     XrayAPI.add_xray_item(&db, record).await?;
     Ok(())
 }

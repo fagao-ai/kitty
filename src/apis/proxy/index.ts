@@ -19,7 +19,11 @@ export async function getAllHysterias() {
 }
 
 export async function createXrayProxy(xrayForm: XrayProxy) {
-  await invoke('add_xray_item', { ...decamelizeKeys(xrayForm) })
+  const res = decamelizeKeys(xrayForm) as any
+  const tls_settings = res.stream_settings.tls_settings
+  res.streamSettings = res.stream_settings
+  res.streamSettings.tlsSettings = { allowInsecure: tls_settings.allow_insecure, serverName: tls_settings.server_name }
+  await invoke('add_xray_item', { record: res })
 }
 
 export async function createHysteriaProxy(hysteriaForm: HysteriaProxy) {

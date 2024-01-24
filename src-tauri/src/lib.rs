@@ -69,6 +69,7 @@ fn set_system_tray<'a>(app: &'a mut tauri::App) -> Result<()> {
 }
 
 fn setup_db<'a>(app: &'a mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
+    println!("setup_db!!!");
     let handle = app.handle();
     let app_dir = handle
         .path()
@@ -95,6 +96,27 @@ fn setup_db<'a>(app: &'a mut tauri::App) -> Result<(), Box<dyn std::error::Error
 
 fn setup_kitty_proxy<'a>(app: &'a mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
     let handle = app.handle();
+
+    let app_dir = handle
+        .path()
+        .app_local_data_dir()
+        .expect("The app data directory should exist.");
+    if !app_dir.exists() {
+        fs::create_dir_all(&app_dir)?;
+    }
+    println!("app_dir: {:?}", app_dir);
+    let app_state: State<DatabaseState> = handle.state();
+    let db = tauri::async_runtime::block_on(async move {
+        let db = database::init_db(app_dir).await;
+        match db {
+            Ok(db) => db,
+            Err(err) => {
+                panic!("Error: {}", err);
+            }
+        }
+    });
+    *app_state.db.lock().unwrap() = Some(db);
+    // let _ = set_system_tray(app);
     let resource_dir = handle.path().resource_dir()?.join("static");
     let app_state: State<KittyProxyState> = handle.state();
     tauri::async_runtime::block_on(async move {
