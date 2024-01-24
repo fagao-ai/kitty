@@ -35,8 +35,8 @@ pub async fn get_all_xrays<'a>(
     state: State<'a, DatabaseState>,
 ) -> CommandResult<KittyResponse<Vec<XrayRecord>>> {
     let db = state.get_db();
-    let hy_proxies = XrayAPI.get_all(&db).await?;
-    Ok(KittyResponse::from_data(hy_proxies))
+    let xraies = XrayAPI.get_all(&db).await?;
+    Ok(KittyResponse::from_data(xraies))
 }
 
 #[tauri::command(rename_all = "snake_case")]

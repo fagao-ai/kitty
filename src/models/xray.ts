@@ -81,6 +81,4 @@ export class Xray {
     },
   })
   streamSettings!: StreamSettings
-
-  subscribeId?: number
 }

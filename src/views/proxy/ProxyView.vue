@@ -7,7 +7,7 @@ import type { ProxyCard as Card } from '@/types/proxy'
 import { proxyStore } from '@/views/proxy/store'
 import HysteriaProxyView from '@/views/proxy/HysteriaProxy.vue'
 import XrayProxy from '@/views/proxy/XrayProxy.vue'
-import { batchGetProxy } from '@/apis/proxy'
+import { getAllHysterias, getAllXraies } from '@/apis/proxy'
 
 const showInsertModal = ref(false)
 
@@ -15,19 +15,26 @@ const hysterias = ref<Card[]>([])
 const xrays = ref<Card[]>([])
 
 async function initHysteria() {
-  hysterias.value = await batchGetProxy()
+  hysterias.value = await getAllHysterias()
 }
 
 async function initXray() {
+  const xraies = await getAllXraies()
+  // eslint-disable-next-line no-console
+  console.log('xraies is ', xraies)
   xrays.value = []
 }
 
-watch(proxyStore, () => {
-  if (proxyStore.value.currentProxy === ProxyType.Hysteria) {
+function handleGetAllProxyByType(proxyType: ProxyType) {
+  if (proxyType === ProxyType.Hysteria) {
     initHysteria()
     return
   }
   initXray()
+}
+
+watch(proxyStore, () => {
+  handleGetAllProxyByType(proxyStore.value.currentProxy)
 }, { immediate: true, deep: true })
 </script>
 
@@ -67,7 +74,7 @@ watch(proxyStore, () => {
   </div>
   <add-proxy-modal
     v-model:showModal="showInsertModal"
-    @insert-submit="batchGetProxy"
+    @insert-submit="handleGetAllProxyByType"
   />
 </template>
 
