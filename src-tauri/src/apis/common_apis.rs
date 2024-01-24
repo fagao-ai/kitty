@@ -13,7 +13,7 @@ impl CommonAPI {
         let http_port = record.http_port;
         let socks_port = record.socks_port;
         #[cfg(target_os = "windows")]
-            let env_expr = format!("export https_proxy=http://127.0.0.1:{http_port} http_proxy=http://127.0.0.1:{http_port} all_proxy=socks5://127.0.0.1:{socks_port}");
+            let env_expr = format!("set https_proxy=http://127.0.0.1:{http_port} http_proxy=http://127.0.0.1:{http_port} all_proxy=socks5://127.0.0.1:{socks_port}");
 
         #[cfg(any(target_os = "macos", target_os = "linux"))]
             let env_expr = format!("export https_proxy=http://127.0.0.1:{http_port} http_proxy=http://127.0.0.1:{http_port} all_proxy=socks5://127.0.0.1:{socks_port}");

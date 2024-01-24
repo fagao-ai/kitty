@@ -43,11 +43,17 @@ const xrayFormState = reactive<XrayProxy>({
       serverName: 'bing.com',
     },
     // ws
-    host: '',
+    wsSettings: {
+      path: '',
+      headers: { Host: '' },
+    },
     // tcp
     tcpSettings: {},
     // http2
-    http2Settings: {},
+    http2Settings: {
+      host: [],
+      path: '',
+    },
     // grpc
     grpcSettings: {},
     // kcp

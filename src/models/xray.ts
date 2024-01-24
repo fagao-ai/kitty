@@ -12,7 +12,7 @@ class TLSSetting {
 }
 
 class ProtocolSetting {
-  network!: string
+  network!: 'ws' | 'tcp' | 'http2' | 'grpc' | 'kcp'
 
   security?: 'tls' | 'none' | 'reality' | undefined
 
@@ -23,7 +23,7 @@ class WebSocketHeader {
   host!: string
 }
 
-class WebSocketProtocolSetting {
+export class WebSocketProtocolSetting {
   path!: string
   headers!: WebSocketHeader
 }
@@ -36,7 +36,7 @@ class TcpProtocol extends ProtocolSetting {
   tcpSettings!: Record<string, any>
 }
 
-class Http2ProtocolSetting {
+export class Http2ProtocolSetting {
   host!: string[]
   path!: string
 }
@@ -45,61 +45,12 @@ class Http2Protocol extends ProtocolSetting {
   http2Settings!: Http2ProtocolSetting
 }
 
-class GrpcProtocolSetting {
-  serviceName!: string
-
-  multiMode!: boolean
-
-  idle_time!: number
-
-  healthCheckTimeout!: number
-
-  permitWithoutStream!: boolean
-
-  initialWindowsSize!: number
-}
-
 class GrpcProtocol extends ProtocolSetting {
-  grpcSettings!: GrpcProtocolSetting
-}
-
-enum KcpType {
-  none,
-  srtp,
-  utp,
-  'wechat-video',
-  dtls,
-  wireguard,
-  dns,
-}
-
-class KcpHeader {
-  type!: KcpType
-  domain!: string
-}
-
-class KcpProtocolSetting {
-  mtu!: number
-
-  tti!: number
-
-  uplinkCapacity!: number
-
-  downlinkCapacity!: number
-
-  congestion!: number
-
-  readBufferSize!: number
-
-  sriteBufferSize!: number
-
-  header!: KcpHeader
-
-  seed?: string
+  grpcSettings!: Record<string, any>
 }
 
 class KcpProtocol extends ProtocolSetting {
-  kcpSettings!: KcpProtocolSetting
+  kcpSettings!: Record<string, any>
 }
 
 type StreamSettings = WebSocketProtocol | TcpProtocol | Http2Protocol | GrpcProtocol | KcpProtocol
