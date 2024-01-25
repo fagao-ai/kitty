@@ -1,8 +1,6 @@
 use anyhow::Result;
 use sea_orm::{entity::prelude::*, FromJsonQueryResult};
 use serde::{Deserialize, Serialize};
-use std::convert::TryFrom;
-use std::io::BufRead;
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, DeriveEntityModel)]
 #[sea_orm(table_name = "hysteria")]
@@ -109,4 +107,3 @@ impl HysteriaConfig {
         http_addr.split(":").nth(1).unwrap().parse::<u16>().unwrap()
     }
 }
-

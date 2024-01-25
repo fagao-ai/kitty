@@ -13,9 +13,10 @@ macro_rules! generate_model_functions {
             Ok(record)
         }
 
-        pub async fn update(&self, db: &DatabaseConnection, id: i32) -> Result<self::Model, DbErr> {
+        pub async fn update(&self, db: &DatabaseConnection) -> Result<self::Model, DbErr> {
+            let origin_id = self.id;
             let json_value = serde_json::to_value(self).unwrap();
-            let record = self::Entity::find_by_id(id).one(db).await?;
+            let record = self::Entity::find_by_id(origin_id).one(db).await?;
             let mut record: self::ActiveModel = record.unwrap().into();
             let _ = record.set_from_json(json_value);
             let res = record.update(db).await?;
@@ -38,6 +39,11 @@ macro_rules! generate_model_functions {
                 active_models.push(record)
             }
             let _ = self::Entity::insert_many(active_models).exec(db).await?;
+            Ok(())
+        }
+
+        pub async fn delete_by_id(db: &DatabaseConnection, id: i32) -> Result<()> {
+            let _ = self::Entity::delete_by_id(id).exec(db).await?;
             Ok(())
         }
     };

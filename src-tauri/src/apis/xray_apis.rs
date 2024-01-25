@@ -4,6 +4,7 @@ use entity::subscribe;
 use entity::xray;
 use sea_orm::ActiveModelTrait;
 use sea_orm::DatabaseConnection;
+use sea_orm::ModelTrait;
 use sea_orm::Set;
 use serde::Deserialize;
 use serde::Serialize;
@@ -41,6 +42,20 @@ impl XrayAPI {
 
     pub async fn add_xray_item(&self, db: &DatabaseConnection, record: xray::Model) -> Result<()> {
         record.insert_one(db).await?;
+        Ok(())
+    }
+
+    pub async fn delete_xray_item(&self, db: &DatabaseConnection, id: i32) -> Result<()> {
+        let _ = xray::Model::delete_by_id(db, id).await?;
+        Ok(())
+    }
+
+    pub async fn update_xray_item(
+        &self,
+        db: &DatabaseConnection,
+        record: xray::Model,
+    ) -> Result<()> {
+        let _ = record.update(db).await?;
         Ok(())
     }
 

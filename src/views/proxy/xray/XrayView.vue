@@ -36,19 +36,22 @@ const streamSettingOptions = [{ label: 'WebSocket', value: 'ws' }, { label: 'Tcp
         label="protocol"
         path="protocol"
       >
-        <n-input v-model:value="formState.protocol" />
+        <n-select
+          v-model:value="formState.protocol"
+          :options="[{ label: 'vless', value: 'vless' }, { label: 'vmess', value: 'vmess' }, { label: 'trojan', value: 'trojan' }]"
+        />
       </n-form-item>
       <n-form-item
         label="uuid"
         path="uuid"
       >
-        <n-input v-model:value="formState.uuid" />
+        <n-input v-model:value="formState.uuid" placeholder="xxxx-xxxx-xxxx" />
       </n-form-item>
       <n-form-item
         label="address"
         path="address"
       >
-        <n-input v-model:value="formState.address" />
+        <n-input v-model:value="formState.address" placeholder="www.example.com" />
       </n-form-item>
       <n-form-item
         label="port"
@@ -90,7 +93,7 @@ const streamSettingOptions = [{ label: 'WebSocket', value: 'ws' }, { label: 'Tcp
         label="server name"
         path="streamSetting.tlsSettings.serverName"
       >
-        <n-input v-model:value="formState.streamSettings.tlsSettings!.serverName" />
+        <n-input v-model:value="formState.streamSettings.tlsSettings!.serverName" placeholder="www.example.com" />
       </n-form-item>
       <template v-if="formState.streamSettings.network === 'ws'">
         <n-form-item

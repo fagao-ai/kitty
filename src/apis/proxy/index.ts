@@ -27,7 +27,7 @@ export async function createXrayProxy(xrayForm: XrayProxy) {
 }
 
 export async function createHysteriaProxy(hysteriaForm: HysteriaProxy) {
-  await invoke('add_hy_item', { record: decamelizeKeys(hysteriaForm) })
+  await invoke('add_hysteria_item', { record: decamelizeKeys(hysteriaForm) })
 }
 
 export async function getAllXraies() {

@@ -23,4 +23,18 @@ impl HysteriaAPI {
         record.insert_one(db).await?;
         Ok(())
     }
+
+    pub async fn delete_hysteria_item(&self, db: &DatabaseConnection, id: i32) -> Result<()> {
+        let _ = hysteria::Model::delete_by_id(db, id).await?;
+        Ok(())
+    }
+
+    pub async fn update_hysteria_item(
+        &self,
+        db: &DatabaseConnection,
+        record: hysteria::Model,
+    ) -> Result<()> {
+        let _ = record.update(db).await?;
+        Ok(())
+    }
 }

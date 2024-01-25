@@ -49,3 +49,20 @@ pub async fn import_by_subscribe_url<'a>(
     let _res = XrayAPI.import_xray_from_subscribe(&db, url).await?;
     Ok(())
 }
+
+#[tauri::command(rename_all = "snake_case")]
+pub async fn delete_xray_item<'a>(state: State<'a, DatabaseState>, id: i32) -> CommandResult<()> {
+    let db = state.get_db();
+    XrayAPI.delete_xray_item(&db, id).await?;
+    Ok(())
+}
+
+#[tauri::command(rename_all = "snake_case")]
+pub async fn update_xray_item<'a>(
+    state: State<'a, DatabaseState>,
+    record: xray::Model,
+) -> CommandResult<()> {
+    let db = state.get_db();
+    XrayAPI.update_xray_item(&db, record).await?;
+    Ok(())
+}

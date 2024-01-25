@@ -9,47 +9,48 @@ import XrayView from '@/views/proxy/xray/XrayView.vue'
 
 interface Props {
   showModal: boolean
+  currentTab: ProxyType
 }
 
 interface Emits {
   (e: 'insertSubmit', tab: ProxyType): void
 }
 
-const props = withDefaults(defineProps<Props>(), { showModal: false })
+const props = withDefaults(defineProps<Props>(), { showModal: false, currentTab: ProxyType.Hysteria })
 
 const emits = defineEmits<Emits>()
 
 const showInsertModal = useVModel(props, 'showModal')
 
-const activeTab = ref<ProxyType>(ProxyType.Hysteria)
+const activeTab = ref<ProxyType>(props.currentTab)
 
 const hysteriaFormState = reactive<HysteriaProxy>({
-  name: '名称',
-  server: 'ip:port',
-  auth: 'password',
+  name: '',
+  server: '',
+  auth: '',
   bandwidth: {
     up: '10 mbps',
     down: '100 mbps',
   },
   tls: {
-    sni: 'bing.com',
+    sni: '',
     insecure: true,
   },
 })
 
 const xrayFormState = reactive<XrayProxy>({
   id: 0,
-  name: '名称',
-  protocol: 'VLESS',
-  uuid: 'xxxx-xxxx-xxxx-xxxx',
-  address: 'ip',
+  name: '',
+  protocol: 'vless',
+  uuid: '',
+  address: '',
   port: 443,
   streamSettings: {
     network: 'ws',
     security: 'tls',
     tlsSettings: {
       allowInsecure: true,
-      serverName: 'bing.com',
+      serverName: '',
     },
     // ws
     wsSettings: {
@@ -122,7 +123,7 @@ function onCancelInsert() {
             label="服务地址"
             path="server"
           >
-            <n-input v-model:value="hysteriaFormState.server" />
+            <n-input v-model:value="hysteriaFormState.server" placeholder="ip:port" />
           </n-form-item>
           <n-form-item
             label="认证"
@@ -149,7 +150,7 @@ function onCancelInsert() {
             label="sni"
             path="tls.sni"
           >
-            <n-input v-model:value="hysteriaFormState.tls.sni" />
+            <n-input v-model:value="hysteriaFormState.tls.sni" placeholder="bing.com" />
           </n-form-item>
           <n-form-item
             label="安全连接"

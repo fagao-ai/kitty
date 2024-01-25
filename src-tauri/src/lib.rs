@@ -1,8 +1,6 @@
 use anyhow::Result;
-use kitty_proxy::MatchProxy;
 use state::{DatabaseState, ProcessManagerState};
-use std::sync::Arc;
-use std::{env, fs};
+use std::env;
 use tauri::{
     menu::{MenuBuilder, MenuItemBuilder},
     tray::{ClickType, TrayIconBuilder},
@@ -13,6 +11,7 @@ use tauri::{Manager, State};
 use tauri_apis::hysteria as hysteria_api;
 #[cfg(feature = "xray")]
 use tauri_apis::xray as xray_api;
+use tauri_init::init_setup;
 
 use tauri_apis::common as common_api;
 use tauri_plugin_autostart::MacosLauncher;
@@ -21,10 +20,10 @@ use tauri_plugin_notification::{NotificationExt, PermissionState};
 use crate::state::KittyProxyState;
 
 mod apis;
-mod database;
 mod proxy;
 mod state;
 mod tauri_apis;
+mod tauri_init;
 mod types;
 mod utils;
 
@@ -65,74 +64,6 @@ fn set_system_tray<'a>(app: &'a mut tauri::App) -> Result<()> {
             }
         })
         .build(app)?;
-    Ok(())
-}
-
-fn setup_db<'a>(app: &'a mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
-    println!("setup_db!!!");
-    let handle = app.handle();
-    let app_dir = handle
-        .path()
-        .app_local_data_dir()
-        .expect("The app data directory should exist.");
-    if !app_dir.exists() {
-        fs::create_dir_all(&app_dir)?;
-    }
-    println!("app_dir: {:?}", app_dir);
-    let app_state: State<DatabaseState> = handle.state();
-    let db = tauri::async_runtime::block_on(async move {
-        let db = database::init_db(app_dir).await;
-        match db {
-            Ok(db) => db,
-            Err(err) => {
-                panic!("Error: {}", err);
-            }
-        }
-    });
-    *app_state.db.lock().unwrap() = Some(db);
-    let _ = set_system_tray(app);
-    Ok(())
-}
-
-fn setup_kitty_proxy<'a>(app: &'a mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
-    let handle = app.handle();
-
-    let app_dir = handle
-        .path()
-        .app_local_data_dir()
-        .expect("The app data directory should exist.");
-    if !app_dir.exists() {
-        fs::create_dir_all(&app_dir)?;
-    }
-    println!("app_dir: {:?}", app_dir);
-    let app_state: State<DatabaseState> = handle.state();
-    let db = tauri::async_runtime::block_on(async move {
-        let db = database::init_db(app_dir).await;
-        match db {
-            Ok(db) => db,
-            Err(err) => {
-                panic!("Error: {}", err);
-            }
-        }
-    });
-    *app_state.db.lock().unwrap() = Some(db);
-    // let _ = set_system_tray(app);
-    let resource_dir = handle.path().resource_dir()?.join("static");
-    let app_state: State<KittyProxyState> = handle.state();
-    tauri::async_runtime::block_on(async move {
-        println!(
-            "resource_dir: {:?}, exists: {}",
-            resource_dir,
-            resource_dir.exists()
-        );
-        let geoip_file = resource_dir.join("kitty_geoip.dat");
-        let geosite_file = resource_dir.join("kitty_geosite.dat");
-        println!("geoip_file: {:?}", geoip_file);
-        println!("geosite_file: {:?}", geosite_file);
-        let match_proxy = MatchProxy::from_geo_dat(Some(&geoip_file), Some(&geosite_file)).unwrap();
-        *app_state.match_proxy.lock().await = Some(Arc::new(match_proxy));
-    });
-
     Ok(())
 }
 
@@ -203,8 +134,7 @@ pub fn run() {
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_notification::init())
         .plugin(tauri_plugin_clipboard_manager::init())
-        .setup(setup_db)
-        .setup(setup_kitty_proxy)
+        .setup(init_setup)
         .on_window_event(on_window_exit_func);
 
     let builder = builder.invoke_handler(tauri::generate_handler![
@@ -216,8 +146,10 @@ pub fn run() {
     let builder = builder.invoke_handler(tauri::generate_handler![common_api::copy_proxy_env,]);
     #[cfg(feature = "hysteria")]
     let builder = builder.invoke_handler(tauri::generate_handler![
-        hysteria_api::add_hy_item,
+        hysteria_api::add_hysteria_item,
         hysteria_api::get_all_hysterias,
+        hysteria_api::update_hysteria_item,
+        hysteria_api::delete_hysteria_item,
     ]);
 
     #[cfg(feature = "xray")]
@@ -225,6 +157,8 @@ pub fn run() {
         xray_api::add_xray_item,
         xray_api::get_all_xrays,
         xray_api::import_by_subscribe_url,
+        xray_api::update_xray_item,
+        xray_api::delete_xray_item,
     ]);
 
     builder

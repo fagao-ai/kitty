@@ -74,6 +74,7 @@ watch(proxyStore, () => {
   </div>
   <add-proxy-modal
     v-model:showModal="showInsertModal"
+    :current-tab="proxyStore.currentProxy"
     @insert-submit="handleGetAllProxyByType"
   />
 </template>

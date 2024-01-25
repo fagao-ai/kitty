@@ -5,7 +5,6 @@ use serde::{Deserialize, Serialize};
 #[sea_orm(table_name = "subscribe")]
 pub struct Model {
     #[sea_orm(primary_key, auto_increment = true)]
-    // #[serde(skip)]
     pub id: i32,
     pub url: String,
 }

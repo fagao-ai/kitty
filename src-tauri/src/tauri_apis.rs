@@ -9,7 +9,6 @@ use entity::xray::{self as xray_entity, XrayConfig};
 
 use kitty_proxy::{HttpProxy, NodeInfo, SocksProxy};
 use protocols::KittyCommandGroup;
-use std::borrow::{Borrow, BorrowMut};
 use std::{
     collections::HashMap,
     net::{IpAddr, Ipv4Addr},
