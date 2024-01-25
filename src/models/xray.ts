@@ -29,10 +29,14 @@ export class WebSocketProtocolSetting {
 }
 
 class WebSocketProtocol extends ProtocolSetting {
+  declare network: 'ws'
+
   wsSettings!: WebSocketProtocolSetting
 }
 
 class TcpProtocol extends ProtocolSetting {
+  declare network: 'tcp'
+
   tcpSettings!: Record<string, any>
 }
 
@@ -42,14 +46,20 @@ export class Http2ProtocolSetting {
 }
 
 class Http2Protocol extends ProtocolSetting {
+  declare network: 'http2'
+
   http2Settings!: Http2ProtocolSetting
 }
 
 class GrpcProtocol extends ProtocolSetting {
+  declare network: 'grpc'
+
   grpcSettings!: Record<string, any>
 }
 
 class KcpProtocol extends ProtocolSetting {
+  declare network: 'kcp'
+
   kcpSettings!: Record<string, any>
 }
 

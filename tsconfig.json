@@ -30,22 +30,26 @@
     "node_modules",
     "dist",
     "postcss.config.cjs",
-    "*.json"
+    "*.json",
+    "src-tauri",
+    ".cargo",
+    ".vscode",
+    "public"
   ],
-  "include": [
-    "src/**/*.ts",
-    "src/**/*.d.ts",
-    "src/**/*.tsx",
-    "src/**/*.vue",
-    "src/**/**/*.vue",
-    "src/**/**/*.ts",
-    "src/**/**/**/*.ts",
-    "src/**/**/**/*.vue",
-    "src/*.vue",
-    "src/*.ts",
-    "tailwind.config.ts",
-    "./vite.config.ts"
-  ],
+  // "include": [
+  //   "src/**/*.ts",
+  //   "src/**/*.d.ts",
+  //   "src/**/*.tsx",
+  //   "src/**/*.vue",
+  //   "src/**/**/*.vue",
+  //   "src/**/**/*.ts",
+  //   "src/**/**/**/*.ts",
+  //   "src/**/**/**/*.vue",
+  //   "src/*.vue",
+  //   "src/*.ts",
+  //   "tailwind.config.ts",
+  //   "./vite.config.ts"
+  // ],
   "references": [
     {
       "path": "./tsconfig.node.json"

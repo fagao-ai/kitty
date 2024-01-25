@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { NForm, NFormItem, NInput, NInputNumber, NScrollbar } from 'naive-ui'
+import { NButton, NForm, NFormItem, NInput, NInputNumber, NScrollbar } from 'naive-ui'
 import { useVModel } from '@vueuse/core'
-import type { Http2ProtocolSetting, WebSocketProtocolSetting, Xray } from '@/models/xray'
+import type { Xray } from '@/models/xray'
 
 type XrayForm = {
   [K in keyof Xray]: Xray[K];
@@ -16,6 +16,18 @@ const props = defineProps<Props>()
 const formState = useVModel(props, 'form')
 
 const streamSettingOptions = [{ label: 'WebSocket', value: 'ws' }, { label: 'Tcp', value: 'tcp' }, { label: 'http2', value: 'http2' }, { label: 'grpc', value: 'grpc' }, { label: 'kcp', value: 'kcp' }]
+
+function handleRemoveHttp2Host(index: number) {
+  if (formState.value.streamSettings.network !== 'http2')
+    return
+  formState.value.streamSettings.http2Settings.host.splice(index, 1)
+}
+
+function handleAddHttp2Host() {
+  if (formState.value.streamSettings.network !== 'http2')
+    return
+  formState.value.streamSettings.http2Settings.host.push('')
+}
 </script>
 
 <template>
@@ -100,13 +112,13 @@ const streamSettingOptions = [{ label: 'WebSocket', value: 'ws' }, { label: 'Tcp
           label="path"
           path="streamSetting.wsSettings.path"
         >
-          <n-input v-model:value="(formState.streamSettings.wsSettings as WebSocketProtocolSetting)!.path" />
+          <n-input v-model:value="formState.streamSettings.wsSettings.path" />
         </n-form-item>
         <n-form-item
           label="host"
           path="streamSetting.wsSettings.headers.host"
         >
-          <n-input v-model:value="(formState.streamSettings.wsSettings as WebSocketProtocolSetting)!.headers.host" />
+          <n-input v-model:value="formState.streamSettings.wsSettings.headers.host" />
         </n-form-item>
       </template>
 
@@ -115,13 +127,21 @@ const streamSettingOptions = [{ label: 'WebSocket', value: 'ws' }, { label: 'Tcp
           label="path"
           path="streamSetting.http2Settings.path"
         >
-          <n-input v-model:value="(formState.streamSettings.http2Settings as Http2ProtocolSetting)!.path" />
+          <n-input v-model:value="formState.streamSettings.http2Settings.path" />
         </n-form-item>
         <n-form-item
-          label="host"
-          path="streamSetting.http2Settings.headers.host"
+          v-for="(item, index) in formState.streamSettings.http2Settings.host"
+          :key="index"
+          :label="`host${index + 1}`"
+          :path="`streamSetting.http2Settings.headers.host[${index}]`"
         >
-          <n-input v-model:value="(formState.streamSettings.http2Settings as Http2ProtocolSetting)!.host" />
+          <n-input v-model:value="formState.streamSettings.http2Settings.host[index]" />
+          <n-button class="pl-3" @click="handleAddHttp2Host()">
+            增加
+          </n-button>
+          <n-button class="pl-3" @click="handleRemoveHttp2Host(index)">
+            删除
+          </n-button>
         </n-form-item>
       </template>
     </n-form>

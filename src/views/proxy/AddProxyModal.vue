@@ -61,7 +61,7 @@ const xrayFormState = reactive<XrayProxy>({
     tcpSettings: {},
     // http2
     http2Settings: {
-      host: [],
+      host: [''],
       path: '',
     },
     // grpc
