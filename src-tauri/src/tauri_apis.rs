@@ -89,8 +89,8 @@ fn get_http_socks_ports(used_ports: &mut HashSet<u16>) -> (u16, u16) {
 }
 
 #[tauri::command(rename_all = "snake_case")]
-pub async fn set_system_proxy<'a, R: Runtime>(
-    app_handle: AppHandle<R>,
+pub async fn set_system_proxy<'a>(
+    app_handle: AppHandle,
     process_state: State<'a, ProcessManagerState>,
     proxy_state: State<'a, KittyProxyState>,
     db_state: State<'a, DatabaseState>,

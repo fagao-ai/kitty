@@ -2,7 +2,7 @@ use migration::{Migrator, MigratorTrait};
 use sea_orm::{Database, DatabaseConnection, DbErr};
 use std::path::PathBuf;
 
-use crate::state::DatabaseState;
+use crate::{state::DatabaseState, tray::Tray};
 use anyhow::Result;
 use kitty_proxy::MatchProxy;
 use std::fs;
@@ -69,5 +69,6 @@ pub fn init_setup<'a>(app: &'a mut tauri::App) -> Result<(), Box<dyn std::error:
     let handle = app.handle();
     let _ = setup_db(handle)?;
     let _ = setup_kitty_proxy(handle)?;
+    let _ = Tray::init_tray(handle);
     Ok(())
 }

@@ -43,7 +43,7 @@ macro_rules! generate_model_functions {
         }
 
         pub async fn delete_by_id(db: &DatabaseConnection, id: i32) -> Result<()> {
-            let _ = self::Entity::delete_by_id(id).exec(db).await?;
+            let _ = Entity::delete_by_id(id).exec(db).await?;
             Ok(())
         }
     };

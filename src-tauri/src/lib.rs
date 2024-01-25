@@ -26,46 +26,47 @@ mod tauri_apis;
 mod tauri_init;
 mod types;
 mod utils;
+mod tray;
 
-fn set_system_tray<'a>(app: &'a mut tauri::App) -> Result<()> {
-    let quit = MenuItemBuilder::with_id("quit", "Quit").build(app);
-    let hide = MenuItemBuilder::with_id("hide", "Hide").build(app);
-    let menu = MenuBuilder::new(app).items(&[&quit, &hide]).build()?;
-    let current_path = env::current_dir()?;
-    println!("current_path: {:?}", current_path);
-    let parent_dir = current_path.to_owned();
-    let icon_path = parent_dir.join("icons").join("icons8-48.png");
-    println!("icon_path: {:?}", icon_path);
-    let icon = Icon::File(icon_path);
-    print!("set_system_tray");
-    let _tray = TrayIconBuilder::new()
-        .menu(&menu)
-        .icon(icon)
-        .on_menu_event(
-            move |app, event: tauri::menu::MenuEvent| match event.id().as_ref() {
-                "hide" => {
-                    let window: tauri::Window = app.get_window("main").unwrap();
-                    window.hide().unwrap();
-                }
-                "quit" => {
-                    app.exit(0);
-                }
+// fn set_system_tray<'a>(app: &'a mut tauri::App) -> Result<()> {
+//     let quit = MenuItemBuilder::with_id("quit", "Quit").build(app);
+//     let hide = MenuItemBuilder::with_id("hide", "Hide").build(app);
+//     let menu = MenuBuilder::new(app).items(&[&quit, &hide]).build()?;
+//     let current_path = env::current_dir()?;
+//     println!("current_path: {:?}", current_path);
+//     let parent_dir = current_path.to_owned();
+//     let icon_path = parent_dir.join("icons").join("icons8-48.png");
+//     println!("icon_path: {:?}", icon_path);
+//     let icon = Icon::File(icon_path);
+//     print!("set_system_tray");
+//     let _tray = TrayIconBuilder::new()
+//         .menu(&menu)
+//         .icon(icon)
+//         .on_menu_event(
+//             move |app, event: tauri::menu::MenuEvent| match event.id().as_ref() {
+//                 "hide" => {
+//                     let window: tauri::Window = app.get_window("main").unwrap();
+//                     window.hide().unwrap();
+//                 }
+//                 "quit" => {
+//                     app.exit(0);
+//                 }
 
-                _ => (),
-            },
-        )
-        .on_tray_icon_event(|tray, event| {
-            if event.click_type == ClickType::Left {
-                let app = tray.app_handle();
-                if let Some(window) = app.get_window("main") {
-                    let _ = window.show();
-                    let _ = window.set_focus();
-                }
-            }
-        })
-        .build(app)?;
-    Ok(())
-}
+//                 _ => (),
+//             },
+//         )
+//         .on_tray_icon_event(|tray, event| {
+//             if event.click_type == ClickType::Left {
+//                 let app = tray.app_handle();
+//                 if let Some(window) = app.get_window("main") {
+//                     let _ = window.show();
+//                     let _ = window.set_focus();
+//                 }
+//             }
+//         })
+//         .build(app)?;
+//     Ok(())
+// }
 
 async fn on_window_exit(event: tauri::GlobalWindowEvent) {
     match event.event() {
@@ -143,9 +144,9 @@ pub fn run() {
         tauri_apis::set_system_proxy,
     ]);
     #[cfg(any(target_os = "macos", target_os = "linux", target_os = "windows"))]
-    let builder = builder.invoke_handler(tauri::generate_handler![common_api::copy_proxy_env,]);
+        let builder = builder.invoke_handler(tauri::generate_handler![common_api::copy_proxy_env_cmd,]);
     #[cfg(feature = "hysteria")]
-    let builder = builder.invoke_handler(tauri::generate_handler![
+        let builder = builder.invoke_handler(tauri::generate_handler![
         hysteria_api::add_hysteria_item,
         hysteria_api::get_all_hysterias,
         hysteria_api::update_hysteria_item,
@@ -153,7 +154,7 @@ pub fn run() {
     ]);
 
     #[cfg(feature = "xray")]
-    let builder = builder.invoke_handler(tauri::generate_handler![
+        let builder = builder.invoke_handler(tauri::generate_handler![
         xray_api::add_xray_item,
         xray_api::get_all_xrays,
         xray_api::import_by_subscribe_url,
