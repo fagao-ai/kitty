@@ -825,7 +825,7 @@ impl From<Model> for Outbound {
             }
         };
         Outbound::new(
-            source.name,
+            format!("proxy_{}", source.id),
             source.protocol.to_value(),
             out_bound_settings,
             source.stream_settings,

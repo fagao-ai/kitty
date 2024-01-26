@@ -4,7 +4,6 @@ use entity::subscribe;
 use entity::xray;
 use sea_orm::ActiveModelTrait;
 use sea_orm::DatabaseConnection;
-use sea_orm::ModelTrait;
 use sea_orm::Set;
 use serde::Deserialize;
 use serde::Serialize;

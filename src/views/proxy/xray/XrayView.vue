@@ -57,13 +57,19 @@ function handleAddHttp2Host() {
         label="uuid"
         path="uuid"
       >
-        <n-input v-model:value="formState.uuid" placeholder="xxxx-xxxx-xxxx" />
+        <n-input
+          v-model:value="formState.uuid"
+          placeholder="xxxx-xxxx-xxxx"
+        />
       </n-form-item>
       <n-form-item
         label="address"
         path="address"
       >
-        <n-input v-model:value="formState.address" placeholder="www.example.com" />
+        <n-input
+          v-model:value="formState.address"
+          placeholder="www.example.com"
+        />
       </n-form-item>
       <n-form-item
         label="port"
@@ -105,7 +111,10 @@ function handleAddHttp2Host() {
         label="server name"
         path="streamSetting.tlsSettings.serverName"
       >
-        <n-input v-model:value="formState.streamSettings.tlsSettings!.serverName" placeholder="www.example.com" />
+        <n-input
+          v-model:value="formState.streamSettings.tlsSettings!.serverName"
+          placeholder="www.example.com"
+        />
       </n-form-item>
       <template v-if="formState.streamSettings.network === 'ws'">
         <n-form-item
@@ -136,11 +145,17 @@ function handleAddHttp2Host() {
           :path="`streamSetting.http2Settings.headers.host[${index}]`"
         >
           <n-input v-model:value="formState.streamSettings.http2Settings.host[index]" />
-          <n-button class="pl-3" @click="handleAddHttp2Host()">
-            增加
+          <n-button
+            class="pl-3"
+            @click="handleAddHttp2Host()"
+          >
+            +
           </n-button>
-          <n-button class="pl-3" @click="handleRemoveHttp2Host(index)">
-            删除
+          <n-button
+            class="pl-3"
+            @click="handleRemoveHttp2Host(index)"
+          >
+            -
           </n-button>
         </n-form-item>
       </template>

@@ -6,20 +6,6 @@ use crate::apis::xray_apis::XrayRecord;
 use crate::state::DatabaseState;
 use crate::types::{CommandResult, KittyResponse};
 
-// #[tauri::command(rename_all = "snake_case")]
-// pub async fn get_hysteria_status<'a>(
-//     state: State<'a, ProcessManagerState>,
-// ) -> CommandResult<KittyResponse<bool>> {
-//     let process_manager = state.hy_process_manager.lock().await;
-//     let process_manager = process_manager.as_ref();
-//     if let Some(process_manager) = process_manager {
-//         let is_running = process_manager.is_running();
-//         Ok(KittyResponse::from_data(is_running))
-//     } else {
-//         Ok(KittyResponse::from_data(false))
-//     }
-// }
-
 #[tauri::command(rename_all = "snake_case")]
 pub async fn add_xray_item<'a>(
     state: State<'a, DatabaseState>,

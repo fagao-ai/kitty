@@ -2,9 +2,11 @@ use anyhow::Result;
 use state::{DatabaseState, ProcessManagerState};
 use std::env;
 use tauri::{
+    generate_handler,
+    ipc::Invoke,
     menu::{MenuBuilder, MenuItemBuilder},
     tray::{ClickType, TrayIconBuilder},
-    Icon, WindowEvent,
+    Icon, Runtime, WindowEvent,
 };
 use tauri::{Manager, State};
 #[cfg(feature = "hysteria")]
@@ -19,54 +21,16 @@ use tauri_plugin_notification::{NotificationExt, PermissionState};
 
 use crate::state::KittyProxyState;
 
+use tauri::command;
+
 mod apis;
 mod proxy;
 mod state;
 mod tauri_apis;
 mod tauri_init;
+mod tray;
 mod types;
 mod utils;
-mod tray;
-
-// fn set_system_tray<'a>(app: &'a mut tauri::App) -> Result<()> {
-//     let quit = MenuItemBuilder::with_id("quit", "Quit").build(app);
-//     let hide = MenuItemBuilder::with_id("hide", "Hide").build(app);
-//     let menu = MenuBuilder::new(app).items(&[&quit, &hide]).build()?;
-//     let current_path = env::current_dir()?;
-//     println!("current_path: {:?}", current_path);
-//     let parent_dir = current_path.to_owned();
-//     let icon_path = parent_dir.join("icons").join("icons8-48.png");
-//     println!("icon_path: {:?}", icon_path);
-//     let icon = Icon::File(icon_path);
-//     print!("set_system_tray");
-//     let _tray = TrayIconBuilder::new()
-//         .menu(&menu)
-//         .icon(icon)
-//         .on_menu_event(
-//             move |app, event: tauri::menu::MenuEvent| match event.id().as_ref() {
-//                 "hide" => {
-//                     let window: tauri::Window = app.get_window("main").unwrap();
-//                     window.hide().unwrap();
-//                 }
-//                 "quit" => {
-//                     app.exit(0);
-//                 }
-
-//                 _ => (),
-//             },
-//         )
-//         .on_tray_icon_event(|tray, event| {
-//             if event.click_type == ClickType::Left {
-//                 let app = tray.app_handle();
-//                 if let Some(window) = app.get_window("main") {
-//                     let _ = window.show();
-//                     let _ = window.set_focus();
-//                 }
-//             }
-//         })
-//         .build(app)?;
-//     Ok(())
-// }
 
 async fn on_window_exit(event: tauri::GlobalWindowEvent) {
     match event.event() {
@@ -137,31 +101,63 @@ pub fn run() {
         .plugin(tauri_plugin_clipboard_manager::init())
         .setup(init_setup)
         .on_window_event(on_window_exit_func);
-
-    let builder = builder.invoke_handler(tauri::generate_handler![
-        common_api::query_base_config,
-        common_api::update_base_config,
-        tauri_apis::set_system_proxy,
-    ]);
-    #[cfg(any(target_os = "macos", target_os = "linux", target_os = "windows"))]
-        let builder = builder.invoke_handler(tauri::generate_handler![common_api::copy_proxy_env_cmd,]);
-    #[cfg(feature = "hysteria")]
-        let builder = builder.invoke_handler(tauri::generate_handler![
-        hysteria_api::add_hysteria_item,
-        hysteria_api::get_all_hysterias,
-        hysteria_api::update_hysteria_item,
-        hysteria_api::delete_hysteria_item,
-    ]);
-
+    let mut handler: fn(Invoke) -> bool;
     #[cfg(feature = "xray")]
-        let builder = builder.invoke_handler(tauri::generate_handler![
+    #[cfg(any(target_os = "macos", target_os = "linux", target_os = "windows"))]
+    let handler: fn(Invoke) -> bool = generate_handler![
         xray_api::add_xray_item,
         xray_api::get_all_xrays,
         xray_api::import_by_subscribe_url,
         xray_api::update_xray_item,
         xray_api::delete_xray_item,
-    ]);
+        common_api::copy_proxy_env_cmd,
+        common_api::query_base_config,
+        common_api::update_base_config,
+    ];
 
+    #[cfg(feature = "xray")]
+    let handler: fn(Invoke) -> bool = generate_handler![
+        xray_api::add_xray_item,
+        xray_api::get_all_xrays,
+        xray_api::import_by_subscribe_url,
+        xray_api::update_xray_item,
+        xray_api::delete_xray_item,
+        common_api::query_base_config,
+        common_api::update_base_config,
+    ];
+
+    #[cfg(feature = "hysteria")]
+    #[cfg(any(target_os = "macos", target_os = "linux", target_os = "windows"))]
+    let handler: fn(Invoke) -> bool = generate_handler![
+        hysteria_api::add_hysteria_item,
+        hysteria_api::get_all_hysterias,
+        hysteria_api::update_hysteria_item,
+        hysteria_api::delete_hysteria_item,
+        common_api::copy_proxy_env_cmd,
+        common_api::query_base_config,
+        common_api::update_base_config,
+    ];
+
+    #[cfg(all(feature = "xray", feature = "hysteria"))]
+    #[cfg(any(target_os = "macos", target_os = "linux", target_os = "windows"))]
+    let handler: fn(Invoke) -> bool = generate_handler![
+        hysteria_api::add_hysteria_item,
+        hysteria_api::get_all_hysterias,
+        hysteria_api::update_hysteria_item,
+        hysteria_api::delete_hysteria_item,
+        xray_api::add_xray_item,
+        xray_api::get_all_xrays,
+        xray_api::import_by_subscribe_url,
+        xray_api::update_xray_item,
+        xray_api::delete_xray_item,
+        common_api::query_base_config,
+        common_api::update_base_config,
+        common_api::copy_proxy_env_cmd,
+        common_api::query_base_config,
+        common_api::update_base_config,
+    ];
+
+    let builder = builder.invoke_handler(handler);
     builder
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
