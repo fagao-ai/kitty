@@ -21,29 +21,11 @@ export async function getAllHysterias() {
 }
 
 export async function createXrayProxy(xrayForm: XrayProxy) {
+  const groupName = xrayForm.streamSettings.network
   const formCopy = { ...xrayForm }
-  // const formCopy: XrayProxy = {
-  //   id: 0,
-  //   name: '1',
-  //   protocol: 'trojan',
-  //   uuid: '11',
-  //   address: '1',
-  //   port: 1,
-  //   streamSettings: {
-  //     network: 'ws',
-  //     security: 'none',
-  //     wsSettings: {
-  //       path: '/ws',
-  //       headers: {
-  //         host: '1',
-  //       }
-  //     },
-  //   },
-  // }
-  // const instance = plainToInstance(Xray, formCopy)
-  // const plain = instanceToPlain(instance)
-  // console.log('instance', instance, '\nplain', plain)
-  await invoke('add_xray_item', { record: instanceToPlain(plainToInstance(Xray, formCopy)) })
+  const record = instanceToPlain(plainToInstance(Xray, formCopy, { groups: [groupName] }), { groups: [groupName] })
+  // console.log(record)
+  await invoke('add_xray_item', { record })
 }
 
 export async function createHysteriaProxy(hysteriaForm: HysteriaProxy) {

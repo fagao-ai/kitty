@@ -1,4 +1,3 @@
-import 'reflect-metadata'
 import { Exclude, Expose, Type } from 'class-transformer'
 
 class TLSSetting {
@@ -9,19 +8,8 @@ class TLSSetting {
   serverName!: string
 }
 
-class ProtocolSetting {
-  @Expose()
-  network!: 'ws' | 'tcp' | 'http2' | 'grpc' | 'kcp'
-
-  @Expose()
-  security?: 'tls' | 'none' | 'reality' | undefined
-
-  @Expose({ name: 'tls_settings', toPlainOnly: true })
-  tlsSettings?: TLSSetting
-}
-
 class WebSocketHeader {
-  @Expose()
+  @Expose({ name: 'Host', toPlainOnly: true })
   host!: string
 }
 
@@ -29,22 +17,9 @@ export class WebSocketProtocolSetting {
   @Expose()
   path!: string
 
+  @Type(() => WebSocketHeader)
   @Expose()
   headers!: WebSocketHeader
-}
-
-class WebSocketProtocol extends ProtocolSetting {
-  declare network: 'ws'
-
-  @Expose({ name: 'ws_settings', toPlainOnly: true })
-  wsSettings!: WebSocketProtocolSetting
-}
-
-class TcpProtocol extends ProtocolSetting {
-  declare network: 'tcp'
-
-  @Expose({ name: 'tcp_settings', toPlainOnly: true })
-  tcpSettings!: Record<string, any>
 }
 
 export class Http2ProtocolSetting {
@@ -55,32 +30,33 @@ export class Http2ProtocolSetting {
   path!: string
 }
 
-class Http2Protocol extends ProtocolSetting {
-  declare network: 'http2'
+class StreamSettings {
+  @Expose()
+  network!: 'ws' | 'tcp' | 'http2' | 'grpc' | 'kcp'
 
-  @Expose({ name: 'http2_settings', toPlainOnly: true })
+  @Expose()
+  security?: 'tls' | 'none' | 'reality' | undefined
+
+  @Expose({ name: 'tls_settings', toPlainOnly: true })
+  tlsSettings?: TLSSetting
+
+  @Type(() => WebSocketProtocolSetting)
+  @Expose({ name: 'ws_settings', toPlainOnly: true, groups: ['ws'] })
+  wsSettings!: WebSocketProtocolSetting
+
+  @Expose({ name: 'tcp_settings', toPlainOnly: true, groups: ['tcp'] })
+  tcpSettings!: Record<string, any>
+
+  @Type(() => Http2ProtocolSetting)
+  @Expose({ name: 'http2_settings', toPlainOnly: true, groups: ['http2'] })
   http2Settings!: Http2ProtocolSetting
-}
 
-class GrpcProtocol extends ProtocolSetting {
-  declare network: 'grpc'
-
-  @Expose({ name: 'grpc_settings', toPlainOnly: true })
+  @Expose({ name: 'grpc_settings', toPlainOnly: true, groups: ['grpc'] })
   grpcSettings!: Record<string, any>
-}
 
-class KcpProtocol extends ProtocolSetting {
-  declare network: 'kcp'
-
-  @Expose({ name: 'kcp_settings', toPlainOnly: true })
+  @Expose({ name: 'kcp_settings', toPlainOnly: true, groups: ['kcp'] })
   kcpSettings!: Record<string, any>
 }
-
-class TrojanProtocol extends ProtocolSetting {
-  declare network: 'tcp'
-}
-
-type StreamSettings = WebSocketProtocol | TcpProtocol | Http2Protocol | GrpcProtocol | KcpProtocol | TrojanProtocol
 
 export class Xray {
   @Exclude({ toPlainOnly: true })
@@ -101,18 +77,47 @@ export class Xray {
   @Expose()
   port!: number
 
-  @Type(() => ProtocolSetting, {
-    discriminator: {
-      property: 'network',
-      subTypes: [
-        { value: WebSocketProtocol, name: 'ws' },
-        { value: TcpProtocol, name: 'tcp' },
-        { value: Http2Protocol, name: 'http2' },
-        { value: GrpcProtocol, name: 'grpc' },
-        { value: KcpProtocol, name: 'kcp' },
-      ],
-    },
-  })
+  @Type(() => StreamSettings)
   @Expose({ name: 'stream_settings', toPlainOnly: true })
   streamSettings!: StreamSettings
 }
+
+// export class XrayController {
+//   static getForm() {
+//     const tlsSettings = new TLSSetting()
+//     tlsSettings.allowInsecure = true
+//     tlsSettings.serverName = ''
+
+//     const wsHeader = new WebSocketHeader()
+//     wsHeader.host = ''
+
+//     const wsSettings = new WebSocketProtocolSetting()
+//     wsSettings.path = ''
+//     wsSettings.headers = wsHeader
+
+//     const http2Setting = new Http2ProtocolSetting()
+//     http2Setting.host = ['']
+//     http2Setting.path = ''
+
+//     const streamSettings = new StreamSettings()
+//     streamSettings.network = 'ws'
+//     streamSettings.security = 'none'
+//     streamSettings.tlsSettings = tlsSettings
+//     streamSettings.wsSettings = wsSettings
+//     streamSettings.grpcSettings = {}
+//     streamSettings.http2Settings = http2Setting
+//     streamSettings.kcpSettings = {}
+//     streamSettings.tcpSettings = {}
+
+//     const xray = new Xray()
+//     xray.id = 0
+//     xray.name = ''
+//     xray.protocol = 'vmess'
+//     xray.uuid = ''
+//     xray.address = ''
+//     xray.port = 443
+//     xray.streamSettings = streamSettings
+
+//     return xray
+//   }
+// }

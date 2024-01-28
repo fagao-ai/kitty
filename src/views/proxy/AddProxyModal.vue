@@ -24,7 +24,7 @@ const showInsertModal = useVModel(props, 'showModal')
 
 const activeTab = ref<ProxyType>(props.currentTab)
 
-const hysteriaFormState = reactive<HysteriaProxy>({
+const defaultHysteriaForm: HysteriaProxy = {
   name: '',
   server: '',
   auth: '',
@@ -36,47 +36,51 @@ const hysteriaFormState = reactive<HysteriaProxy>({
     sni: '',
     insecure: true,
   },
-})
+}
 
-const xrayFormState = reactive<XrayProxy>({
+const hysteriaFormState = reactive<HysteriaProxy>({ ...defaultHysteriaForm })
+
+const defaultXrayForm: XrayProxy = {
   id: 0,
   name: '',
-  protocol: 'vless',
+  protocol: 'vmess',
   uuid: '',
   address: '',
   port: 443,
   streamSettings: {
     network: 'ws',
-    security: 'tls',
+    security: 'none',
     tlsSettings: {
-      allowInsecure: true,
       serverName: '',
+      allowInsecure: true,
     },
-    // ws
     wsSettings: {
       path: '',
-      headers: { Host: '' },
+      headers: {
+        host: '',
+      },
     },
-    // tcp
     tcpSettings: {},
-    // http2
     http2Settings: {
-      host: [''],
       path: '',
+      host: [''],
     },
-    // grpc
-    grpcSettings: {},
-    // kcp
     kcpSettings: {},
-  } as any,
-})
+    grpcSettings: {},
+  },
+}
+
+const xrayFormState = reactive<XrayProxy>({ ...defaultXrayForm })
 
 async function onInsertSubmit() {
-  if (activeTab.value === 'hysteria')
+  if (activeTab.value === 'hysteria') {
     await createHysteriaProxy(hysteriaFormState)
-
-  else
+    Object.assign(hysteriaFormState, defaultHysteriaForm)
+  }
+  else {
     await createXrayProxy(xrayFormState)
+    Object.assign(xrayFormState, defaultXrayForm)
+  }
 
   emits('insertSubmit', activeTab.value)
   showInsertModal.value = false
@@ -123,7 +127,10 @@ function onCancelInsert() {
             label="服务地址"
             path="server"
           >
-            <n-input v-model:value="hysteriaFormState.server" placeholder="ip:port" />
+            <n-input
+              v-model:value="hysteriaFormState.server"
+              placeholder="ip:port"
+            />
           </n-form-item>
           <n-form-item
             label="认证"
@@ -150,7 +157,10 @@ function onCancelInsert() {
             label="sni"
             path="tls.sni"
           >
-            <n-input v-model:value="hysteriaFormState.tls.sni" placeholder="bing.com" />
+            <n-input
+              v-model:value="hysteriaFormState.tls.sni"
+              placeholder="bing.com"
+            />
           </n-form-item>
           <n-form-item
             label="安全连接"
