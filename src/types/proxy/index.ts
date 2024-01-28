@@ -1,12 +1,5 @@
 import type { Xray } from '@/models/xray'
 
-export interface ProxyCard {
-  tag: string
-  name: string
-  delay: number
-  protocol: string
-}
-
 interface Bandwidth {
   up: string
   down: string
@@ -22,6 +15,7 @@ interface TLS {
 // }
 
 export interface HysteriaProxy {
+  id?: number
   name: string
   server: string
   auth: string
@@ -42,4 +36,13 @@ export type XrayProxy = {
 export enum ProxyType {
   Hysteria = 'hysteria',
   Xray = 'xray',
+}
+
+export interface ProxyCard {
+  id: number
+  type: ProxyType
+  tag: string
+  name: string
+  delay: number
+  protocol: string
 }

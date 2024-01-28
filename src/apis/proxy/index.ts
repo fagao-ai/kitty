@@ -2,22 +2,11 @@ import { camelizeKeys, decamelizeKeys } from 'humps'
 import { instanceToPlain, plainToInstance } from 'class-transformer'
 import { Xray } from '@/models/xray'
 import { invoke } from '@/utils/invoke'
-import type { ProxyCard as Card, HysteriaProxy, XrayProxy } from '@/types/proxy'
+import type { HysteriaProxy, XrayProxy } from '@/types/proxy'
 
 export async function getAllHysterias() {
-  const res = await invoke<Card[]>('get_all_hysterias')
-  return res.data.map(item => ({
-    tag: 'hysteria',
-    name: item.name,
-    delay: 200,
-    protocol: 'TCP',
-  }))
-  // cards.value.push({
-  //   tag: 'hysteria',
-  //   name: 'test',
-  //   delay: 200,
-  //   protocol: 'TCP',
-  // })
+  const res = await invoke<HysteriaProxy[]>('get_all_hysterias')
+  return camelizeKeys(res.data) as HysteriaProxy[]
 }
 
 export async function createXrayProxy(xrayForm: XrayProxy) {

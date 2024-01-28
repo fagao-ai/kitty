@@ -1,28 +1,49 @@
 <script setup lang="ts">
 import { NButton } from 'naive-ui'
-import { ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { ProxyType } from '@/types/proxy'
 import AddProxyModal from '@/views/proxy/AddProxyModal.vue'
 import type { ProxyCard as Card } from '@/types/proxy'
 import { proxyStore } from '@/views/proxy/store'
-import HysteriaProxyView from '@/views/proxy/HysteriaProxy.vue'
-import XrayProxy from '@/views/proxy/XrayProxy.vue'
+import ProxyCardList from '@/components/ProxyCardList.vue'
 import { getAllHysterias, getAllXraies } from '@/apis/proxy'
 
 const showInsertModal = ref(false)
 
-const hysterias = ref<Card[]>([])
-const xrays = ref<Card[]>([])
+const hysteriaCards = ref<Card[]>([])
+const xrayCards = ref<Card[]>([])
+const cards = computed(() => {
+  return proxyStore.value.currentProxy === ProxyType.Hysteria
+    ? hysteriaCards.value
+    : xrayCards.value
+})
 
 async function initHysteria() {
-  hysterias.value = await getAllHysterias()
+  const hysteriaProxies = await getAllHysterias()
+  hysteriaCards.value = hysteriaProxies.map((item) => {
+    return {
+      id: item.id!,
+      type: ProxyType.Hysteria,
+      name: item.name,
+      tag: 'hysteria',
+      delay: 200, // TODO
+      protocol: 'TCP',
+    }
+  })
 }
 
 async function initXray() {
   const xraies = await getAllXraies()
-  // eslint-disable-next-line no-console
-  console.log('xraies is ', xraies)
-  xrays.value = []
+  xrayCards.value = xraies.map((item) => {
+    return {
+      id: item.id!,
+      type: ProxyType.Xray,
+      name: item.name,
+      tag: item.protocol,
+      delay: 200, // TODO
+      protocol: item.streamSettings.network,
+    }
+  })
 }
 
 function handleGetAllProxyByType(proxyType: ProxyType) {
@@ -57,19 +78,24 @@ watch(proxyStore, () => {
       <n-radio-group
         v-model:value="proxyStore.currentProxy"
         name="proxyGroup"
-        :on-update-value="() => {}"
+        :on-update-value="() => { }"
       >
-        <n-radio-button class="w-20" :value="ProxyType.Hysteria">
+        <n-radio-button
+          class="w-20"
+          :value="ProxyType.Hysteria"
+        >
           {{ ProxyType.Hysteria }}
         </n-radio-button>
-        <n-radio-button class="w-20" :value="ProxyType.Xray">
+        <n-radio-button
+          class="w-20"
+          :value="ProxyType.Xray"
+        >
           {{ ProxyType.Xray }}
         </n-radio-button>
       </n-radio-group>
     </div>
     <div class="flex-1 w-full">
-      <hysteria-proxy-view v-if="proxyStore.currentProxy === ProxyType.Hysteria" :data="hysterias" />
-      <xray-proxy v-if="proxyStore.currentProxy === ProxyType.Xray" :data="xrays" />
+      <proxy-card-list :data="cards" />
     </div>
   </div>
   <add-proxy-modal
