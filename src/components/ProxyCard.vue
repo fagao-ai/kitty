@@ -1,9 +1,14 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { NTag } from 'naive-ui'
-import type { ProxyCard } from '@/types/proxy'
+import type { ProxyCard, ProxyType } from '@/types/proxy'
 
+interface Emits {
+  (e: 'dblclick', id: number, type: ProxyType): void
+}
 const props = defineProps<ProxyCard>()
+
+const emits = defineEmits<Emits>()
 
 const tagType = computed(() => {
   if (props.delay <= 500)
@@ -14,10 +19,18 @@ const tagType = computed(() => {
 
   return 'error'
 })
+
+async function handleDblClick() {
+  emits('dblclick', props.id, props.type)
+}
 </script>
 
 <template>
-  <div class="w-[130px] h-[110px] shadow-2xl bg-[#f9f7f7] py-3 px-2 flex flex-col gap-[2px] rounded-md dark:bg-[#3e4247] dark:text-slate-100">
+  <div
+    class="w-[130px] h-[110px] shadow-2xl bg-[#f9f7f7] py-3 px-2 flex flex-col gap-[2px] rounded-md dark:bg-[#3e4247] dark:text-slate-100"
+    @dblclick="handleDblClick"
+  >
+    >
     <div class="h-6">
       <n-tag
         :type="tagType"

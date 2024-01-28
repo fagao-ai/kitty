@@ -54,6 +54,11 @@ function handleGetAllProxyByType(proxyType: ProxyType) {
   initXray()
 }
 
+function handleCardDblClick(id: number, proxyType: ProxyType) {
+  // eslint-disable-next-line no-console
+  console.log(`id is ${id}, proxyType is ${proxyType}`)
+}
+
 watch(proxyStore, () => {
   handleGetAllProxyByType(proxyStore.value.currentProxy)
 }, { immediate: true, deep: true })
@@ -95,7 +100,10 @@ watch(proxyStore, () => {
       </n-radio-group>
     </div>
     <div class="flex-1 w-full">
-      <proxy-card-list :data="cards" />
+      <proxy-card-list
+        :data="cards"
+        @dblclick="handleCardDblClick"
+      />
     </div>
   </div>
   <add-proxy-modal

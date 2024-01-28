@@ -1,13 +1,18 @@
 <script setup lang="ts">
 import ProxyCard from '@/components/ProxyCard.vue'
 import Empty from '@/components/Empty.vue'
-import type { ProxyCard as Card } from '@/types/proxy'
+import type { ProxyCard as Card, ProxyType } from '@/types/proxy'
 
 interface Props {
   data: Card[]
 }
 
+interface Emits {
+  (e: 'dblclick', id: number, type: ProxyType): void
+}
+
 defineProps<Props>()
+const emits = defineEmits<Emits>()
 </script>
 
 <template>
@@ -25,6 +30,7 @@ defineProps<Props>()
             :delay="card.delay"
             :tag="card.tag"
             :protocol="card.protocol"
+            @dblclick="emits('dblclick', card.id, card.type)"
           />
         </template>
       </div>
