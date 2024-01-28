@@ -1,13 +1,11 @@
-import { Type } from 'class-transformer'
-
-// enum Security {
-//   tls,
-//   none,
-//   reality,
-// }
+import 'reflect-metadata'
+import { Expose, Type } from 'class-transformer'
 
 class TLSSetting {
+  @Expose({ name: 'allowInsecure' })
   allowInsecure!: boolean
+
+  @Expose({ name: 'serverName' })
   serverName!: string
 }
 
@@ -16,6 +14,7 @@ class ProtocolSetting {
 
   security?: 'tls' | 'none' | 'reality' | undefined
 
+  @Expose({ name: 'tls_settings' })
   tlsSettings?: TLSSetting
 }
 
@@ -31,12 +30,14 @@ export class WebSocketProtocolSetting {
 class WebSocketProtocol extends ProtocolSetting {
   declare network: 'ws'
 
+  @Expose({ name: 'ws_settings' })
   wsSettings!: WebSocketProtocolSetting
 }
 
 class TcpProtocol extends ProtocolSetting {
   declare network: 'tcp'
 
+  @Expose({ name: 'tcp_settings' })
   tcpSettings!: Record<string, any>
 }
 
@@ -48,29 +49,36 @@ export class Http2ProtocolSetting {
 class Http2Protocol extends ProtocolSetting {
   declare network: 'http2'
 
+  @Expose({ name: 'http2_settings' })
   http2Settings!: Http2ProtocolSetting
 }
 
 class GrpcProtocol extends ProtocolSetting {
   declare network: 'grpc'
 
+  @Expose({ name: 'grpc_settings' })
   grpcSettings!: Record<string, any>
 }
 
 class KcpProtocol extends ProtocolSetting {
   declare network: 'kcp'
 
+  @Expose({ name: 'kcp_settings' })
   kcpSettings!: Record<string, any>
 }
 
-type StreamSettings = WebSocketProtocol | TcpProtocol | Http2Protocol | GrpcProtocol | KcpProtocol
+class TrojanProtocol extends ProtocolSetting {
+  declare network: 'tcp'
+}
+
+type StreamSettings = WebSocketProtocol | TcpProtocol | Http2Protocol | GrpcProtocol | KcpProtocol | TrojanProtocol
 
 export class Xray {
   id!: number
 
   name!: string
 
-  protocol!: string
+  protocol!: 'vless' | 'vmess' | 'trojan'
 
   uuid!: string
 
@@ -80,15 +88,16 @@ export class Xray {
 
   @Type(() => ProtocolSetting, {
     discriminator: {
-      property: 'type',
+      property: 'stream_settings.network',
       subTypes: [
-        { value: WebSocketProtocol, name: 'WebSocket' },
-        { value: TcpProtocol, name: 'Tcp' },
+        { value: WebSocketProtocol, name: 'ws' },
+        { value: TcpProtocol, name: 'tcp' },
         { value: Http2Protocol, name: 'http2' },
         { value: GrpcProtocol, name: 'grpc' },
         { value: KcpProtocol, name: 'kcp' },
       ],
     },
   })
+  @Expose({ name: 'stream_settings' })
   streamSettings!: StreamSettings
 }

@@ -11,6 +11,7 @@
     "isolatedModules": true,
     "esModuleInterop": true,
     "experimentalDecorators": true,
+    "outDir": "debug",
     "lib": [
       "ESNext",
       "DOM"

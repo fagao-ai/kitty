@@ -3,9 +3,8 @@ import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import { internalIpV4 } from 'internal-ip'
 
-// @ts-expect-error process is a nodejs global
 // eslint-disable-next-line node/prefer-global/process
-const mobile = !!/android|ios/.exec(process.env.TAURI_ENV_PLATFORM)
+const mobile = !!/android|ios/.exec(process.env.TAURI_ENV_PLATFORM as string)
 
 // https://vitejs.dev/config/
 export default defineConfig(async () => ({
