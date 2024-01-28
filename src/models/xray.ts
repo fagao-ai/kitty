@@ -1,69 +1,78 @@
 import 'reflect-metadata'
-import { Expose, Type } from 'class-transformer'
+import { Exclude, Expose, Type } from 'class-transformer'
 
 class TLSSetting {
-  @Expose({ name: 'allowInsecure' })
+  @Expose({ name: 'allowInsecure', toPlainOnly: true })
   allowInsecure!: boolean
 
-  @Expose({ name: 'serverName' })
+  @Expose({ name: 'serverName', toPlainOnly: true })
   serverName!: string
 }
 
 class ProtocolSetting {
+  @Expose()
   network!: 'ws' | 'tcp' | 'http2' | 'grpc' | 'kcp'
 
+  @Expose()
   security?: 'tls' | 'none' | 'reality' | undefined
 
-  @Expose({ name: 'tls_settings' })
+  @Expose({ name: 'tls_settings', toPlainOnly: true })
   tlsSettings?: TLSSetting
 }
 
 class WebSocketHeader {
+  @Expose()
   host!: string
 }
 
 export class WebSocketProtocolSetting {
+  @Expose()
   path!: string
+
+  @Expose()
   headers!: WebSocketHeader
 }
 
 class WebSocketProtocol extends ProtocolSetting {
   declare network: 'ws'
 
-  @Expose({ name: 'ws_settings' })
+  @Expose({ name: 'ws_settings', toPlainOnly: true })
   wsSettings!: WebSocketProtocolSetting
 }
 
 class TcpProtocol extends ProtocolSetting {
   declare network: 'tcp'
 
-  @Expose({ name: 'tcp_settings' })
+  @Expose({ name: 'tcp_settings', toPlainOnly: true })
   tcpSettings!: Record<string, any>
 }
 
 export class Http2ProtocolSetting {
+  @Expose()
   host!: string[]
+
+  @Expose()
   path!: string
 }
 
 class Http2Protocol extends ProtocolSetting {
   declare network: 'http2'
 
-  @Expose({ name: 'http2_settings' })
+  @Expose({ name: 'http2_settings', toPlainOnly: true })
   http2Settings!: Http2ProtocolSetting
 }
 
 class GrpcProtocol extends ProtocolSetting {
   declare network: 'grpc'
 
-  @Expose({ name: 'grpc_settings' })
+  @Expose({ name: 'grpc_settings', toPlainOnly: true })
   grpcSettings!: Record<string, any>
 }
 
 class KcpProtocol extends ProtocolSetting {
   declare network: 'kcp'
 
-  @Expose({ name: 'kcp_settings' })
+  @Expose({ name: 'kcp_settings', toPlainOnly: true })
   kcpSettings!: Record<string, any>
 }
 
@@ -74,21 +83,27 @@ class TrojanProtocol extends ProtocolSetting {
 type StreamSettings = WebSocketProtocol | TcpProtocol | Http2Protocol | GrpcProtocol | KcpProtocol | TrojanProtocol
 
 export class Xray {
+  @Exclude({ toPlainOnly: true })
   id!: number
 
+  @Expose()
   name!: string
 
+  @Expose()
   protocol!: 'vless' | 'vmess' | 'trojan'
 
+  @Expose()
   uuid!: string
 
+  @Expose()
   address!: string
 
+  @Expose()
   port!: number
 
   @Type(() => ProtocolSetting, {
     discriminator: {
-      property: 'stream_settings.network',
+      property: 'network',
       subTypes: [
         { value: WebSocketProtocol, name: 'ws' },
         { value: TcpProtocol, name: 'tcp' },
@@ -98,6 +113,6 @@ export class Xray {
       ],
     },
   })
-  @Expose({ name: 'stream_settings' })
+  @Expose({ name: 'stream_settings', toPlainOnly: true })
   streamSettings!: StreamSettings
 }

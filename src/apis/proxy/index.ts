@@ -1,4 +1,6 @@
 import { camelizeKeys, decamelizeKeys } from 'humps'
+import { instanceToPlain, plainToInstance } from 'class-transformer'
+import { Xray } from '@/models/xray'
 import { invoke } from '@/utils/invoke'
 import type { ProxyCard as Card, HysteriaProxy, XrayProxy } from '@/types/proxy'
 
@@ -19,11 +21,29 @@ export async function getAllHysterias() {
 }
 
 export async function createXrayProxy(xrayForm: XrayProxy) {
-  const res = decamelizeKeys(xrayForm) as any
-  const tls_settings = res.stream_settings.tls_settings
-  res.streamSettings = res.stream_settings
-  res.streamSettings.tlsSettings = { allowInsecure: tls_settings.allow_insecure, serverName: tls_settings.server_name }
-  await invoke('add_xray_item', { record: res })
+  const formCopy = { ...xrayForm }
+  // const formCopy: XrayProxy = {
+  //   id: 0,
+  //   name: '1',
+  //   protocol: 'trojan',
+  //   uuid: '11',
+  //   address: '1',
+  //   port: 1,
+  //   streamSettings: {
+  //     network: 'ws',
+  //     security: 'none',
+  //     wsSettings: {
+  //       path: '/ws',
+  //       headers: {
+  //         host: '1',
+  //       }
+  //     },
+  //   },
+  // }
+  // const instance = plainToInstance(Xray, formCopy)
+  // const plain = instanceToPlain(instance)
+  // console.log('instance', instance, '\nplain', plain)
+  await invoke('add_xray_item', { record: instanceToPlain(plainToInstance(Xray, formCopy)) })
 }
 
 export async function createHysteriaProxy(hysteriaForm: HysteriaProxy) {
