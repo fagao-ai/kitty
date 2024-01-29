@@ -19,6 +19,9 @@ function useTheme() {
       itemTextColorActive: 'whitesmoke',
       itemTextColorActiveHover: 'white',
     },
+    Switch: {
+      railColorActive: primaryColor,
+    },
   }
 
   const darkThemeOverrides: GlobalThemeOverrides = {
@@ -34,6 +37,9 @@ function useTheme() {
       itemTextColor: '#5b7497',
       itemTextColorActive: 'whitesmoke',
       itemTextColorActiveHover: 'white',
+    },
+    Switch: {
+      railColorActive: primaryColor,
     },
   }
 

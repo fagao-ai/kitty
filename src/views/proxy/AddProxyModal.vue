@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { reactive, ref } from 'vue'
+import { reactive, ref, watch } from 'vue'
 import { NButton, NForm, NFormItem, NInput, NTabPane, NTabs } from 'naive-ui'
 import { useVModel } from '@vueuse/core'
 import { ProxyType } from '@/types/proxy'
@@ -89,6 +89,10 @@ async function onInsertSubmit() {
 function onCancelInsert() {
   showInsertModal.value = false
 }
+
+watch(() => props.currentTab, (tab) => {
+  activeTab.value = tab
+})
 </script>
 
 <template>
@@ -96,6 +100,7 @@ function onCancelInsert() {
     v-model:show="showInsertModal"
     class="w-1/2 h-1/2"
     :mask-closable="false"
+    transform-origin="center"
     preset="card"
     title="添加代理"
     size="huge"
