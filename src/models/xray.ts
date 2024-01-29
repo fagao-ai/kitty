@@ -37,24 +37,24 @@ class StreamSettings {
   @Expose()
   security?: 'tls' | 'none' | 'reality' | undefined
 
-  @Expose({ name: 'tls_settings', toPlainOnly: true })
+  @Expose({ name: 'tlsSettings', toPlainOnly: true })
   tlsSettings?: TLSSetting
 
   @Type(() => WebSocketProtocolSetting)
-  @Expose({ name: 'ws_settings', toPlainOnly: true, groups: ['ws'] })
+  @Expose({ name: 'wsSettings', toPlainOnly: true, groups: ['ws'] })
   wsSettings!: WebSocketProtocolSetting
 
-  @Expose({ name: 'tcp_settings', toPlainOnly: true, groups: ['tcp'] })
+  @Expose({ name: 'tcpSettings', toPlainOnly: true, groups: ['tcp'] })
   tcpSettings!: Record<string, any>
 
   @Type(() => Http2ProtocolSetting)
-  @Expose({ name: 'http2_settings', toPlainOnly: true, groups: ['http2'] })
+  @Expose({ name: 'http2Settings', toPlainOnly: true, groups: ['http2'] })
   http2Settings!: Http2ProtocolSetting
 
-  @Expose({ name: 'grpc_settings', toPlainOnly: true, groups: ['grpc'] })
+  @Expose({ name: 'grpcSettings', toPlainOnly: true, groups: ['grpc'] })
   grpcSettings!: Record<string, any>
 
-  @Expose({ name: 'kcp_settings', toPlainOnly: true, groups: ['kcp'] })
+  @Expose({ name: 'kcpSettings', toPlainOnly: true, groups: ['kcp'] })
   kcpSettings!: Record<string, any>
 }
 

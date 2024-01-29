@@ -13,7 +13,6 @@ export async function createXrayProxy(xrayForm: XrayProxy) {
   const groupName = xrayForm.streamSettings.network
   const formCopy = { ...xrayForm }
   const record = instanceToPlain(plainToInstance(Xray, formCopy, { groups: [groupName] }), { groups: [groupName] })
-  // console.log(record)
   await invoke('add_xray_item', { record })
 }
 

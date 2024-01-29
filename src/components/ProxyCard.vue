@@ -30,7 +30,6 @@ async function handleDblClick() {
     class="w-[130px] h-[110px] shadow-2xl bg-[#f9f7f7] py-3 px-2 flex flex-col gap-[2px] rounded-md dark:bg-[#3e4247] dark:text-slate-100"
     @dblclick="handleDblClick"
   >
-    >
     <div class="h-6">
       <n-tag
         :type="tagType"
