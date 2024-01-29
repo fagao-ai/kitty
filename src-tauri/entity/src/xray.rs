@@ -3,12 +3,13 @@ use anyhow::{anyhow, Result};
 use base64::{engine::general_purpose, Engine as _};
 use sea_orm::{entity::prelude::*, FromJsonQueryResult};
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::str::FromStr;
 use url::Url;
 
 use crate::types::ShareJsonStruct;
 use crate::types::ShareWithProtocol;
+use crate::utils::get_random_port;
 
 #[derive(
     Clone, Debug, PartialEq, Eq, Serialize, Deserialize, DeriveEntityModel, FromJsonQueryResult,
@@ -823,7 +824,7 @@ impl Rule {
         if self.outbound_tag.is_none() {
             self.outbound_tag = Some(vec![tag])
         } else {
-            self.outbound_tag.unwrap().push(tag)
+            self.outbound_tag.as_mut().unwrap().push(tag)
         }
     }
 }
@@ -1036,7 +1037,22 @@ impl XrayConfig {
 
     fn add_route(&mut self, inbound_tag: String, outbound_tag: String) {
         self.routing.rules[0].add_inbound_tag(inbound_tag);
-        self.routing.rules[0].add_inbound_tag(outbound_tag);
+        self.routing.rules[0].add_outbound_tag(outbound_tag);
+    }
+
+    fn from_models4http_delay(models: Vec<Model>, used_ports: &HashSet<u16>) -> Self {
+        let mut xray_config = XrayConfig::empty();
+        for record in models.into_iter() {
+            let port = get_random_port(used_ports).unwrap();
+            xray_config.insert_inbound(port);
+            let record_id = record.id;
+            xray_config.insert_outbound(record);
+            xray_config.add_route(
+                format!("http_ipv4_{}", port),
+                format!("proxy_{}", record_id),
+            );
+        }
+        xray_config
     }
 }
 
