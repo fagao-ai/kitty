@@ -568,8 +568,8 @@ impl XrayConfig {
         Self {
             log: XrayLog::default(),
             inbounds: vec![
-                Inbound::from_http_port(http_port),
-                Inbound::from_socks_port(socks_port),
+                Inbound::from_http_port(http_port, false),
+                Inbound::from_socks_port(socks_port, false),
             ],
             outbounds,
             routing: Routing::new(selector_outbound_tags),
@@ -604,9 +604,14 @@ struct Inbound {
 }
 
 impl Inbound {
-    fn from_http_port(http_port: u16) -> Self {
+    fn from_http_port(http_port: u16, tag_port: bool) -> Self {
+        let tag = if tag_port {
+            format!("http_ipv4_{}", http_port)
+        } else {
+            "http_ipv4".into()
+        };
         Self {
-            tag: "http_ipv4".into(),
+            tag,
             port: http_port,
             protocol: "http".into(),
             listen: "0.0.0.0".into(),
@@ -614,10 +619,15 @@ impl Inbound {
         }
     }
 
-    fn from_socks_port(http_port: u16) -> Self {
+    fn from_socks_port(socks_port: u16, tag_port: bool) -> Self {
+        let tag = if tag_port {
+            format!("socks_ipv4_{}", socks_port)
+        } else {
+            "socks_ipv4".into()
+        };
         Self {
-            tag: "socks_ipv4".into(),
-            port: http_port,
+            tag,
+            port: socks_port,
             protocol: "socks".into(),
             listen: "0.0.0.0".into(),
             settings: InboundSettings::SocksInboundSettings(SocksInboundSettings::default()),
@@ -774,6 +784,14 @@ impl Routing {
             balancers: vec![Balancer::new(selector)],
         }
     }
+
+    pub fn empty() -> Self {
+        Self {
+            domain_strategy: "AsIs".into(),
+            rules: vec![Rule::empty()],
+            balancers: vec![],
+        }
+    }
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -781,8 +799,33 @@ struct Rule {
     r#type: String,
     #[serde(rename = "inboundTag")]
     inbound_tag: Vec<String>,
-    #[serde(rename = "balancerTag")]
     bclancer_tag: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(rename = "outboundTag")]
+    outbound_tag: Option<Vec<String>>,
+}
+
+impl Rule {
+    pub fn empty() -> Self {
+        Self {
+            r#type: "field".into(),
+            inbound_tag: Vec::new(),
+            bclancer_tag: "balancer".into(),
+            outbound_tag: Some(Vec::new()),
+        }
+    }
+
+    fn add_inbound_tag(&mut self, tag: String) {
+        self.inbound_tag.push(tag)
+    }
+
+    fn add_outbound_tag(&mut self, tag: String) {
+        if self.outbound_tag.is_none() {
+            self.outbound_tag = Some(vec![tag])
+        } else {
+            self.outbound_tag.unwrap().push(tag)
+        }
+    }
 }
 
 impl Default for Rule {
@@ -791,6 +834,7 @@ impl Default for Rule {
             r#type: "field".into(),
             inbound_tag: vec!["http_ipv4".into(), "socks_ipv4".into()],
             bclancer_tag: "balancer".into(),
+            outbound_tag: None,
         }
     }
 }
@@ -966,6 +1010,33 @@ impl TrojanServer {
             port,
             password,
         }
+    }
+}
+
+impl XrayConfig {
+    pub fn empty() -> Self {
+        let outbounds: Vec<Outbound> = Vec::new();
+        Self {
+            log: XrayLog::default(),
+            inbounds: Vec::new(),
+            outbounds,
+            routing: Routing::empty(),
+        }
+    }
+
+    fn insert_inbound(&mut self, port: u16) {
+        let inbound = Inbound::from_http_port(port, true);
+        self.inbounds.push(inbound)
+    }
+
+    fn insert_outbound(&mut self, model: Model) {
+        let outbound = Outbound::from(model);
+        self.outbounds.push(outbound)
+    }
+
+    fn add_route(&mut self, inbound_tag: String, outbound_tag: String) {
+        self.routing.rules[0].add_inbound_tag(inbound_tag);
+        self.routing.rules[0].add_inbound_tag(outbound_tag);
     }
 }
 
