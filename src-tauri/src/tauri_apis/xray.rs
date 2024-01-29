@@ -2,7 +2,6 @@ use entity::xray::{self};
 use tauri::State;
 
 use crate::apis::xray_apis::XrayAPI;
-use crate::apis::xray_apis::XrayRecord;
 use crate::state::DatabaseState;
 use crate::types::{CommandResult, KittyResponse};
 
@@ -20,7 +19,7 @@ pub async fn add_xray_item<'a>(
 #[tauri::command(rename_all = "snake_case")]
 pub async fn get_all_xrays<'a>(
     state: State<'a, DatabaseState>,
-) -> CommandResult<KittyResponse<Vec<XrayRecord>>> {
+) -> CommandResult<KittyResponse<Vec<xray::Model>>> {
     let db = state.get_db();
     let xraies = XrayAPI.get_all(&db).await?;
     Ok(KittyResponse::from_data(xraies))
