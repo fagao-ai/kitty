@@ -1,8 +1,7 @@
-use anyhow::{anyhow, Result};
+use anyhow::Result;
 use entity::base_config;
 #[cfg(feature = "hysteria")]
 use entity::hysteria::{self as hysteria_entity, HysteriaConfig};
-
 
 #[cfg(feature = "xray")]
 use entity::xray::{self as xray_entity, XrayConfig};
@@ -12,35 +11,26 @@ use protocols::KittyCommandGroup;
 use std::{
     collections::HashMap,
     net::{IpAddr, Ipv4Addr},
-    path::{Path, PathBuf},
 };
-use std::collections::HashSet;
-use tauri::utils::platform;
-use tauri::{Manager, State, AppHandle, Runtime};
+use tauri::{AppHandle, Manager, State};
 use tokio::sync::watch;
-use entity::utils::get_random_port;
 
 use crate::{
     state::{DatabaseState, KittyProxyState, ProcessManagerState},
+    tauri_apis::utils::relative_command_path,
     types::{CommandResult, KittyResponse},
 };
+
+use utils::get_http_socks_ports;
 
 #[cfg(feature = "hysteria")]
 pub mod hysteria;
 
+pub mod common;
 #[cfg(feature = "xray")]
 pub mod xray;
-pub mod common;
 
-fn relative_command_path(command: &Path) -> Result<PathBuf> {
-    match platform::current_exe()?.parent() {
-        #[cfg(windows)]
-        Some(exe_dir) => Ok(exe_dir.join(command).with_extension("exe")),
-        #[cfg(not(windows))]
-        Some(exe_dir) => Ok(exe_dir.join(command)),
-        None => Err(anyhow!("current exe not has parent.")),
-    }
-}
+pub mod utils;
 
 async fn init_state<'a>(
     process_state: &State<'a, ProcessManagerState>,
@@ -80,12 +70,6 @@ async fn init_state<'a>(
     *socks_proxy_sx = None;
     proxy_state.used_ports.lock().await.clear();
     Ok(())
-}
-
-fn get_http_socks_ports(used_ports: &mut HashSet<u16>) -> (u16, u16) {
-    let http_port = get_random_port(&used_ports).unwrap();
-    let socks_port = get_random_port(&used_ports).unwrap();
-    (http_port, socks_port)
 }
 
 #[tauri::command(rename_all = "snake_case")]
@@ -133,7 +117,11 @@ pub async fn set_system_proxy<'a>(
         let xray_records = xray_entity::Model::fetch_all(&db).await?;
         let node_number = xray_records.len();
         let (http_port, socks_port) = get_http_socks_ports(&mut used_ports);
-        let server_key: String = xray_records.iter().map(|x| x.get_server()).collect::<Vec<String>>().join("_");
+        let server_key: String = xray_records
+            .iter()
+            .map(|x| x.get_server())
+            .collect::<Vec<String>>()
+            .join("_");
         let xray_config = XrayConfig::new(http_port, socks_port, xray_records);
         let xray_bin_path = relative_command_path("xray".as_ref())?;
         let resource_dir = app_handle.path().resource_dir()?;
