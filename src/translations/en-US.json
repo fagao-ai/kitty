@@ -17,6 +17,7 @@
     "allowLan": "Allow connect from Lan",
     "mode": "Mode",
     "socks5Port": "Socks5 port",
-    "httpPort": "HTTP port"
+    "httpPort": "HTTP port",
+    "delayTestUrl": "Delay test url"
   }
 }

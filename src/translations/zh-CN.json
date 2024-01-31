@@ -17,6 +17,7 @@
     "allowLan": "允许局域网连接",
     "mode": "代理模式",
     "httpPort": "HTTP 代理端口",
-    "socks5Port": "Socks5 代理端口"
+    "socks5Port": "Socks5 代理端口",
+    "delayTestUrl": "延迟测试地址"
   }
 }

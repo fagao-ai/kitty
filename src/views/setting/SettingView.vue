@@ -32,6 +32,7 @@ const baseConfig = reactive<KittyBaseConfig>({
   id: 0,
   httpPort: 10086,
   socksPort: 10087,
+  delayTestUrl: 'https://gstatic.com/generate_204',
 })
 
 async function getBaseConfig() {
@@ -155,6 +156,22 @@ watch(language, whenLanguageChanged, { immediate: true })
           <div class="font-medium w-20">
             <n-input-number
               v-model:value="baseConfig.httpPort"
+              type="text"
+              :show-button="false"
+              :max="65535"
+              :min="1"
+              @blur="onBaseConfigUpdate"
+            />
+          </div>
+        </div>
+
+        <div class="flex justify-between items-center">
+          <div class="font-semibold">
+            {{ t('setting.delayTestUrl') }}
+          </div>
+          <div class="font-medium w-20">
+            <n-input
+              v-model:value="baseConfig.delayTestUrl"
               type="text"
               :show-button="false"
               :max="65535"

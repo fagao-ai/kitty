@@ -158,3 +158,9 @@ pub fn clear_system_proxy() -> Result<()> {
 
     Ok(())
 }
+
+#[cfg(any(target_os = "macos", target_os = "linux", target_os = "windows"))]
+pub fn has_sys_proxy() -> Result<bool> {
+    let sys_proxy = Sysproxy::get_system_proxy()?;
+    Ok(sys_proxy.enable)
+}

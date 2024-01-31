@@ -28,6 +28,14 @@ macro_rules! generate_model_functions {
             Ok(results)
         }
 
+        pub async fn fetch_by_ids(db: &DatabaseConnection, ids: Vec<i32>) -> Result<Vec<Model>, DbErr> {
+            let results = self::Entity::find()
+                .filter(self::Column::Id.is_in(ids))
+                .all(db)
+                .await?;
+            Ok(results)
+        }
+
         pub async fn insert_many(
             db: &DatabaseConnection,
             records: Vec<Model>,

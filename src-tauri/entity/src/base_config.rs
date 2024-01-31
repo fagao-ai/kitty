@@ -7,10 +7,12 @@ use serde_json;
 pub struct Model {
     #[sea_orm(primary_key, auto_increment = true)]
     // #[serde(skip)]
+    #[serde(skip_deserializing)]
     pub id: i32,
     pub local_ip: String,
     pub http_port: u16,
     pub socks_port: u16,
+    pub delay_test_url: String,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]

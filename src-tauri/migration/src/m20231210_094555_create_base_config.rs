@@ -21,13 +21,24 @@ impl MigrationTrait for Migration {
                     .col(ColumnDef::new(BaseConfig::LocalIp).string().not_null())
                     .col(ColumnDef::new(BaseConfig::HttpPort).integer().not_null())
                     .col(ColumnDef::new(BaseConfig::SocksPort).integer().not_null())
+                    .col(ColumnDef::new(BaseConfig::DelayTestUrl).string().not_null())
                     .to_owned(),
             )
             .await;
         let insert = Query::insert()
             .into_table(BaseConfig::Table)
-            .columns([BaseConfig::LocalIp, BaseConfig::SocksPort, BaseConfig::HttpPort])
-            .values_panic(["127.0.0.1".into(), 10086.into(), 10087.into()])
+            .columns([
+                BaseConfig::LocalIp,
+                BaseConfig::SocksPort,
+                BaseConfig::HttpPort,
+                BaseConfig::DelayTestUrl,
+            ])
+            .values_panic([
+                "127.0.0.1".into(),
+                10086.into(),
+                10087.into(),
+                "https://gstatic.com/generate_204".into(),
+            ])
             .to_owned();
 
         manager.exec_stmt(insert).await?;
@@ -49,4 +60,5 @@ enum BaseConfig {
     LocalIp,
     HttpPort,
     SocksPort,
+    DelayTestUrl,
 }

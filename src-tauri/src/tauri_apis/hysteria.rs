@@ -1,15 +1,13 @@
-use std::collections::{HashMap, HashSet};
-use std::path::PathBuf;
+use std::collections::HashMap;
 
+use entity::base_config;
 use entity::hysteria::{self, HysteriaConfig};
 use protocols::KittyCommandGroup;
-use sea_orm::DatabaseConnection;
-use tauri::State;
+use tauri::{AppHandle, Manager, State};
 
 use crate::apis::hysteria_apis::HysteriaAPI;
-use crate::state::DatabaseState;
+use crate::state::{DatabaseState, KittyProxyState};
 use crate::types::{CommandResult, KittyResponse};
-use anyhow::Result;
 
 use super::utils::{get_http_socks_ports, relative_command_path, speed_delay};
 
@@ -53,12 +51,22 @@ pub async fn update_hysteria_item<'a>(
 }
 
 #[tauri::command(rename_all = "snake_case")]
-pub async fn speed_hysteria_delay(
-    db: &DatabaseConnection,
-    used_ports: &mut HashSet<u16>,
-    config_dir: PathBuf,
-) -> Result<HashMap<i32, u128>> {
-    let hysteria_records = hysteria::Model::fetch_all(&db).await?;
+pub async fn speed_hysteria_delay<'a>(
+    app_handle: AppHandle,
+    state: State<'a, DatabaseState>,
+    proxy_state: State<'a, KittyProxyState>,
+    record_ids: Option<Vec<i32>>,
+) -> CommandResult<HashMap<i32, u128>> {
+    let db = state.get_db();
+    let hysteria_records = if record_ids.is_none() {
+        hysteria::Model::fetch_all(&db).await?
+    } else {
+        hysteria::Model::fetch_by_ids(&db, record_ids.unwrap()).await?
+    };
+    let base_config_record = base_config::Model::first(&db).await.unwrap();
+    let delay_test_url = base_config_record.unwrap().delay_test_url;
+    drop(db);
+    let config_dir = app_handle.path().config_dir()?;
     let hysteria_bin_path = relative_command_path("hysteria".as_ref())?;
     let mut hysteria_command_group = KittyCommandGroup::new(
         String::from("hysteria"),
@@ -68,17 +76,20 @@ pub async fn speed_hysteria_delay(
     let mut config_hash_map: HashMap<String, HysteriaConfig> = HashMap::new();
 
     let mut port_model_dict = HashMap::new();
+    let mut used_ports = proxy_state.used_ports.lock().await;
     for record in hysteria_records.into_iter() {
-        let (http_port, socks_port) = get_http_socks_ports(used_ports);
+        let (http_port, socks_port) = get_http_socks_ports(&mut used_ports);
         let record_id = record.id;
         let hysteria_config = HysteriaConfig::new(http_port, socks_port, record);
         config_hash_map.insert(hysteria_config.server.clone(), hysteria_config);
         port_model_dict.insert(http_port, record_id);
     }
+    drop(used_ports);
     let _ = hysteria_command_group.start_commands(config_hash_map, None);
     let ports: Vec<u16> = port_model_dict.keys().map(|x| x.to_owned()).collect();
     let total = ports.len();
-    let result: HashMap<u16, std::time::Duration> = speed_delay(ports, None).await?;
+    let result: HashMap<u16, std::time::Duration> =
+        speed_delay(ports, Some(delay_test_url.as_str())).await?;
     let mut new_result: HashMap<i32, u128> = HashMap::with_capacity(total);
     for (k, v) in result.iter() {
         new_result.insert(port_model_dict.get(k).unwrap().to_owned(), v.as_millis());

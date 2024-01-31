@@ -17,6 +17,7 @@ use crate::utils::get_random_port;
 #[sea_orm(table_name = "xray")]
 pub struct Model {
     #[sea_orm(primary_key, auto_increment = true)]
+    #[serde(skip_deserializing)]
     pub id: i32,
     pub name: String,
     pub protocol: Protocol,
@@ -75,6 +76,7 @@ impl ActiveModelBehavior for ActiveModel {}
 
 impl Model {
     generate_model_functions!();
+
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, FromJsonQueryResult)]
@@ -1040,10 +1042,12 @@ impl XrayConfig {
         self.routing.rules[0].add_outbound_tag(outbound_tag);
     }
 
-    fn from_models4http_delay(models: Vec<Model>, used_ports: &HashSet<u16>) -> Self {
+    pub fn from_models4http_delay(models: Vec<Model>, used_ports: &HashSet<u16>) -> (Self, HashMap<u16, i32>) {
+        let mut port_model_dict = HashMap::new();
         let mut xray_config = XrayConfig::empty();
         for record in models.into_iter() {
             let port = get_random_port(used_ports).unwrap();
+            port_model_dict.insert(port, record.id);
             xray_config.insert_inbound(port);
             let record_id = record.id;
             xray_config.insert_outbound(record);
@@ -1051,8 +1055,9 @@ impl XrayConfig {
                 format!("http_ipv4_{}", port),
                 format!("proxy_{}", record_id),
             );
+            
         }
-        xray_config
+        (xray_config, port_model_dict)
     }
 }
 
