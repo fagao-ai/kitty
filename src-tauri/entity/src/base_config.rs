@@ -13,6 +13,7 @@ pub struct Model {
     pub http_port: u16,
     pub socks_port: u16,
     pub delay_test_url: String,
+    pub start_proxy: bool,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
@@ -41,4 +42,5 @@ impl Model {
         let base_config_res = base_config_record.update(db).await?;
         Ok(base_config_res)
     }
+
 }

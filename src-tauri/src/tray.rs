@@ -24,7 +24,7 @@ impl Tray {
         let system_proxy = MenuItemBuilder::with_id("system_proxy", "System Proxy")
             .accelerator("CmdOrControl+Shift+Y")
             .build(app_handle);
-        let copy_env = MenuItemBuilder::with_id("copy_env", "Copy ENv")
+        let copy_env = MenuItemBuilder::with_id("copy_env", "Copy ENV")
             .accelerator("CmdOrControl+Shift+C")
             .build(app_handle);
         let menu = MenuBuilder::new(app_handle)

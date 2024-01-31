@@ -1,9 +1,10 @@
 use migration::{Migrator, MigratorTrait};
-use sea_orm::{Database, DatabaseConnection, DbErr};
+use sea_orm::{ActiveModelTrait, Database, DatabaseConnection, DbErr, Set};
 use std::path::PathBuf;
 
 use crate::{state::DatabaseState, tray::Tray};
 use anyhow::Result;
+use entity::base_config;
 use kitty_proxy::MatchProxy;
 use std::fs;
 use std::sync::Arc;
@@ -17,6 +18,10 @@ pub async fn init_db(app_dir: PathBuf) -> Result<DatabaseConnection, DbErr> {
     let sqlite_url = format!("sqlite://{}?mode=rwc", sqlite_path.to_string_lossy());
     let db: DatabaseConnection = Database::connect(&sqlite_url).await?;
     Migrator::up(&db, None).await?;
+    let record = base_config::Model::first(&db).await?.unwrap();
+    let mut record: base_config::ActiveModel = record.into();
+    record.start_proxy = Set(false);
+    let _ = record.update(&db).await?;
     println!("Migrator");
     Ok(db)
 }

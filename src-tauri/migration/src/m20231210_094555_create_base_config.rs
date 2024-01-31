@@ -22,6 +22,7 @@ impl MigrationTrait for Migration {
                     .col(ColumnDef::new(BaseConfig::HttpPort).integer().not_null())
                     .col(ColumnDef::new(BaseConfig::SocksPort).integer().not_null())
                     .col(ColumnDef::new(BaseConfig::DelayTestUrl).string().not_null())
+                    .col(ColumnDef::new(BaseConfig::StartProxy).boolean().not_null())
                     .to_owned(),
             )
             .await;
@@ -32,12 +33,14 @@ impl MigrationTrait for Migration {
                 BaseConfig::SocksPort,
                 BaseConfig::HttpPort,
                 BaseConfig::DelayTestUrl,
+                BaseConfig::StartProxy,
             ])
             .values_panic([
                 "127.0.0.1".into(),
                 10086.into(),
                 10087.into(),
                 "https://gstatic.com/generate_204".into(),
+                false.into(),
             ])
             .to_owned();
 
@@ -61,4 +64,5 @@ enum BaseConfig {
     HttpPort,
     SocksPort,
     DelayTestUrl,
+    StartProxy,
 }
