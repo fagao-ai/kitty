@@ -15,15 +15,13 @@ async function handleSwitchProxy(value: boolean) {
   proxyLoading.value = true
   try {
     if (value) {
-      const res = await invoke<boolean>('get_hysteria_status')
-      if (res.data)
-        return
-
-      await invoke('start_hysteria')
+      const res = await invoke('start_system_proxy')
+      console.log(res)
     }
-    else { await invoke('stop_hysteria') }
+    else { await invoke('stop_system_proxy') }
   }
   finally {
+    console.log("finally")
     proxyLoading.value = false
   }
 }
@@ -33,6 +31,7 @@ const baseConfig = reactive<KittyBaseConfig>({
   httpPort: 10086,
   socksPort: 10087,
   delayTestUrl: 'https://gstatic.com/generate_204',
+  sysproxyFlag: false
 })
 
 async function getBaseConfig() {
@@ -40,16 +39,11 @@ async function getBaseConfig() {
   Object.assign(baseConfig, config.data)
 }
 
-async function getHysteriaStatus() {
-  const res = await invoke<boolean>('get_hysteria_status')
-  proxyStatus.value = res.data
-}
 
 async function onBaseConfigUpdate() {
   await invoke('update_base_config', { id: baseConfig.id, base_config: decamelizeKeys(baseConfig) })
 }
 getBaseConfig()
-getHysteriaStatus()
 
 const language = ref(unref(settingStore).language)
 

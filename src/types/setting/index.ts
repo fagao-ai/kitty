@@ -3,6 +3,7 @@ export interface KittyBaseConfig {
   httpPort: number
   socksPort: number
   delayTestUrl: string
+  sysproxyFlag: boolean
   startAtLogin?: boolean
   language?: string
   allowLan?: boolean

@@ -18,10 +18,7 @@ pub async fn init_db(app_dir: PathBuf) -> Result<DatabaseConnection, DbErr> {
     let sqlite_url = format!("sqlite://{}?mode=rwc", sqlite_path.to_string_lossy());
     let db: DatabaseConnection = Database::connect(&sqlite_url).await?;
     Migrator::up(&db, None).await?;
-    let record = base_config::Model::first(&db).await?.unwrap();
-    let mut record: base_config::ActiveModel = record.into();
-    record.start_proxy = Set(false);
-    let _ = record.update(&db).await?;
+    base_config::Model::update_sysproxy_flag(&db, false).await?;
     println!("Migrator");
     Ok(db)
 }

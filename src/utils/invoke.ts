@@ -9,7 +9,9 @@ export async function invoke<T>(cmd: string, args?: InvokeArgs, options?: Invoke
 
   try {
     if (import.meta.env.KITTY_ENV !== 'web') {
+      console.log("call kitty before ")
       const resp = await tauriInvoke<KittyResponse<T>>(cmd, args, options)
+      console.log("resp: ", resp)
       return camelizeKeys<KittyResponse<T>>(resp) as KittyResponse<T>
     }
 

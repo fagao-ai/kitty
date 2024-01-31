@@ -22,7 +22,7 @@ impl MigrationTrait for Migration {
                     .col(ColumnDef::new(BaseConfig::HttpPort).integer().not_null())
                     .col(ColumnDef::new(BaseConfig::SocksPort).integer().not_null())
                     .col(ColumnDef::new(BaseConfig::DelayTestUrl).string().not_null())
-                    .col(ColumnDef::new(BaseConfig::StartProxy).boolean().not_null())
+                    .col(ColumnDef::new(BaseConfig::SysproxyFlag).boolean().not_null())
                     .to_owned(),
             )
             .await;
@@ -33,7 +33,7 @@ impl MigrationTrait for Migration {
                 BaseConfig::SocksPort,
                 BaseConfig::HttpPort,
                 BaseConfig::DelayTestUrl,
-                BaseConfig::StartProxy,
+                BaseConfig::SysproxyFlag,
             ])
             .values_panic([
                 "127.0.0.1".into(),
@@ -64,5 +64,5 @@ enum BaseConfig {
     HttpPort,
     SocksPort,
     DelayTestUrl,
-    StartProxy,
+    SysproxyFlag,
 }

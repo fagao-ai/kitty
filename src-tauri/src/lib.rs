@@ -1,13 +1,6 @@
-use anyhow::Result;
 use state::{DatabaseState, ProcessManagerState};
 use std::env;
-use tauri::{
-    generate_handler,
-    ipc::Invoke,
-    menu::{MenuBuilder, MenuItemBuilder},
-    tray::{ClickType, TrayIconBuilder},
-    Icon, Runtime, WindowEvent,
-};
+use tauri::{generate_handler, ipc::Invoke, WindowEvent};
 use tauri::{Manager, State};
 #[cfg(feature = "hysteria")]
 use tauri_apis::hysteria as hysteria_api;
@@ -20,8 +13,7 @@ use tauri_plugin_autostart::MacosLauncher;
 use tauri_plugin_notification::{NotificationExt, PermissionState};
 
 use crate::state::KittyProxyState;
-
-use tauri::command;
+use crate::tauri_apis::{start_system_proxy, stop_system_proxy};
 
 mod apis;
 mod proxy;
@@ -101,7 +93,6 @@ pub fn run() {
         .plugin(tauri_plugin_clipboard_manager::init())
         .setup(init_setup)
         .on_window_event(on_window_exit_func);
-    let mut handler: fn(Invoke) -> bool;
     #[cfg(feature = "xray")]
     #[cfg(any(target_os = "macos", target_os = "linux", target_os = "windows"))]
     let handler: fn(Invoke) -> bool = generate_handler![
@@ -114,6 +105,8 @@ pub fn run() {
         common_api::copy_proxy_env_cmd,
         common_api::query_base_config,
         common_api::update_base_config,
+        start_system_proxy,
+        stop_system_proxy,
     ];
 
     #[cfg(feature = "xray")]
@@ -126,6 +119,8 @@ pub fn run() {
         xray_api::speed_xray_delay,
         common_api::query_base_config,
         common_api::update_base_config,
+        start_system_proxy,
+        stop_system_proxy,
     ];
 
     #[cfg(feature = "hysteria")]
@@ -139,6 +134,8 @@ pub fn run() {
         common_api::copy_proxy_env_cmd,
         common_api::query_base_config,
         common_api::update_base_config,
+        start_system_proxy,
+        stop_system_proxy,
     ];
 
     #[cfg(all(feature = "xray", feature = "hysteria"))]
@@ -160,6 +157,8 @@ pub fn run() {
         common_api::copy_proxy_env_cmd,
         common_api::query_base_config,
         common_api::update_base_config,
+        start_system_proxy,
+        stop_system_proxy,
     ];
 
     let builder = builder.invoke_handler(handler);

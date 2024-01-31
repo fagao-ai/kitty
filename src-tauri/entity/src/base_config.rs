@@ -1,4 +1,4 @@
-use sea_orm::entity::prelude::*;
+use sea_orm::{entity::prelude::*, Set};
 use serde::{Deserialize, Serialize};
 use serde_json;
 
@@ -13,7 +13,7 @@ pub struct Model {
     pub http_port: u16,
     pub socks_port: u16,
     pub delay_test_url: String,
-    pub start_proxy: bool,
+    pub sysproxy_flag: bool,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
@@ -43,4 +43,11 @@ impl Model {
         Ok(base_config_res)
     }
 
+    pub async fn update_sysproxy_flag(db: &DatabaseConnection, value: bool) -> Result<(), DbErr> {
+        let record = self::Model::first(&db).await?.unwrap();
+        let mut record: self::ActiveModel = record.into();
+        record.sysproxy_flag = Set(value);
+        let _ = record.update(db).await?;
+        Ok(())
+    }
 }
