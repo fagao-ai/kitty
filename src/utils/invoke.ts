@@ -1,3 +1,4 @@
+import { getCurrentInstance } from 'vue'
 import { invoke as tauriInvoke } from '@tauri-apps/api/primitives'
 import { camelizeKeys } from 'humps'
 import type { InvokeArgs, InvokeOptions } from '@tauri-apps/api/types/primitives'
@@ -21,7 +22,8 @@ export async function invoke<T>(cmd: string, args?: InvokeArgs, options?: Invoke
     return camelizeKeys(resp.json()) as unknown as KittyResponse<T>
   }
   catch (e) {
-    // window.$message.error(`${e}`, { duration: 3000 })
+    const instance = getCurrentInstance()
+    instance?.appContext.config.globalProperties.$message.error(`${e}`, { duration: 3000 })
     console.error('kitty error', e)
 
     throw e
