@@ -1,17 +1,12 @@
 import { invoke as tauriInvoke } from '@tauri-apps/api/primitives'
 import { camelizeKeys } from 'humps'
-import { useMessage } from 'naive-ui'
 import type { InvokeArgs, InvokeOptions } from '@tauri-apps/api/types/primitives'
 import type { KittyResponse } from '@/types'
 
 export async function invoke<T>(cmd: string, args?: InvokeArgs, options?: InvokeOptions): Promise<KittyResponse<T>> {
-  const message = useMessage()
-
   try {
     if (import.meta.env.KITTY_ENV !== 'web') {
-      console.log("call kitty before ")
       const resp = await tauriInvoke<KittyResponse<T>>(cmd, args, options)
-      console.log("resp: ", resp)
       return camelizeKeys<KittyResponse<T>>(resp) as KittyResponse<T>
     }
 
@@ -26,7 +21,7 @@ export async function invoke<T>(cmd: string, args?: InvokeArgs, options?: Invoke
     return camelizeKeys(resp.json()) as unknown as KittyResponse<T>
   }
   catch (e) {
-    message.error(`${e}`, { duration: 3000 })
+    // window.$message.error(`${e}`, { duration: 3000 })
     console.error('kitty error', e)
 
     throw e

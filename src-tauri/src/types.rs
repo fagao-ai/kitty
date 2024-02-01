@@ -1,4 +1,5 @@
-use serde::{Deserialize, ser::Serializer, Serialize};
+use serde::ser::SerializeMap;
+use serde::{ser::Serializer, Deserialize, Serialize};
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct KittyResponse<T> {
@@ -57,15 +58,18 @@ pub enum KittyCommandError {
     StdError(#[from] std::io::Error),
 }
 
+#[derive(Debug, Serialize)]
+struct ErrorMessage {
+    error: String,
+}
+
 // we must manually implement serde::Serialize
 impl Serialize for KittyCommandError {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
     {
-        let res = String::from("aaa") + self.to_string().as_str();
-
-        serializer.serialize_str(res.as_ref())
+        serializer.serialize_str(self.to_string().as_ref())
     }
 }
 

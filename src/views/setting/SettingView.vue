@@ -15,13 +15,11 @@ async function handleSwitchProxy(value: boolean) {
   proxyLoading.value = true
   try {
     if (value) {
-      const res = await invoke('start_system_proxy')
-      console.log(res)
+      const _res = await invoke('start_system_proxy')
     }
     else { await invoke('stop_system_proxy') }
   }
   finally {
-    console.log("finally")
     proxyLoading.value = false
   }
 }
@@ -31,14 +29,13 @@ const baseConfig = reactive<KittyBaseConfig>({
   httpPort: 10086,
   socksPort: 10087,
   delayTestUrl: 'https://gstatic.com/generate_204',
-  sysproxyFlag: false
+  sysproxyFlag: false,
 })
 
 async function getBaseConfig() {
   const config = await invoke<KittyBaseConfig>('query_base_config')
   Object.assign(baseConfig, config.data)
 }
-
 
 async function onBaseConfigUpdate() {
   await invoke('update_base_config', { id: baseConfig.id, base_config: decamelizeKeys(baseConfig) })

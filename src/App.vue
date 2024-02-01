@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { NConfigProvider } from 'naive-ui'
+import { NConfigProvider, NMessageProvider } from 'naive-ui'
 import { useTheme } from '@/utils/theme'
 import MenuView from '@/views/menu/MenuView.vue'
-import 'vfonts/Lato.css'
 import 'vfonts/FiraCode.css'
+import 'vfonts/Lato.css'
 
 const { theme, lightThemeOverrides, darkThemeOverrides } = useTheme()
+// window.$message = useMessage()
 </script>
 
 <template>

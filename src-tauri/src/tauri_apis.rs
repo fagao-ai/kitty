@@ -18,7 +18,7 @@ use tokio::sync::watch;
 use crate::{
     state::{DatabaseState, KittyProxyState, ProcessManagerState},
     tauri_apis::utils::relative_command_path,
-    types::{CommandResult, KittyResponse},
+    types::{CommandResult, KittyCommandError, KittyResponse},
 };
 
 use utils::get_http_socks_ports;
@@ -156,7 +156,8 @@ pub async fn start_system_proxy<'a>(
         }
     }
     if !start_cmd_flag {
-        return Err(anyhow!("Not have any proxy, please add proxy").into());
+        let error = anyhow!("Not have any proxy, please add proxy");
+        return Err(KittyCommandError::AnyHowError(error));
     }
     let record: base_config::Model = base_config::Model::first(&db).await.unwrap().unwrap();
     let http_port = record.http_port;
