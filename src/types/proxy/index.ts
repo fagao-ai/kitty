@@ -46,3 +46,8 @@ export interface ProxyCard {
   delay: number
   protocol: string
 }
+
+export interface ImportProxy {
+  id?: number
+  url: string
+}

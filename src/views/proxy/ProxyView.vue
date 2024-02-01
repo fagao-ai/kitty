@@ -7,8 +7,10 @@ import type { ProxyCard as Card } from '@/types/proxy'
 import { proxyStore } from '@/views/proxy/store'
 import ProxyCardList from '@/components/ProxyCardList.vue'
 import { getAllHysterias, getAllXraies } from '@/apis/proxy'
+import ImportProxy from '@/views/proxy/ImportProxy.vue'
 
 const showInsertModal = ref(false)
+const showImportModal = ref(false)
 
 const hysteriaCards = ref<Card[]>([])
 const xrayCards = ref<Card[]>([])
@@ -70,12 +72,18 @@ watch(proxyStore, () => {
       <div class="text-primay text-2xl font-extrabold">
         Proxies
       </div>
-      <div>
+      <div class="flex space-x-3">
         <n-button
           round
           @click="showInsertModal = true"
         >
           add
+        </n-button>
+        <n-button
+          round
+          @click="showImportModal = true"
+        >
+          import
         </n-button>
       </div>
     </div>
@@ -109,6 +117,13 @@ watch(proxyStore, () => {
   <add-proxy-modal
     v-model:showModal="showInsertModal"
     :current-tab="proxyStore.currentProxy"
+    @insert-submit="handleGetAllProxyByType"
+  />
+
+  <import-proxy
+    v-model:showModal="showImportModal"
+    :current-tab="ProxyType.Xray"
+    :disabled-tab="ProxyType.Hysteria"
     @insert-submit="handleGetAllProxyByType"
   />
 </template>

@@ -59,6 +59,7 @@ impl XrayAPI {
         for line in share_protocol_string.lines() {
             let mut xray_model = xray::Model::from_str(line.trim())?;
             xray_model.subscribe_id = Some(exec_subscribe_res.id);
+            println!("{}", xray_model.id);
             xray_models.push(xray_model)
         }
         xray::Model::insert_many(db, xray_models).await?;

@@ -98,7 +98,7 @@ pub fn run() {
     let handler: fn(Invoke) -> bool = generate_handler![
         xray_api::add_xray_item,
         xray_api::get_all_xrays,
-        xray_api::import_by_subscribe_url,
+        xray_api::import_xray_subscribe,
         xray_api::update_xray_item,
         xray_api::delete_xray_item,
         xray_api::speed_xray_delay,
@@ -113,7 +113,7 @@ pub fn run() {
     let handler: fn(Invoke) -> bool = generate_handler![
         xray_api::add_xray_item,
         xray_api::get_all_xrays,
-        xray_api::import_by_subscribe_url,
+        xray_api::import_xray_subscribe,
         xray_api::update_xray_item,
         xray_api::delete_xray_item,
         xray_api::speed_xray_delay,
@@ -148,7 +148,7 @@ pub fn run() {
         hysteria_api::speed_hysteria_delay,
         xray_api::add_xray_item,
         xray_api::get_all_xrays,
-        xray_api::import_by_subscribe_url,
+        xray_api::import_xray_subscribe,
         xray_api::update_xray_item,
         xray_api::delete_xray_item,
         xray_api::speed_xray_delay,

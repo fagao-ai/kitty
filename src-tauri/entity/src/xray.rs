@@ -1,6 +1,7 @@
 use anyhow::Error;
 use anyhow::{anyhow, Result};
 use base64::{engine::general_purpose, Engine as _};
+use sea_orm::ActiveValue;
 use sea_orm::{entity::prelude::*, FromJsonQueryResult};
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
@@ -932,7 +933,7 @@ impl TryFrom<ShareWithProtocol> for Model {
         };
 
         Ok(Self {
-            id: Default::default(),
+            id: ActiveValue::NotSet,
             name,
             protocol: Protocol::from_str(value.protocol.as_str())?,
             uuid,

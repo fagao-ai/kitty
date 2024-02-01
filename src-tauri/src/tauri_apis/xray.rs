@@ -32,10 +32,11 @@ pub async fn get_all_xrays<'a>(
 }
 
 #[tauri::command(rename_all = "snake_case")]
-pub async fn import_by_subscribe_url<'a>(
+pub async fn import_xray_subscribe<'a>(
     state: State<'a, DatabaseState>,
     url: &str,
 ) -> CommandResult<()> {
+    println!("url: {}", url);
     let db = state.get_db();
     let _res = XrayAPI.import_xray_from_subscribe(&db, url).await?;
     Ok(())
