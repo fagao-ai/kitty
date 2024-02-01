@@ -1,6 +1,7 @@
 use anyhow::Result;
 use sea_orm::{entity::prelude::*, FromJsonQueryResult};
 use serde::{Deserialize, Serialize};
+use sea_orm::NotSet;
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, DeriveEntityModel)]
 #[sea_orm(table_name = "hysteria")]

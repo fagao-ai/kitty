@@ -5,7 +5,9 @@ use entity::xray;
 use sea_orm::ActiveModelTrait;
 use sea_orm::DatabaseConnection;
 use sea_orm::Set;
+use sea_orm::TransactionTrait;
 use std::str::FromStr;
+
 
 use crate::apis::api_traits::APIServiceTrait;
 
@@ -55,14 +57,15 @@ impl XrayAPI {
             url: Set(url.to_owned()),
             ..Default::default()
         };
-        let exec_subscribe_res = subscribe.insert(db).await?;
+        let txn = db.begin().await?;
+        let exec_subscribe_res = subscribe.insert(&txn).await?;
         for line in share_protocol_string.lines() {
             let mut xray_model = xray::Model::from_str(line.trim())?;
             xray_model.subscribe_id = Some(exec_subscribe_res.id);
-            println!("{}", xray_model.id);
             xray_models.push(xray_model)
         }
-        xray::Model::insert_many(db, xray_models).await?;
+        xray::Model::insert_many(&txn, xray_models).await?;
+        txn.commit().await?;
         Ok(())
     }
 }

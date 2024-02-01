@@ -1,7 +1,6 @@
 use anyhow::Error;
 use anyhow::{anyhow, Result};
 use base64::{engine::general_purpose, Engine as _};
-use sea_orm::ActiveValue;
 use sea_orm::{entity::prelude::*, FromJsonQueryResult};
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
@@ -11,6 +10,7 @@ use url::Url;
 use crate::types::ShareJsonStruct;
 use crate::types::ShareWithProtocol;
 use crate::utils::get_random_port;
+use sea_orm::ActiveValue::NotSet;
 
 #[derive(
     Clone, Debug, PartialEq, Eq, Serialize, Deserialize, DeriveEntityModel, FromJsonQueryResult,
@@ -77,9 +77,7 @@ impl ActiveModelBehavior for ActiveModel {}
 
 impl Model {
     generate_model_functions!();
-
 }
-
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, FromJsonQueryResult)]
 #[serde(rename = "streamSettings")]
 pub enum StreamSettings {
@@ -933,7 +931,7 @@ impl TryFrom<ShareWithProtocol> for Model {
         };
 
         Ok(Self {
-            id: ActiveValue::NotSet,
+            id: Default::default(),
             name,
             protocol: Protocol::from_str(value.protocol.as_str())?,
             uuid,
@@ -1043,7 +1041,10 @@ impl XrayConfig {
         self.routing.rules[0].add_outbound_tag(outbound_tag);
     }
 
-    pub fn from_models4http_delay(models: Vec<Model>, used_ports: &HashSet<u16>) -> (Self, HashMap<u16, i32>) {
+    pub fn from_models4http_delay(
+        models: Vec<Model>,
+        used_ports: &HashSet<u16>,
+    ) -> (Self, HashMap<u16, i32>) {
         let mut port_model_dict = HashMap::new();
         let mut xray_config = XrayConfig::empty();
         for record in models.into_iter() {
@@ -1056,7 +1057,6 @@ impl XrayConfig {
                 format!("http_ipv4_{}", port),
                 format!("proxy_{}", record_id),
             );
-            
         }
         (xray_config, port_model_dict)
     }

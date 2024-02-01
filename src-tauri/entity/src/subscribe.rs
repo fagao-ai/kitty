@@ -1,4 +1,4 @@
-use sea_orm::entity::prelude::*;
+use sea_orm::{entity::prelude::*, ActiveValue::NotSet};
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, DeriveEntityModel)]
@@ -23,3 +23,16 @@ impl Related<super::xray::Entity> for Entity {
 }
 
 impl ActiveModelBehavior for ActiveModel {}
+
+impl Model {
+    pub async fn insert_one1<C>(&self, db: &C) -> Result<Self, DbErr>
+    where
+        C: ConnectionTrait,
+    {
+        let json_value = serde_json::to_value(self).unwrap().into();
+        let mut record = ActiveModel::from_json(json_value)?;
+        record.id = NotSet;
+        let res = record.insert(db).await;
+        res
+    }
+}

@@ -1,11 +1,30 @@
 #[macro_export]
 macro_rules! generate_model_functions {
     () => {
-        pub async fn insert_one(&self, db: &DatabaseConnection) -> Result<Self, DbErr> {
+        pub async fn insert_one<C>(&self, db: &C) -> Result<Self, DbErr>
+        where
+            C: ConnectionTrait,
+        {
             let json_value = serde_json::to_value(self).unwrap().into();
-            let record = ActiveModel::from_json(json_value)?;
+            let mut record = ActiveModel::from_json(json_value)?;
+            record.id = NotSet;
             let res = record.insert(db).await;
             res
+        }
+
+        pub async fn insert_many<C>(db: &C, records: Vec<Model>) -> Result<(), DbErr>
+        where
+            C: ConnectionTrait,
+        {
+            let mut active_models = Vec::with_capacity(records.len());
+            for record in records {
+                let json_value = serde_json::to_value(record).unwrap().into();
+                let mut record = ActiveModel::from_json(json_value)?;
+                record.id = NotSet;
+                active_models.push(record)
+            }
+            let res = self::Entity::insert_many(active_models).exec(db).await?;
+            Ok(())
         }
 
         pub async fn first(db: &DatabaseConnection) -> Result<Option<Self>, DbErr> {
@@ -28,26 +47,15 @@ macro_rules! generate_model_functions {
             Ok(results)
         }
 
-        pub async fn fetch_by_ids(db: &DatabaseConnection, ids: Vec<i32>) -> Result<Vec<Model>, DbErr> {
+        pub async fn fetch_by_ids(
+            db: &DatabaseConnection,
+            ids: Vec<i32>,
+        ) -> Result<Vec<Model>, DbErr> {
             let results = self::Entity::find()
                 .filter(self::Column::Id.is_in(ids))
                 .all(db)
                 .await?;
             Ok(results)
-        }
-
-        pub async fn insert_many(
-            db: &DatabaseConnection,
-            records: Vec<Model>,
-        ) -> Result<(), DbErr> {
-            let mut active_models = Vec::with_capacity(records.len());
-            for record in records {
-                let json_value = serde_json::to_value(record).unwrap().into();
-                let record = ActiveModel::from_json(json_value)?;
-                active_models.push(record)
-            }
-            let _ = self::Entity::insert_many(active_models).exec(db).await?;
-            Ok(())
         }
 
         pub async fn delete_by_id(db: &DatabaseConnection, id: i32) -> Result<()> {
