@@ -1,7 +1,7 @@
 use state::{DatabaseState, ProcessManagerState};
 use std::env;
 use tauri::{generate_handler, ipc::Invoke, WindowEvent};
-use tauri::{Manager, State};
+use tauri::{AppHandle, Manager, RunEvent, State};
 #[cfg(feature = "hysteria")]
 use tauri_apis::hysteria as hysteria_api;
 #[cfg(feature = "xray")]
@@ -26,56 +26,59 @@ mod tray;
 mod types;
 mod utils;
 
-async fn on_window_exit(event: tauri::GlobalWindowEvent) {
-    match event.event() {
-        WindowEvent::Destroyed => {
-            println!("exit!!!");
-            let state: State<ProcessManagerState> = event.window().state();
-            #[cfg(feature = "hysteria")]
-            {
-                let mut process_manager = state.hy_process_manager.lock().await;
-                let process_manager = process_manager.as_mut();
-                if let Some(process_manager) = process_manager {
-                    if process_manager.terminate_backends().is_err() {
-                        let app = event.window();
-                        if let Ok(PermissionState::Granted) = app.notification().permission_state()
-                        {
-                            app.notification()
-                                .builder()
-                                .body(format!("{} terminate failed.", process_manager.name()))
-                                .show()
-                                .unwrap();
-                        }
-                    }
-                }
-            }
+// async fn on_window_exit(event: tauri::GlobalWindowEvent) {
+//     println!("on_window_exit call!!!");
+//     println!("{:?}", event.event());
+//     match event.event() {
+//         WindowEvent::Destroyed => {
+//             println!("exit!!!");
+//             let state: State<ProcessManagerState> = event.window().state();
+//             #[cfg(feature = "hysteria")]
+//             {
+//                 let mut process_manager = state.hy_process_manager.lock().await;
+//                 let process_manager = process_manager.as_mut();
+//                 if let Some(process_manager) = process_manager {
+//                     println!("terminate_backends call");
+//                     if process_manager.terminate_backends().is_err() {
+//                         let app = event.window();
+//                         if let Ok(PermissionState::Granted) = app.notification().permission_state()
+//                         {
+//                             app.notification()
+//                                 .builder()
+//                                 .body(format!("{} terminate failed.", process_manager.name()))
+//                                 .show()
+//                                 .unwrap();
+//                         }
+//                     }
+//                 }
+//             }
 
-            #[cfg(feature = "xray")]
-            {
-                let mut process_manager = state.xray_process_manager.lock().await;
-                let process_manager = process_manager.as_mut();
-                if let Some(process_manager) = process_manager {
-                    if process_manager.terminate_backends().is_err() {
-                        let app = event.window();
-                        if let Ok(PermissionState::Granted) = app.notification().permission_state()
-                        {
-                            app.notification()
-                                .builder()
-                                .body(format!("{} terminate failed.", process_manager.name()))
-                                .show()
-                                .unwrap();
-                        }
-                    }
-                }
-            }
-        }
-        _ => {}
-    }
-}
+//             #[cfg(feature = "xray")]
+//             {
+//                 let mut process_manager = state.xray_process_manager.lock().await;
+//                 let process_manager = process_manager.as_mut();
+//                 if let Some(process_manager) = process_manager {
+//                     if process_manager.terminate_backends().is_err() {
+//                         let app = event.window();
+//                         if let Ok(PermissionState::Granted) = app.notification().permission_state()
+//                         {
+//                             app.notification()
+//                                 .builder()
+//                                 .body(format!("{} terminate failed.", process_manager.name()))
+//                                 .show()
+//                                 .unwrap();
+//                         }
+//                     }
+//                 }
+//             }
+//         }
+//         _ => {}
+//     }
+// }
 
-fn on_window_exit_func(event: tauri::GlobalWindowEvent) {
-    tauri::async_runtime::block_on(on_window_exit(event))
-}
+// fn on_window_exit_func(event: tauri::GlobalWindowEvent) {
+//     tauri::async_runtime::block_on(on_window_exit(event))
+// }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -93,8 +96,8 @@ pub fn run() {
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_notification::init())
         .plugin(tauri_plugin_clipboard_manager::init())
-        .setup(init_setup)
-        .on_window_event(on_window_exit_func);
+        .setup(init_setup);
+        // .on_window_event(on_window_exit_func);
     #[cfg(feature = "xray")]
     #[cfg(any(target_os = "macos", target_os = "linux", target_os = "windows"))]
     let handler: fn(Invoke) -> bool = generate_handler![
@@ -165,6 +168,13 @@ pub fn run() {
 
     let builder = builder.invoke_handler(handler);
     builder
-        .run(tauri::generate_context!())
-        .expect("error while running tauri application");
+        .build(tauri::generate_context!())
+        .expect("error while running tauri application")
+        .run(|app, event| {
+            println!("RunEvent callback!!! {:?}", event);
+            if let RunEvent::Exit = event {
+                println!("RunEvent exit!!!");
+                // clear_command(app);
+            }
+        });
 }

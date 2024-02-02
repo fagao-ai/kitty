@@ -105,6 +105,7 @@ impl KittyCommand {
     }
 
     pub fn terminate_backend(&mut self) -> Result<()> {
+        println!("kill command");
         self.child.kill()?;
         Ok(())
     }

@@ -1,17 +1,44 @@
 use anyhow::{Ok, Result};
+use protocols::KittyCommandGroupTrait;
 use std::env;
 use tauri::menu::{Menu, MenuEvent};
 use tauri::{
     menu::{MenuBuilder, MenuItemBuilder},
     tray::{ClickType, TrayIconBuilder},
-    Icon, WindowEvent,
+    Icon,
 };
-use tauri::{App, AppHandle, Manager, Runtime, State, Wry};
+use tauri::{AppHandle, Manager, State, Wry};
 
-use crate::state::DatabaseState;
+use crate::state::{DatabaseState, ProcessManagerState};
 use crate::tauri_apis::common as common_api;
 
 pub struct Tray {}
+
+async fn clear_command(app_handle: &AppHandle) {
+    let state: State<ProcessManagerState> = app_handle.state();
+    #[cfg(feature = "hysteria")]
+    {
+        let mut process_manager = state.hy_process_manager.lock().await;
+        let process_manager = process_manager.as_mut();
+        if let Some(process_manager) = process_manager {
+            println!("terminate_backends call");
+            process_manager.terminate_backends().unwrap();
+        }
+    }
+
+    #[cfg(feature = "xray")]
+    {
+        let mut process_manager = state.xray_process_manager.lock().await;
+        let process_manager = process_manager.as_mut();
+        if let Some(process_manager) = process_manager {
+            process_manager.terminate_backends().unwrap();
+        }
+    }
+}
+
+fn on_exit_clear_commands(app_handle: &AppHandle) {
+    tauri::async_runtime::block_on(clear_command(app_handle))
+}
 
 impl Tray {
     fn tray_menu(app_handle: &AppHandle) -> Result<Menu<Wry>> {
@@ -73,8 +100,9 @@ impl Tray {
                 window.hide().unwrap();
             }
             "quit" => {
+                on_exit_clear_commands(app_handle);
                 app_handle.exit(0);
-                std::process::exit(0);
+                // std::process::exit(0);
             }
             "system_proxy" => (),
             "copy_env" => {
