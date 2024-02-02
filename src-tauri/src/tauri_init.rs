@@ -1,5 +1,5 @@
 use migration::{Migrator, MigratorTrait};
-use sea_orm::{ActiveModelTrait, Database, DatabaseConnection, DbErr, Set};
+use sea_orm::{Database, DatabaseConnection, DbErr};
 use std::path::PathBuf;
 
 use crate::{state::DatabaseState, tray::Tray};

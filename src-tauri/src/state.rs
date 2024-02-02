@@ -1,10 +1,13 @@
-use std::collections::HashSet;
 use kitty_proxy::MatchProxy;
-use protocols::KittyCommandGroup;
+#[cfg(feature = "hysteria")]
+use protocols::HysteriaCommandGroup;
+#[cfg(feature = "xray")]
+use protocols::XrayCommandGroup;
 use sea_orm::DatabaseConnection;
+use std::collections::HashSet;
 use std::sync::Arc;
-use tokio::sync::Mutex;
 use tokio::sync::watch::Sender;
+use tokio::sync::Mutex;
 
 pub struct DatabaseState {
     pub db: std::sync::Mutex<Option<DatabaseConnection>>,
@@ -20,12 +23,12 @@ impl DatabaseState {
 
 pub struct ProcessManagerState {
     #[cfg(feature = "hysteria")]
-    pub hy_process_manager: Mutex<Option<KittyCommandGroup>>,
+    pub hy_process_manager: Mutex<Option<HysteriaCommandGroup>>,
     #[cfg(feature = "xray")]
-    pub xray_process_manager: Mutex<Option<KittyCommandGroup>>,
+    pub xray_process_manager: Mutex<Option<XrayCommandGroup>>,
 }
 
-impl Default for ProcessManagerState {
+impl<'a> Default for ProcessManagerState {
     fn default() -> Self {
         Self {
             #[cfg(feature = "hysteria")]

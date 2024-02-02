@@ -2,12 +2,14 @@ use std::collections::HashMap;
 
 use entity::base_config;
 use entity::xray::{self, XrayConfig};
-use protocols::KittyCommandGroup;
+use protocols::XrayCommandGroup;
 use tauri::{AppHandle, Manager, State};
 
 use crate::apis::xray_apis::XrayAPI;
 use crate::state::{DatabaseState, KittyProxyState};
 use crate::types::{CommandResult, KittyResponse};
+
+use protocols::KittyCommandGroupTrait;
 
 use super::utils::{relative_command_path, speed_delay};
 
@@ -78,8 +80,7 @@ pub async fn speed_xray_delay<'a>(
     let config_dir = app_handle.path().config_dir()?;
     let mut used_ports = proxy_state.used_ports.lock().await;
     let hysteria_bin_path = relative_command_path("xray".as_ref())?;
-    let mut hysteria_command_group =
-        KittyCommandGroup::new(String::from("xray"), hysteria_bin_path, config_dir.clone());
+    let mut hysteria_command_group = XrayCommandGroup::new(hysteria_bin_path, config_dir.clone());
     let mut config_hash_map: HashMap<String, XrayConfig> = HashMap::new();
 
     let server_key: String = xray_records

@@ -8,6 +8,8 @@ use tauri_apis::hysteria as hysteria_api;
 use tauri_apis::xray as xray_api;
 use tauri_init::init_setup;
 
+use protocols::KittyCommandGroupTrait;
+
 use tauri_apis::common as common_api;
 use tauri_plugin_autostart::MacosLauncher;
 use tauri_plugin_notification::{NotificationExt, PermissionState};

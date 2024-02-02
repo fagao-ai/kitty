@@ -122,7 +122,7 @@ pub fn set_system_proxy(host: &str, socks_port: u16, http_port: Option<u16>) -> 
 }
 
 #[cfg(target_os = "windows")]
-pub fn clear_system_proxy() {
+pub fn clear_system_proxy() -> Result<()>{
     let socks_sysproxy = Sysproxy {
         enable: false,
         host: "127.0.0.1".into(),
@@ -132,6 +132,7 @@ pub fn clear_system_proxy() {
         bypass: "localhost,127.0.0.1/8".into(),
     };
     let _ = socks_sysproxy.set_system_proxy();
+    Ok(())
 }
 
 #[cfg(target_os = "linux")]

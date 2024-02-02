@@ -2,7 +2,8 @@ use std::collections::HashMap;
 
 use entity::base_config;
 use entity::hysteria::{self, HysteriaConfig};
-use protocols::KittyCommandGroup;
+use protocols::XrayCommandGroup;
+use protocols::KittyCommandGroupTrait;
 use tauri::{AppHandle, Manager, State};
 
 use crate::apis::hysteria_apis::HysteriaAPI;
@@ -68,11 +69,7 @@ pub async fn speed_hysteria_delay<'a>(
     drop(db);
     let config_dir = app_handle.path().config_dir()?;
     let hysteria_bin_path = relative_command_path("hysteria".as_ref())?;
-    let mut hysteria_command_group = KittyCommandGroup::new(
-        String::from("hysteria"),
-        hysteria_bin_path,
-        config_dir.clone(),
-    );
+    let mut hysteria_command_group = XrayCommandGroup::new(hysteria_bin_path, config_dir.clone());
     let mut config_hash_map: HashMap<String, HysteriaConfig> = HashMap::new();
 
     let mut port_model_dict = HashMap::new();

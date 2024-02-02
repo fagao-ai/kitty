@@ -2,12 +2,17 @@ use anyhow::{anyhow, Result};
 use entity::base_config;
 #[cfg(feature = "hysteria")]
 use entity::hysteria::{self as hysteria_entity, HysteriaConfig};
-
 #[cfg(feature = "xray")]
 use entity::xray::{self as xray_entity, XrayConfig};
+#[cfg(feature = "hysteria")]
+use protocols::HysteriaCommandGroup;
+#[cfg(feature = "xray")]
+use protocols::XrayCommandGroup;
+
+use protocols::KittyCommandGroupTrait;
 
 use kitty_proxy::{HttpProxy, NodeInfo, SocksProxy};
-use protocols::KittyCommandGroup;
+
 use std::{
     collections::HashMap,
     net::{IpAddr, Ipv4Addr},
@@ -16,7 +21,10 @@ use tauri::{AppHandle, Manager, State};
 use tokio::sync::watch;
 
 use crate::{
-    proxy::system_proxy::{clear_system_proxy, set_system_proxy}, state::{DatabaseState, KittyProxyState, ProcessManagerState}, tauri_apis::utils::relative_command_path, types::{CommandResult, KittyCommandError, KittyResponse}
+    proxy::system_proxy::{clear_system_proxy, set_system_proxy},
+    state::{DatabaseState, KittyProxyState, ProcessManagerState},
+    tauri_apis::utils::relative_command_path,
+    types::{CommandResult, KittyCommandError, KittyResponse},
 };
 
 use utils::get_http_socks_ports;
@@ -91,11 +99,8 @@ pub async fn start_system_proxy<'a>(
             let (http_port, socks_port) = get_http_socks_ports(&mut used_ports);
             let hysteria_config = HysteriaConfig::new(http_port, socks_port, hysteria_record);
             let hysteria_bin_path = relative_command_path("hysteria".as_ref())?;
-            let mut hysteria_command_group = KittyCommandGroup::new(
-                String::from("hysteria"),
-                hysteria_bin_path,
-                config_dir.clone(),
-            );
+            let mut hysteria_command_group =
+                HysteriaCommandGroup::new(hysteria_bin_path, config_dir.clone());
             let mut config_hash_map: HashMap<String, HysteriaConfig> = HashMap::new();
             config_hash_map.insert(hysteria_config.server.clone(), hysteria_config);
             let _ = hysteria_command_group.start_commands(config_hash_map, None);
@@ -134,12 +139,11 @@ pub async fn start_system_proxy<'a>(
                 resource_dir.to_string_lossy().to_string(),
             );
             let mut config_hash_map: HashMap<String, XrayConfig> = HashMap::new();
-            let mut xray_command_group =
-                KittyCommandGroup::new(String::from("xray"), xray_bin_path, config_dir);
+            let mut xray_command_group = XrayCommandGroup::new(xray_bin_path, config_dir);
 
             config_hash_map.insert(server_key, xray_config);
             let _ = xray_command_group.start_commands(config_hash_map, None)?;
-            *process_state.hy_process_manager.lock().await = Some(xray_command_group);
+            *process_state.xray_process_manager.lock().await = Some(xray_command_group);
             http_vpn_node_infos.push(NodeInfo::new(
                 IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)),
                 http_port,
