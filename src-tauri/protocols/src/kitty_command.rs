@@ -9,6 +9,8 @@ use std::path::PathBuf;
 use std::process::{Command, Stdio};
 use std::sync::Arc;
 use uuid::Uuid;
+use std::os::windows::process::CommandExt;
+
 
 use crate::types::CheckStatusCommandPipe;
 
@@ -49,7 +51,8 @@ impl KittyCommand {
         let command = command
             .arg(config_path.as_os_str())
             .stdout(Stdio::piped())
-            .stderr(Stdio::piped());
+            .stderr(Stdio::piped())
+            .creation_flags(0x08000000);
         for (env_key, env_value) in env_mapping.iter() {
             std::env::set_var(env_key, env_value);
         }
