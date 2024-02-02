@@ -13,8 +13,6 @@ declare module '@tauri-apps/api/primitives' {
   export { transformCallback, Channel, PluginListener, addPluginListener, invoke, convertFileSrc }
 }
 
-// declare global {
-//   interface Window {
-//       $message: MessageApiInjection
-//   }
-// }
+declare interface Window {
+  $message: MessageApiInjection
+}

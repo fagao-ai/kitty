@@ -1,17 +1,11 @@
 <script setup lang="ts">
-import { getCurrentInstance, onMounted } from 'vue'
-import { NConfigProvider, NMessageProvider, useMessage } from 'naive-ui'
+import { NConfigProvider, NMessageProvider } from 'naive-ui'
 import { useTheme } from '@/utils/theme'
 import MenuView from '@/views/menu/MenuView.vue'
 import 'vfonts/FiraCode.css'
 import 'vfonts/Lato.css'
 
 const { theme, lightThemeOverrides, darkThemeOverrides } = useTheme()
-
-onMounted(() => {
-  const vueInstance = getCurrentInstance()
-  vueInstance!.appContext.config.globalProperties.$message = useMessage()
-})
 </script>
 
 <template>

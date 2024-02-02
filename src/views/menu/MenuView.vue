@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { h } from 'vue'
-import { NMenu } from 'naive-ui'
+import { NMenu, useMessage } from 'naive-ui'
 import type { MenuOption } from 'naive-ui'
 import { RouterLink, useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
@@ -37,6 +37,7 @@ const menuOptions: MenuOption[] = [
 ]
 
 const route = useRoute()
+window.$message = useMessage()
 </script>
 
 <template>

@@ -19,6 +19,9 @@ async function handleSwitchProxy(value: boolean) {
     }
     else { await invoke('stop_system_proxy') }
   }
+  catch (e) {
+    proxyStatus.value = false
+  }
   finally {
     proxyLoading.value = false
   }
