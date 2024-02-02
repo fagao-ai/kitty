@@ -2,7 +2,7 @@ use anyhow::Result;
 use sysproxy::Sysproxy;
 
 #[cfg(target_os = "windows")]
-pub fn set_system_proxy(host: &str, socks_port: u16, http_port: Option<u16>) -> Result<()> {
+pub fn set_system_proxy(host: &str, _socks_port: u16, http_port: Option<u16>) -> Result<()> {
     use anyhow::anyhow;
 
     let res = if let Some(port) = http_port {

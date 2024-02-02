@@ -16,11 +16,13 @@ use tauri_plugin_notification::{NotificationExt, PermissionState};
 
 use crate::state::KittyProxyState;
 use crate::tauri_apis::{start_system_proxy, stop_system_proxy};
+use crate::tauri_event_handler::on_exit_clear_commands;
 
 mod apis;
 mod proxy;
 mod state;
 mod tauri_apis;
+mod tauri_event_handler;
 mod tauri_init;
 mod tray;
 mod types;
@@ -97,7 +99,7 @@ pub fn run() {
         .plugin(tauri_plugin_notification::init())
         .plugin(tauri_plugin_clipboard_manager::init())
         .setup(init_setup);
-        // .on_window_event(on_window_exit_func);
+    // .on_window_event(on_window_exit_func);
     #[cfg(feature = "xray")]
     #[cfg(any(target_os = "macos", target_os = "linux", target_os = "windows"))]
     let handler: fn(Invoke) -> bool = generate_handler![
@@ -171,10 +173,10 @@ pub fn run() {
         .build(tauri::generate_context!())
         .expect("error while running tauri application")
         .run(|app, event| {
-            println!("RunEvent callback!!! {:?}", event);
             if let RunEvent::Exit = event {
                 println!("RunEvent exit!!!");
                 // clear_command(app);
+                on_exit_clear_commands(app);
             }
         });
 }
