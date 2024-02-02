@@ -45,6 +45,7 @@ impl KittyCommandGroup {
     {
         for (node_server, config) in config.iter() {
             let kitty_command = KittyCommand::spawn(&self.bin_path, config, &self.config_dir, env_mapping.clone().unwrap_or(HashMap::new()))?;
+            println!("check_status call");
             kitty_command.check_status()?;
             self.kitty_commands.insert(node_server.clone(), kitty_command);
         }

@@ -4,6 +4,7 @@ use base64::{engine::general_purpose, Engine as _};
 use sea_orm::{entity::prelude::*, FromJsonQueryResult};
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
+use std::path::PathBuf;
 use std::str::FromStr;
 use url::Url;
 
@@ -577,6 +578,11 @@ impl XrayConfig {
             routing: Routing::new(selector_outbound_tags),
         }
     }
+
+    pub fn set_log_path(&mut self, log_dir: PathBuf) {
+        self.log.access = log_dir.join("access.log").to_string_lossy().to_string();
+        self.log.error = log_dir.join("error.log").to_string_lossy().to_string();
+    }
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -589,9 +595,9 @@ struct XrayLog {
 impl Default for XrayLog {
     fn default() -> Self {
         Self {
-            access: "".into(),
-            error: "".into(),
-            loglevel: "info".into(),
+            access: "access.log".into(),
+            error: "error.log".into(),
+            loglevel: "debug".into(),
         }
     }
 }
@@ -801,7 +807,8 @@ struct Rule {
     r#type: String,
     #[serde(rename = "inboundTag")]
     inbound_tag: Vec<String>,
-    bclancer_tag: String,
+    #[serde(rename = "balancerTag")]
+    balancer_tag: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(rename = "outboundTag")]
     outbound_tag: Option<Vec<String>>,
@@ -812,7 +819,7 @@ impl Rule {
         Self {
             r#type: "field".into(),
             inbound_tag: Vec::new(),
-            bclancer_tag: "balancer".into(),
+            balancer_tag: "balancer".into(),
             outbound_tag: Some(Vec::new()),
         }
     }
@@ -835,7 +842,7 @@ impl Default for Rule {
         Self {
             r#type: "field".into(),
             inbound_tag: vec!["http_ipv4".into(), "socks_ipv4".into()],
-            bclancer_tag: "balancer".into(),
+            balancer_tag: "balancer".into(),
             outbound_tag: None,
         }
     }

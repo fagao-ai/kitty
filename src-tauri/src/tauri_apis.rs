@@ -16,9 +16,7 @@ use tauri::{AppHandle, Manager, State};
 use tokio::sync::watch;
 
 use crate::{
-    state::{DatabaseState, KittyProxyState, ProcessManagerState},
-    tauri_apis::utils::relative_command_path,
-    types::{CommandResult, KittyCommandError, KittyResponse},
+    proxy::system_proxy::{clear_system_proxy, set_system_proxy}, state::{DatabaseState, KittyProxyState, ProcessManagerState}, tauri_apis::utils::relative_command_path, types::{CommandResult, KittyCommandError, KittyResponse}
 };
 
 use utils::get_http_socks_ports;
@@ -81,7 +79,7 @@ pub async fn start_system_proxy<'a>(
 ) -> CommandResult<KittyResponse<()>> {
     let _ = init_state(&process_state, &proxy_state).await?;
     let db = db_state.get_db();
-    let config_dir = app_handle.path().config_dir()?;
+    let config_dir = app_handle.path().app_local_data_dir()?;
     let mut http_vpn_node_infos = Vec::new();
     let mut socks_vpn_node_infos = Vec::new();
     let mut used_ports = proxy_state.used_ports.lock().await;
@@ -140,7 +138,7 @@ pub async fn start_system_proxy<'a>(
                 KittyCommandGroup::new(String::from("xray"), xray_bin_path, config_dir);
 
             config_hash_map.insert(server_key, xray_config);
-            let _ = xray_command_group.start_commands(config_hash_map, None);
+            let _ = xray_command_group.start_commands(config_hash_map, None)?;
             *process_state.hy_process_manager.lock().await = Some(xray_command_group);
             http_vpn_node_infos.push(NodeInfo::new(
                 IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)),
@@ -185,7 +183,9 @@ pub async fn start_system_proxy<'a>(
             .serve(socks_match_proxy, &mut socks_kill_rx, socks_vpn_node_infos)
             .await;
     });
-
+    set_system_proxy(&record.local_ip, record.socks_port, Some(record.http_port))?;
+    let db = db_state.get_db();
+    base_config::Model::update_sysproxy_flag(&db, true).await?;
     Ok(KittyResponse::default())
 }
 
@@ -194,6 +194,7 @@ pub async fn stop_system_proxy<'a>(
     db_state: State<'a, DatabaseState>,
 ) -> CommandResult<KittyResponse<()>> {
     let db = db_state.get_db();
+    clear_system_proxy()?;
     base_config::Model::update_sysproxy_flag(&db, false).await?;
     Ok(KittyResponse::default())
 }

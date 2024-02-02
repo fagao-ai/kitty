@@ -22,7 +22,8 @@
         "icons/icon.ico"
       ],
       "externalBin": [
-        "binaries/hysteria"
+        "binaries/hysteria",
+        "binaries/xray"
       ],
       "resources": [
         "static/*"

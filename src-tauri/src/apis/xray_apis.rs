@@ -17,7 +17,6 @@ impl APIServiceTrait for XrayAPI {}
 impl XrayAPI {
     pub async fn get_all(&self, db: &DatabaseConnection) -> Result<Vec<xray::Model>> {
         let xray_proxies = xray::Model::fetch_all(&db).await?;
-        println!("xray_proxies: {:?}", xray_proxies);
         let xray_proxies: Vec<xray::Model> =
             xray_proxies.into_iter().map(|model| model.into()).collect();
         Ok(xray_proxies)

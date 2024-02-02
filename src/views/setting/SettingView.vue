@@ -9,8 +9,14 @@ import type { KittyBaseConfig } from '@/types/setting'
 
 const { t, locale } = useI18n()
 
-const proxyStatus = ref(false)
 const proxyLoading = ref(false)
+const baseConfig = reactive<KittyBaseConfig>({
+  id: 0,
+  httpPort: 10086,
+  socksPort: 10087,
+  delayTestUrl: 'https://gstatic.com/generate_204',
+  sysproxyFlag: false,
+})
 async function handleSwitchProxy(value: boolean) {
   proxyLoading.value = true
   try {
@@ -20,20 +26,12 @@ async function handleSwitchProxy(value: boolean) {
     else { await invoke('stop_system_proxy') }
   }
   catch (e) {
-    proxyStatus.value = false
+    baseConfig.sysproxyFlag = false
   }
   finally {
     proxyLoading.value = false
   }
 }
-
-const baseConfig = reactive<KittyBaseConfig>({
-  id: 0,
-  httpPort: 10086,
-  socksPort: 10087,
-  delayTestUrl: 'https://gstatic.com/generate_204',
-  sysproxyFlag: false,
-})
 
 async function getBaseConfig() {
   const config = await invoke<KittyBaseConfig>('query_base_config')
@@ -101,7 +99,7 @@ watch(language, whenLanguageChanged, { immediate: true })
           </div>
           <div class="font-medium">
             <n-switch
-              v-model:value="proxyStatus"
+              v-model:value="baseConfig.sysproxyFlag"
               :loading="proxyLoading"
               size="medium"
               @update:value="handleSwitchProxy"
