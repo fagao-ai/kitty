@@ -8,7 +8,6 @@ use sea_orm::Set;
 use sea_orm::TransactionTrait;
 use std::str::FromStr;
 
-
 use crate::apis::api_traits::APIServiceTrait;
 
 pub struct XrayAPI;
@@ -20,6 +19,14 @@ impl XrayAPI {
         let xray_proxies: Vec<xray::Model> =
             xray_proxies.into_iter().map(|model| model.into()).collect();
         Ok(xray_proxies)
+    }
+
+    pub async fn get_xray_by_id(
+        &self,
+        db: &DatabaseConnection,
+        id: i32,
+    ) -> Result<Option<xray::Model>> {
+        Ok(xray::Model::get_by_id(db, id).await?)
     }
 
     pub async fn add_xray_item(&self, db: &DatabaseConnection, record: xray::Model) -> Result<()> {

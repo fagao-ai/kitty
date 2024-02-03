@@ -7,7 +7,9 @@ interface Props {
   form: HysteriaProxy
 }
 
-const hysteriaFormState = useVModel(defineProps<Props>(), 'form')
+const props = defineProps<Props>()
+
+const hysteriaFormState = useVModel(props, 'form')
 </script>
 
 <template>

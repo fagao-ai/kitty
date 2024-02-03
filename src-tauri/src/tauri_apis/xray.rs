@@ -14,6 +14,17 @@ use protocols::KittyCommandGroupTrait;
 use super::utils::{relative_command_path, speed_delay};
 
 #[tauri::command(rename_all = "snake_case")]
+pub async fn get_xray_by_id<'a>(
+    state: State<'a, DatabaseState>,
+    id: i32,
+) -> CommandResult<KittyResponse<Option<xray::Model>>> {
+    let db = state.get_db();
+    Ok(KittyResponse::from_data(
+        XrayAPI.get_xray_by_id(&db, id).await?,
+    ))
+}
+
+#[tauri::command(rename_all = "snake_case")]
 pub async fn add_xray_item<'a>(
     state: State<'a, DatabaseState>,
     record: xray::Model,

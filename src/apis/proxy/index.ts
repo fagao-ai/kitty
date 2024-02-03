@@ -2,11 +2,37 @@ import { camelizeKeys, decamelizeKeys } from 'humps'
 import { instanceToPlain, plainToInstance } from 'class-transformer'
 import { Xray } from '@/models/xray'
 import { invoke } from '@/utils/invoke'
-import type { HysteriaProxy, ImportProxy, XrayProxy } from '@/types/proxy'
+import { HysteriaProxy, ImportProxy, ProxyType, XrayProxy } from '@/types/proxy'
 
 export async function getAllHysterias() {
   const res = await invoke<HysteriaProxy[]>('get_all_hysterias')
   return camelizeKeys(res.data) as HysteriaProxy[]
+}
+
+export async function getHysteriaById(id: number) {
+  const res = await invoke<HysteriaProxy>('get_hysteria_by_id', { id })
+  return camelizeKeys(res.data) as HysteriaProxy | null
+}
+
+export async function getXrayById(id: number) {
+  const res = await invoke<XrayProxy>('get_xray_by_id', { id })
+  if (!res.data) return null
+  const data = camelizeKeys<XrayProxy>(res.data)
+  if (data.streamSettings.network === "ws") {
+    const headers = { ...data.streamSettings.wsSettings.headers } as any
+    data.streamSettings.wsSettings.headers.host = headers.Host
+    delete (data.streamSettings.wsSettings.headers as any).Host
+  }
+  return data
+}
+
+export async function getProxyByIdAndType(id: number, proxyType: ProxyType) {
+  switch (proxyType) {
+    case ProxyType.Hysteria:
+      return await getHysteriaById(id)
+    case ProxyType.Xray:
+      return await getXrayById(id)
+  }
 }
 
 export async function createXrayProxy(xrayForm: XrayProxy) {

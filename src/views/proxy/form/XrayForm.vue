@@ -6,8 +6,8 @@ import type { XrayProxy } from '@/types/proxy'
 interface Props {
   form: XrayProxy
 }
-
-const formState = useVModel(defineProps<Props>(), 'form')
+const props = defineProps<Props>()
+const formState = useVModel(props, 'form')
 
 const streamSettingOptions = [{ label: 'WebSocket', value: 'ws' }, { label: 'Tcp', value: 'tcp' }, { label: 'http2', value: 'http2' }, { label: 'grpc', value: 'grpc' }, { label: 'kcp', value: 'kcp' }]
 

@@ -34,12 +34,17 @@ function getNext(): FormItem | null {
         <n-input v-model:value="formState.payload.value" />
       </template>
       <template v-else-if="formState.payload.type === 'textarea'">
-        <n-input v-model:value="formState.payload.value" type="textarea" />
+        <n-input
+          v-model:value="formState.payload.value"
+          type="textarea"
+        />
       </template>
       <template v-else-if="formState.payload.type === 'select'">
-        <n-select v-model:value="formState.payload.value" :options="formState.payload.options" />
+        <n-select
+          v-model:value="formState.payload.value"
+          :options="formState.payload.options"
+        />
       </template>
-    </n-form-item>
-    <form-item :form-state="getNext()" />
-  </template>
-</template>
+  </n-form-item>
+  <form-item :form-state="getNext()" />
+</template></template>

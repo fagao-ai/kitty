@@ -2,8 +2,8 @@ use std::collections::HashMap;
 
 use entity::base_config;
 use entity::hysteria::{self, HysteriaConfig};
-use protocols::XrayCommandGroup;
 use protocols::KittyCommandGroupTrait;
+use protocols::XrayCommandGroup;
 use tauri::{AppHandle, Manager, State};
 
 use crate::apis::hysteria_apis::HysteriaAPI;
@@ -20,6 +20,16 @@ pub async fn add_hysteria_item<'a>(
     let db = state.get_db();
     HysteriaAPI.add_hysteria_item(&db, record).await?;
     Ok(())
+}
+
+#[tauri::command(rename_all = "snake_case")]
+pub async fn get_hysteria_by_id<'a>(
+    state: State<'a, DatabaseState>,
+    id: i32,
+) -> CommandResult<KittyResponse<Option<hysteria::Model>>> {
+    let db = state.get_db();
+    let hysteria = HysteriaAPI.get_hysteria_by_id(&db, id).await?;
+    Ok(KittyResponse::from_data(hysteria))
 }
 
 #[tauri::command(rename_all = "snake_case")]

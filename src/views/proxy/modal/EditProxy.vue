@@ -1,11 +1,11 @@
 <script setup lang="ts">
+import { reactive, watch } from 'vue'
 import { useVModel } from '@vueuse/core'
 import type { HysteriaProxy, XrayProxy } from '@/types/proxy'
 import { ProxyType } from '@/types/proxy'
 import XrayForm from '@/views/proxy/form/XrayForm.vue'
 import HysteriaForm from '@/views/proxy/form/HysteriaForm.vue'
 
-// type FormType<T extends ProxyType> = T extends ProxyType.Hysteria ? HysteriaProxy : XrayProxy
 
 interface Props {
   showModal: boolean
@@ -17,7 +17,11 @@ const props = defineProps<Props>()
 
 const showEditModal = useVModel(props, 'showModal')
 
-const formState = useVModel(props, 'form')
+const formState = reactive({ ...props.form })
+
+watch(() => props.form, (val) => {
+  Object.assign(formState, val)
+})
 </script>
 
 <template>
@@ -33,10 +37,10 @@ const formState = useVModel(props, 'form')
     :segmented="true"
   >
     <template v-if="proxyType === ProxyType.Hysteria">
-      <hysteria-form v-model:form="formState" />
+      <hysteria-form v-model:form="(formState as HysteriaProxy)" />
     </template>
-    <template v-if="proxyType === ProxyType.Xray">
-      <xray-form v-model:form="formState" />
+    <template v-if="proxyType === ProxyType.Xray && Object.keys(formState).length > 0">
+      <xray-form v-model:form="(formState as XrayProxy)" />
     </template>
   </n-modal>
 </template>

@@ -1,13 +1,16 @@
 <script setup lang="ts">
-import { NButton } from 'naive-ui'
+import { NButton, useMessage } from 'naive-ui'
 import { computed, ref, watch } from 'vue'
 import { ProxyType } from '@/types/proxy'
-import AddProxyModal from '@/views/proxy/modal/AddProxy.vue'
-import type { ProxyCard as Card } from '@/types/proxy'
+import AddProxy from '@/views/proxy/modal/AddProxy.vue'
+import type { ProxyCard as Card, HysteriaProxy, XrayProxy } from '@/types/proxy'
 import { proxyStore } from '@/views/proxy/store'
 import ProxyCardList from '@/components/ProxyCardList.vue'
-import { getAllHysterias, getAllXraies } from '@/apis/proxy'
+import { getAllHysterias, getAllXraies, getProxyByIdAndType } from '@/apis/proxy'
 import ImportProxy from '@/views/proxy/modal/ImportProxy.vue'
+import EditProxy from '@/views/proxy/modal/EditProxy.vue'
+
+const message = useMessage()
 
 const showInsertModal = ref(false)
 const showImportModal = ref(false)
@@ -56,14 +59,26 @@ function handleGetAllProxyByType(proxyType: ProxyType) {
   initXray()
 }
 
-function handleCardDblClick(id: number, proxyType: ProxyType) {
-  // eslint-disable-next-line no-console
-  console.log(`id is ${id}, proxyType is ${proxyType}`)
-}
-
 watch(proxyStore, () => {
   handleGetAllProxyByType(proxyStore.value.currentProxy)
 }, { immediate: true, deep: true })
+
+
+// edit proxy
+const showEditModal = ref(false)
+const editingProxy = ref<Partial<HysteriaProxy | XrayProxy>>({})
+const editProxyType = ref<ProxyType>(ProxyType.Hysteria)
+
+async function handleCardDblClick(id: number, proxyType: ProxyType) {
+  const res = await getProxyByIdAndType(id, proxyType)
+  if (!res) {
+    message.error('Invalid proxy, please check')
+    return
+  }
+  editingProxy.value = res
+  editProxyType.value = proxyType
+  showEditModal.value = true
+}
 </script>
 
 <template>
@@ -114,7 +129,7 @@ watch(proxyStore, () => {
       />
     </div>
   </div>
-  <add-proxy-modal
+  <add-proxy
     v-model:showModal="showInsertModal"
     :current-tab="proxyStore.currentProxy"
     @insert-submit="handleGetAllProxyByType"
@@ -125,6 +140,11 @@ watch(proxyStore, () => {
     :current-tab="ProxyType.Xray"
     :disabled-tab="ProxyType.Hysteria"
     @insert-submit="handleGetAllProxyByType"
+  />
+  <edit-proxy
+    v-model:show-modal="showEditModal"
+    :proxy-type="editProxyType"
+    :form="(editingProxy as HysteriaProxy | XrayProxy)"
   />
 </template>
 

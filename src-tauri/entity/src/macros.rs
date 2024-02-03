@@ -58,6 +58,11 @@ macro_rules! generate_model_functions {
             Ok(results)
         }
 
+        pub async fn get_by_id(db: &DatabaseConnection, id: i32) -> Result<Option<Model>, DbErr> {
+            let model = self::Entity::find_by_id(id).one(db).await?;
+            Ok(model)
+        }
+
         pub async fn delete_by_id(db: &DatabaseConnection, id: i32) -> Result<()> {
             let _ = Entity::delete_by_id(id).exec(db).await?;
             Ok(())
