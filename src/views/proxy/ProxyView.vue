@@ -2,12 +2,12 @@
 import { NButton } from 'naive-ui'
 import { computed, ref, watch } from 'vue'
 import { ProxyType } from '@/types/proxy'
-import AddProxyModal from '@/views/proxy/AddProxyModal.vue'
+import AddProxyModal from '@/views/proxy/modal/AddProxy.vue'
 import type { ProxyCard as Card } from '@/types/proxy'
 import { proxyStore } from '@/views/proxy/store'
 import ProxyCardList from '@/components/ProxyCardList.vue'
 import { getAllHysterias, getAllXraies } from '@/apis/proxy'
-import ImportProxy from '@/views/proxy/ImportProxy.vue'
+import ImportProxy from '@/views/proxy/modal/ImportProxy.vue'
 
 const showInsertModal = ref(false)
 const showImportModal = ref(false)

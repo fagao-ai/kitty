@@ -1,19 +1,13 @@
 <script setup lang="ts">
 import { NButton, NForm, NFormItem, NInput, NInputNumber, NScrollbar } from 'naive-ui'
 import { useVModel } from '@vueuse/core'
-import type { Xray } from '@/models/xray'
-
-type XrayForm = {
-  [K in keyof Xray]: Xray[K];
-}
+import type { XrayProxy } from '@/types/proxy'
 
 interface Props {
-  form: XrayForm
+  form: XrayProxy
 }
 
-const props = defineProps<Props>()
-
-const formState = useVModel(props, 'form')
+const formState = useVModel(defineProps<Props>(), 'form')
 
 const streamSettingOptions = [{ label: 'WebSocket', value: 'ws' }, { label: 'Tcp', value: 'tcp' }, { label: 'http2', value: 'http2' }, { label: 'grpc', value: 'grpc' }, { label: 'kcp', value: 'kcp' }]
 
