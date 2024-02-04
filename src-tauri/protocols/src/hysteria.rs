@@ -1,11 +1,11 @@
-use anyhow::Result;
+use anyhow::{anyhow, Result};
 use serde::Serialize;
 use std::collections::HashMap;
+use std::net::SocketAddr;
 use std::path::PathBuf;
 
 use crate::kitty_command::KittyCommand;
 use crate::traits::KittyCommandGroupTrait;
-use crate::types::CheckStatusCommandPipe;
 
 #[derive(Debug)]
 pub struct HysteriaCommandGroup {
@@ -24,17 +24,16 @@ impl HysteriaCommandGroup {
     }
 }
 
-// impl Drop for HysteriaCommandGroup {
-//     fn drop(&mut self) {
-//         println!("drop HysteriaCommandGroup");
-//         for (_, child) in self.kitty_commands.iter_mut() {
-//             if child.is_running() {
-//                 child.terminate_backend().ok();
-//             }
-//         }
-//         self.kitty_commands.clear();
-//     }
-// }
+impl Drop for HysteriaCommandGroup {
+    fn drop(&mut self) {
+        for (_, child) in self.kitty_commands.iter_mut() {
+            if child.is_running() {
+                child.terminate_backend().ok();
+            }
+        }
+        self.kitty_commands.clear();
+    }
+}
 
 impl KittyCommandGroupTrait for HysteriaCommandGroup {
     fn start_commands<T>(
@@ -53,13 +52,35 @@ impl KittyCommandGroupTrait for HysteriaCommandGroup {
                 &self.config_dir,
                 env_mapping.clone().unwrap_or(HashMap::new()),
             )?;
-            println!("check_status call");
-            kitty_command.check_status("server listening", CheckStatusCommandPipe::StdErr)?;
-            println!("check_status after");
+
+            let socket_addrs = self.get_socket_addrs(&config)?;
+            kitty_command.check_status(socket_addrs)?;
             self.kitty_commands
                 .insert(node_server.clone(), kitty_command);
         }
         Ok(())
+    }
+
+    fn get_socket_addrs<T>(&self, config: &T) -> Result<Vec<SocketAddr>>
+    where
+        T: Serialize,
+    {
+        let config_value = serde_json::to_value(config)?;
+
+        let socks_listen = config_value["socks5"]["listen"].as_str();
+        let http_listen = config_value["http"]["listen"].as_str();
+        let mut res = Vec::with_capacity(2);
+        for listen in [socks_listen, http_listen] {
+            if let Some(address_str) = listen {
+                let server: SocketAddr = address_str.parse()?;
+                res.push(server);
+            }
+        }
+        if res.len() != 2 {
+            Err(anyhow!("get_socket_addrs failed."))
+        } else {
+            Ok(res)
+        }
     }
 
     fn terminate_backends(&mut self) -> Result<()> {
