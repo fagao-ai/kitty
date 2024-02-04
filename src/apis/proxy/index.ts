@@ -56,3 +56,14 @@ export async function getAllXraies() {
 export async function createImportProxy(importProxyForm: ImportProxy) {
   await invoke('import_xray_subscribe', { url: importProxyForm.url })
 }
+
+export async function updateXrayProxy(xrayForm: XrayProxy) {
+  const groupName = xrayForm.streamSettings.network
+  const formCopy = { ...xrayForm }
+  const record = instanceToPlain(plainToInstance(Xray, formCopy, { groups: [groupName] }), { groups: [groupName] })
+  await invoke('update_xray_item', { record })
+}
+
+export async function updateHysteriaProxy(hysteriaForm: HysteriaProxy) {
+  await invoke('update_xray_item', { record: decamelizeKeys(hysteriaForm) })
+}

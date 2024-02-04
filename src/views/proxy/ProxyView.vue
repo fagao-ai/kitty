@@ -63,7 +63,6 @@ watch(proxyStore, () => {
   handleGetAllProxyByType(proxyStore.value.currentProxy)
 }, { immediate: true, deep: true })
 
-
 // edit proxy
 const showEditModal = ref(false)
 const editingProxy = ref<Partial<HysteriaProxy | XrayProxy>>({})
@@ -78,6 +77,11 @@ async function handleCardDblClick(id: number, proxyType: ProxyType) {
   editingProxy.value = res
   editProxyType.value = proxyType
   showEditModal.value = true
+}
+
+function handleCancelEdit() {
+  showEditModal.value = false
+  editingProxy.value = {}
 }
 </script>
 
@@ -139,12 +143,14 @@ async function handleCardDblClick(id: number, proxyType: ProxyType) {
     v-model:showModal="showImportModal"
     :current-tab="ProxyType.Xray"
     :disabled-tab="ProxyType.Hysteria"
-    @insert-submit="handleGetAllProxyByType"
+    @on-import="handleGetAllProxyByType"
   />
   <edit-proxy
     v-model:show-modal="showEditModal"
     :proxy-type="editProxyType"
     :form="(editingProxy as HysteriaProxy | XrayProxy)"
+    @on-cancel-edit="handleCancelEdit"
+    @on-proxy-updated="handleGetAllProxyByType"
   />
 </template>
 

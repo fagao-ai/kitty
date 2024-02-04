@@ -13,7 +13,7 @@ interface Props {
 }
 
 interface Emits {
-  (e: 'insertSubmit', tab: ProxyType): void
+  (e: 'onImport', tab: ProxyType): void
 }
 
 const props = withDefaults(defineProps<Props>(), { showModal: false, currentTab: ProxyType.Xray })
@@ -30,16 +30,16 @@ const defaultImportProxyForm: ImportProxy = {
 
 const importProxyFormState = reactive<ImportProxy>({ ...defaultImportProxyForm })
 
-async function onInsertSubmit() {
+async function handleImport() {
   if (activeTab.value === 'xray') {
     await createImportProxy(importProxyFormState)
     Object.assign(importProxyFormState, defaultImportProxyForm)
   }
-  emits('insertSubmit', activeTab.value)
+  emits('onImport', activeTab.value)
   showImportModal.value = false
 }
 
-function onCancelInsert() {
+function handleCancelImport() {
   showImportModal.value = false
 }
 
@@ -98,14 +98,14 @@ watch(() => props.currentTab, (tab) => {
       <div class="w-full flex flex-center gap-16">
         <n-button
           round
-          @click="onCancelInsert"
+          @click="handleCancelImport"
         >
           取消
         </n-button>
         <n-button
           round
           type="primary"
-          @click="onInsertSubmit"
+          @click="handleImport"
         >
           导入
         </n-button>
