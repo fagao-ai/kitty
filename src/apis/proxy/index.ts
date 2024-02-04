@@ -1,3 +1,4 @@
+import type { HumpsProcessorParameter } from 'humps'
 import { camelizeKeys, decamelizeKeys } from 'humps'
 import { instanceToPlain, plainToInstance } from 'class-transformer'
 import { Xray } from '@/models/xray'
@@ -19,12 +20,11 @@ export async function getXrayById(id: number) {
   const res = await invoke<XrayProxy>('get_xray_by_id', { id })
   if (!res.data)
     return null
-  const data = camelizeKeys<XrayProxy>(res.data)
-  if (data.streamSettings.network === 'ws') {
-    const headers = JSON.parse(JSON.stringify(data.streamSettings.wsSettings.headers))
-    data.streamSettings.wsSettings.headers.host = headers.Host
-    delete (data.streamSettings.wsSettings.headers as any).Host
-  }
+  const data = camelizeKeys<XrayProxy>(res.data, (key: string, _: HumpsProcessorParameter): string => {
+    if (key === 'Host')
+      return 'host'
+    return key
+  })
   return data
 }
 
