@@ -3,9 +3,12 @@ use serde::Serialize;
 use std::collections::HashMap;
 use std::net::SocketAddr;
 use std::path::PathBuf;
+use std::thread;
+use std::time::Duration;
 
 use crate::kitty_command::KittyCommand;
 use crate::traits::KittyCommandGroupTrait;
+use crate::types::CheckStatusCommandPipe;
 
 #[derive(Debug)]
 pub struct HysteriaCommandGroup {
@@ -52,9 +55,13 @@ impl KittyCommandGroupTrait for HysteriaCommandGroup {
                 &self.config_dir,
                 env_mapping.clone().unwrap_or(HashMap::new()),
             )?;
-
+            thread::sleep(Duration::from_secs(1));
             let socket_addrs = self.get_socket_addrs(&config)?;
-            kitty_command.check_status(socket_addrs)?;
+            kitty_command.check_status(
+                "server listening",
+                CheckStatusCommandPipe::StdErr,
+                socket_addrs,
+            )?;
             self.kitty_commands
                 .insert(node_server.clone(), kitty_command);
         }

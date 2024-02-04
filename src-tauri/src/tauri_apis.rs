@@ -167,6 +167,8 @@ pub async fn start_system_proxy<'a>(
     let record: base_config::Model = base_config::Model::first(&db).await.unwrap().unwrap();
     let http_port = record.http_port;
     let socks_port = record.socks_port;
+    println!("http_port: {http_port}");
+    println!("socks_port: {socks_port}");
     let mut http_proxy = HttpProxy::new(record.local_ip.as_str(), http_port, None)
         .await
         .unwrap();

@@ -3,15 +3,19 @@ use serde::Serialize;
 use shared_child::SharedChild;
 use std::collections::HashMap;
 use std::fs::File;
-use std::io::Write;
+use std::io::{self, BufRead, Write};
 use std::net::SocketAddr;
 #[cfg(target_os = "windows")]
 use std::os::windows::process::CommandExt;
 use std::path::PathBuf;
 use std::process::{Command, Stdio};
 use std::sync::Arc;
+use std::{thread, time};
 use uuid::Uuid;
 
+
+
+use crate::types::CheckStatusCommandPipe;
 use crate::utils::socket_addr_busy;
 
 #[derive(Debug)]
@@ -60,51 +64,61 @@ impl KittyCommand {
         })
     }
 
-    pub fn check_status(&self, socket_addrs: Vec<SocketAddr>) -> Result<()> {
+    pub fn check_socket_addrs(&self, socket_addrs: Vec<SocketAddr>) -> Result<()> {
         for socket_addr in socket_addrs {
             if !socket_addr_busy(socket_addr) {
+                println!("{socket_addr} socket_addr_busy is false");
                 return Err(anyhow!(anyhow!("xray start failed!")));
             }
         }
         Ok(())
     }
 
-    // pub fn check_status(&self, started_str: &str, std_pipe: CheckStatusCommandPipe) -> Result<()> {
-    //     let child_clone = self.child.clone();
-    //     if let Ok(None) = child_clone.try_wait() {
-    //         match std_pipe {
-    //             CheckStatusCommandPipe::StdErr => {
-    //                 let pipe_out = &mut child_clone.take_stderr();
-    //                 if let Some(pipe_out) = pipe_out {
-    //                     let reader = io::BufReader::new(pipe_out);
-    //                     for line in reader.lines() {
-    //                         if let Ok(line) = line {
-    //                             println!("stderr: {line}");
-    //                             if line.to_lowercase().contains(&started_str.to_lowercase()) {
-    //                                 return Ok(());
-    //                             }
-    //                         }
-    //                     }
-    //                 }
-    //             }
-    //             CheckStatusCommandPipe::StdOut => {
-    //                 let pipe_out = &mut child_clone.take_stdout();
-    //                 if let Some(pipe_out) = pipe_out {
-    //                     let reader = io::BufReader::new(pipe_out);
-    //                     for line in reader.lines() {
-    //                         if let Ok(line) = line {
-    //                             println!("stdout: {line}");
-    //                             if line.to_lowercase().contains(&started_str.to_lowercase()) {
-    //                                 return Ok(());
-    //                             }
-    //                         }
-    //                     }
-    //                 }
-    //             }
-    //         }
-    //     }
-    //     Err(anyhow!("xray start failed!"))
-    // }
+    pub fn check_status(
+        &self,
+        started_str: &str,
+        std_pipe: CheckStatusCommandPipe,
+        socket_addrs: Vec<SocketAddr>,
+    ) -> Result<()> {
+        let child_clone = self.child.clone();
+        if let Ok(None) = child_clone.try_wait() {
+            match std_pipe {
+                CheckStatusCommandPipe::StdErr => {
+                    let pipe_out = &mut child_clone.take_stderr();
+                    if let Some(pipe_out) = pipe_out {
+                        let reader = io::BufReader::new(pipe_out);
+                        for line in reader.lines() {
+                            if let Ok(line) = line {
+                                println!("stderr: {line}");
+                                if line.to_lowercase().contains(&started_str.to_lowercase()) {
+                                    thread::sleep(time::Duration::from_millis(500));
+                                    self.check_socket_addrs(socket_addrs)?;
+                                    return Ok(());
+                                }
+                            }
+                        }
+                    }
+                }
+                CheckStatusCommandPipe::StdOut => {
+                    let pipe_out = &mut child_clone.take_stdout();
+                    if let Some(pipe_out) = pipe_out {
+                        let reader = io::BufReader::new(pipe_out);
+                        for line in reader.lines() {
+                            if let Ok(line) = line {
+                                println!("stdout: {line}");
+                                if line.to_lowercase().contains(&started_str.to_lowercase()) {
+                                    thread::sleep(time::Duration::from_millis(500));
+                                    self.check_socket_addrs(socket_addrs)?;
+                                    return Ok(());
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        Err(anyhow!("xray start failed!"))
+    }
 
     pub fn terminate_backend(&mut self) -> Result<()> {
         println!("kill command");

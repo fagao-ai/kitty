@@ -7,6 +7,7 @@ use std::str::FromStr;
 
 use crate::kitty_command::KittyCommand;
 use crate::traits::KittyCommandGroupTrait;
+use crate::types::CheckStatusCommandPipe;
 
 #[derive(Debug)]
 pub struct XrayCommandGroup {
@@ -53,7 +54,11 @@ impl KittyCommandGroupTrait for XrayCommandGroup {
                 env_mapping.clone().unwrap_or(HashMap::new()),
             )?;
             let socket_addrs = self.get_socket_addrs(&config)?;
-            kitty_command.check_status(socket_addrs)?;
+            kitty_command.check_status(
+                "Reading config:",
+                CheckStatusCommandPipe::StdOut,
+                socket_addrs,
+            )?;
             self.kitty_commands
                 .insert(node_server.clone(), kitty_command);
         }
