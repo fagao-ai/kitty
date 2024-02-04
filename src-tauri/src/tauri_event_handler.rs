@@ -1,4 +1,7 @@
-use crate::state::ProcessManagerState;
+use crate::{
+    proxy::system_proxy::{clear_system_proxy, has_sys_proxy},
+    state::ProcessManagerState,
+};
 use protocols::KittyCommandGroupTrait;
 use tauri::{AppHandle, Manager, State};
 
@@ -22,6 +25,9 @@ async fn clear_command(app_handle: &AppHandle) {
             process_manager.terminate_backends().unwrap();
         }
     }
+    if has_sys_proxy().is_ok() {
+        clear_system_proxy().unwrap()
+    };
 }
 
 pub fn on_exit_clear_commands(app_handle: &AppHandle) {

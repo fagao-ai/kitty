@@ -8,11 +8,8 @@ use tauri_apis::hysteria as hysteria_api;
 use tauri_apis::xray as xray_api;
 use tauri_init::init_setup;
 
-use protocols::KittyCommandGroupTrait;
-
 use tauri_apis::common as common_api;
 use tauri_plugin_autostart::MacosLauncher;
-use tauri_plugin_notification::{NotificationExt, PermissionState};
 
 use crate::state::KittyProxyState;
 use crate::tauri_apis::{start_system_proxy, stop_system_proxy};
@@ -26,7 +23,6 @@ mod tauri_event_handler;
 mod tauri_init;
 mod tray;
 mod types;
-mod utils;
 
 // async fn on_window_exit(event: tauri::GlobalWindowEvent) {
 //     println!("on_window_exit call!!!");
