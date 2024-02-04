@@ -2,7 +2,8 @@ import { camelizeKeys, decamelizeKeys } from 'humps'
 import { instanceToPlain, plainToInstance } from 'class-transformer'
 import { Xray } from '@/models/xray'
 import { invoke } from '@/utils/invoke'
-import { HysteriaProxy, ImportProxy, ProxyType, XrayProxy } from '@/types/proxy'
+import type { HysteriaProxy, ImportProxy, XrayProxy } from '@/types/proxy'
+import { ProxyType } from '@/types/proxy'
 
 export async function getAllHysterias() {
   const res = await invoke<HysteriaProxy[]>('get_all_hysterias')
@@ -16,10 +17,11 @@ export async function getHysteriaById(id: number) {
 
 export async function getXrayById(id: number) {
   const res = await invoke<XrayProxy>('get_xray_by_id', { id })
-  if (!res.data) return null
+  if (!res.data)
+    return null
   const data = camelizeKeys<XrayProxy>(res.data)
-  if (data.streamSettings.network === "ws") {
-    const headers = { ...data.streamSettings.wsSettings.headers } as any
+  if (data.streamSettings.network === 'ws') {
+    const headers = JSON.parse(JSON.stringify(data.streamSettings.wsSettings.headers))
     data.streamSettings.wsSettings.headers.host = headers.Host
     delete (data.streamSettings.wsSettings.headers as any).Host
   }
