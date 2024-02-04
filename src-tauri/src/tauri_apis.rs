@@ -26,6 +26,7 @@ use crate::{
     tauri_apis::utils::relative_command_path,
     types::{CommandResult, KittyCommandError, KittyResponse},
 };
+use log::Level;
 
 use utils::get_http_socks_ports;
 
@@ -130,7 +131,8 @@ pub async fn start_system_proxy<'a>(
                 .map(|x| x.get_server())
                 .collect::<Vec<String>>()
                 .join("_");
-            let xray_config = XrayConfig::new(http_port, socks_port, xray_records);
+            let mut xray_config = XrayConfig::new(http_port, socks_port, xray_records);
+            xray_config.set_log_path(config_dir.clone(), Level::Info);
             let xray_bin_path = relative_command_path("xray".as_ref())?;
             let resource_dir = app_handle.path().resource_dir()?;
             let mut env_var = HashMap::new();
@@ -144,6 +146,7 @@ pub async fn start_system_proxy<'a>(
             config_hash_map.insert(server_key, xray_config);
             let _ = xray_command_group.start_commands(config_hash_map, None)?;
             *process_state.xray_process_manager.lock().await = Some(xray_command_group);
+
             http_vpn_node_infos.push(NodeInfo::new(
                 IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)),
                 http_port,

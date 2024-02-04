@@ -2,7 +2,7 @@ use anyhow::{anyhow, Result};
 use serde::Serialize;
 use shared_child::SharedChild;
 use std::collections::HashMap;
-use std::fs::{self, File};
+use std::fs::File;
 use std::io::Write;
 use std::io::{self, BufRead};
 #[cfg(target_os = "windows")]
@@ -14,20 +14,12 @@ use uuid::Uuid;
 
 use crate::types::CheckStatusCommandPipe;
 
+#[derive(Debug)]
 pub struct KittyCommand {
     bin_path: PathBuf,
     child: Arc<SharedChild>,
     config_path: PathBuf,
     env_mapping: HashMap<String, String>,
-}
-
-impl Drop for KittyCommand {
-    fn drop(&mut self) {
-        println!("Executing extra code before dropping XrayManager");
-        if self.config_path.exists() {
-            fs::remove_file(self.config_path.clone()).expect("config_path remove failed.");
-        }
-    }
 }
 
 impl KittyCommand {
@@ -42,6 +34,7 @@ impl KittyCommand {
         T: Serialize,
     {
         let config_content = serde_json::to_string(&config)?;
+        println!("config_content: {config_content}");
         let binary_name = bin_path.file_name().unwrap().to_str().unwrap();
         let config_path = config_dir.join(format!("{binary_name}_{}.json", Uuid::new_v4()));
         let mut file = File::create(&config_path)?;
@@ -59,6 +52,7 @@ impl KittyCommand {
         }
 
         let share_child = SharedChild::spawn(command)?;
+        println!("share_child after");
         let child_arc = Arc::new(share_child);
         Ok(Self {
             bin_path: bin_path.to_owned(),
@@ -67,6 +61,7 @@ impl KittyCommand {
             env_mapping,
         })
     }
+
 
     pub fn check_status(&self, started_str: &str, std_pipe: CheckStatusCommandPipe) -> Result<()> {
         let child_clone = self.child.clone();

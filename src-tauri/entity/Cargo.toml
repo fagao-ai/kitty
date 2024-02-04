@@ -9,16 +9,22 @@ name = "entity"
 path = "src/lib.rs"
 
 [dependencies]
-serde = { version = "1", features = ["derive"] }
+serde = { version = "1", features = [ "derive" ] }
 serde_json = "1.0"
 anyhow = "1"
 rand = "0.8.5"
-url = { version = "2.5.0", optional = true, features = ["default"] }
-base64 = { version = "0.21.7", optional = true, features = ["std"] }
+url = { version = "2.5.0", optional = true, features = [ "default" ] }
+base64 = { version = "0.21.7", optional = true, features = [ "std" ] }
 sea-orm = "0.12.6"
-
+log = "0.4.20"
 
 [features]
 hysteria = []
-default = ["xray", "hysteria"]
-xray = ["dep:url", "dep:base64"]
+default = [
+  "xray",
+  "hysteria"
+]
+xray = [
+  "dep:url",
+  "dep:base64"
+]

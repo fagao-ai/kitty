@@ -215,6 +215,8 @@ fn download_binaries() -> Result<()> {
         let _ = download_hysteria();
         let _ = download_xray()?;
     }
+    let _ = download_hysteria();
+    let _ = download_xray()?;
     Ok(())
 }
 
@@ -237,7 +239,7 @@ fn create_empty_geo_file(file_name: &str) -> Result<()> {
 }
 
 fn main() {
-    let _ = download_binaries();
+    // let _ = download_binaries();
     // let _ = download_geo_file("geoip.dat", "kitty_geoip.dat");
     // let _ = download_geo_file("geosite.dat", "kitty_geosite.dat");
     tauri_build::build()

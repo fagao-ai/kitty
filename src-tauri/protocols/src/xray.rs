@@ -7,12 +7,12 @@ use crate::kitty_command::KittyCommand;
 use crate::traits::KittyCommandGroupTrait;
 use crate::types::CheckStatusCommandPipe;
 
+#[derive(Debug)]
 pub struct XrayCommandGroup {
     bin_path: PathBuf,
     kitty_commands: HashMap<String, KittyCommand>,
     config_dir: PathBuf,
 }
-
 impl XrayCommandGroup {
     pub fn new(bin_path: PathBuf, config_dir: PathBuf) -> Self {
         Self {
@@ -51,8 +51,7 @@ impl KittyCommandGroupTrait for XrayCommandGroup {
                 &self.config_dir,
                 env_mapping.clone().unwrap_or(HashMap::new()),
             )?;
-            println!("check_status call");
-            kitty_command.check_status("started", CheckStatusCommandPipe::StdOut)?;
+            kitty_command.check_status("Reading config:", CheckStatusCommandPipe::StdOut)?;
             self.kitty_commands
                 .insert(node_server.clone(), kitty_command);
         }

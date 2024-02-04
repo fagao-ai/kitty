@@ -1363,6 +1363,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "base64",
+ "log 0.4.20",
  "rand 0.8.5",
  "sea-orm",
  "serde",
@@ -2619,6 +2620,7 @@ dependencies = [
  "entity",
  "env_logger 0.9.3",
  "kitty_proxy",
+ "log 0.4.20",
  "migration",
  "protocols",
  "reqwest",

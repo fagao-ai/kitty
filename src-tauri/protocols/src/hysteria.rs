@@ -7,6 +7,7 @@ use crate::kitty_command::KittyCommand;
 use crate::traits::KittyCommandGroupTrait;
 use crate::types::CheckStatusCommandPipe;
 
+#[derive(Debug)]
 pub struct HysteriaCommandGroup {
     bin_path: PathBuf,
     kitty_commands: HashMap<String, KittyCommand>,
@@ -23,16 +24,17 @@ impl HysteriaCommandGroup {
     }
 }
 
-impl Drop for HysteriaCommandGroup {
-    fn drop(&mut self) {
-        for (_, child) in self.kitty_commands.iter_mut() {
-            if child.is_running() {
-                child.terminate_backend().ok();
-            }
-        }
-        self.kitty_commands.clear();
-    }
-}
+// impl Drop for HysteriaCommandGroup {
+//     fn drop(&mut self) {
+//         println!("drop HysteriaCommandGroup");
+//         for (_, child) in self.kitty_commands.iter_mut() {
+//             if child.is_running() {
+//                 child.terminate_backend().ok();
+//             }
+//         }
+//         self.kitty_commands.clear();
+//     }
+// }
 
 impl KittyCommandGroupTrait for HysteriaCommandGroup {
     fn start_commands<T>(
@@ -53,6 +55,7 @@ impl KittyCommandGroupTrait for HysteriaCommandGroup {
             )?;
             println!("check_status call");
             kitty_command.check_status("server listening", CheckStatusCommandPipe::StdErr)?;
+            println!("check_status after");
             self.kitty_commands
                 .insert(node_server.clone(), kitty_command);
         }

@@ -1,6 +1,6 @@
 use anyhow::Result;
 use entity::hysteria;
-use sea_orm::{DatabaseConnection, EntityTrait};
+use sea_orm::DatabaseConnection;
 
 use crate::apis::api_traits::APIServiceTrait;
 
@@ -10,7 +10,7 @@ impl APIServiceTrait for HysteriaAPI {}
 
 impl HysteriaAPI {
     pub async fn get_all(&self, db: &DatabaseConnection) -> Result<Vec<hysteria::Model>> {
-        let hy_proxies = hysteria::Model::fetch_all(&db).await?;
+        let hy_proxies = hysteria::Model::fetch_all(db).await?;
         println!("hy_proxies: {:?}", hy_proxies);
         Ok(hy_proxies)
     }

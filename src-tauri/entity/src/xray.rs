@@ -1,6 +1,7 @@
 use anyhow::Error;
 use anyhow::{anyhow, Result};
 use base64::{engine::general_purpose, Engine as _};
+use log::Level;
 use sea_orm::{entity::prelude::*, FromJsonQueryResult};
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
@@ -579,9 +580,17 @@ impl XrayConfig {
         }
     }
 
-    pub fn set_log_path(&mut self, log_dir: PathBuf) {
+    pub fn set_log_path(&mut self, log_dir: PathBuf, log_level: Level) {
         self.log.access = log_dir.join("access.log").to_string_lossy().to_string();
         self.log.error = log_dir.join("error.log").to_string_lossy().to_string();
+        let log_level = match log_level {
+            Level::Debug => "debug",
+            Level::Info => "info",
+            Level::Warn => "warn",
+            Level::Error => "error",
+            _ => "debug",
+        };
+        self.log.loglevel = log_level.into();
     }
 }
 
@@ -595,9 +604,9 @@ struct XrayLog {
 impl Default for XrayLog {
     fn default() -> Self {
         Self {
-            access: "access.log".into(),
-            error: "error.log".into(),
-            loglevel: "debug".into(),
+            access: "".into(),
+            error: "".into(),
+            loglevel: "info".into(),
         }
     }
 }

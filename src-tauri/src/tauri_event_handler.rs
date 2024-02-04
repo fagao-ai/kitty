@@ -25,5 +25,6 @@ async fn clear_command(app_handle: &AppHandle) {
 }
 
 pub fn on_exit_clear_commands(app_handle: &AppHandle) {
+    println!("on_exit_clear_commands call");
     tauri::async_runtime::block_on(clear_command(app_handle))
 }
