@@ -9,7 +9,6 @@ use crate::generate_model_functions;
 #[sea_orm(table_name = "rules")]
 pub struct Model {
     #[sea_orm(primary_key, auto_increment = true)]
-    #[serde(skip_deserializing)]
     pub id: i32,
     pub rule_action: RuleAction,
     pub rule_type: RuleType,

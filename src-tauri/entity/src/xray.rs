@@ -20,7 +20,6 @@ use sea_orm::ActiveValue::NotSet;
 #[sea_orm(table_name = "xray")]
 pub struct Model {
     #[sea_orm(primary_key, auto_increment = true)]
-    #[serde(skip_deserializing)]
     pub id: i32,
     pub name: String,
     pub protocol: Protocol,

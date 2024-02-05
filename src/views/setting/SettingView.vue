@@ -39,7 +39,7 @@ async function getBaseConfig() {
 }
 
 async function onBaseConfigUpdate() {
-  await invoke('update_base_config', { id: baseConfig.id, base_config: decamelizeKeys(baseConfig) })
+  await invoke('update_base_config', { base_config: decamelizeKeys(baseConfig) })
 }
 getBaseConfig()
 

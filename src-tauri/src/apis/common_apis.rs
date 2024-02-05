@@ -33,10 +33,9 @@ impl CommonAPI {
 
     pub async fn update_base_config(
         db: &DatabaseConnection,
-        id: i32,
         record: base_config::Model,
     ) -> CommandResult<KittyResponse<base_config::Model>> {
-        let updated_record = record.update(db, id).await?;
+        let updated_record = record.update(db).await?;
         Ok(KittyResponse::<base_config::Model>::from_data(
             updated_record,
         ))
@@ -55,5 +54,13 @@ impl CommonAPI {
     ) -> CommandResult<KittyResponse<Vec<rules::Model>>> {
         let res = rules::Model::fetch_all(db).await?;
         Ok(KittyResponse::from_data(res))
+    }
+
+    pub async fn update_rules(
+        db: &DatabaseConnection,
+        record: rules::Model,
+    ) -> CommandResult<KittyResponse<rules::Model>> {
+        let updated_record = record.update(db).await?;
+        Ok(KittyResponse::<rules::Model>::from_data(updated_record))
     }
 }

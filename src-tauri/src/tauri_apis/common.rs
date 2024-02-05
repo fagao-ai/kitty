@@ -46,11 +46,10 @@ pub async fn query_base_config<'a>(
 #[tauri::command(rename_all = "snake_case")]
 pub async fn update_base_config<'a>(
     state: State<'a, DatabaseState>,
-    id: i32,
     record: base_config::Model,
 ) -> CommandResult<KittyResponse<base_config::Model>> {
     let db = state.get_db();
-    let res = CommonAPI::update_base_config(&db, id, record).await?;
+    let res = CommonAPI::update_base_config(&db, record).await?;
     Ok(res)
 }
 
@@ -70,5 +69,15 @@ pub async fn query_rules<'a>(
 ) -> CommandResult<KittyResponse<Vec<rules::Model>>> {
     let db = state.get_db();
     let res = CommonAPI::query_rules(&db).await?;
+    Ok(res)
+}
+
+#[tauri::command(rename_all = "snake_case")]
+pub async fn update_rules_item<'a>(
+    state: State<'a, DatabaseState>,
+    record: rules::Model,
+) -> CommandResult<KittyResponse<rules::Model>> {
+    let db = state.get_db();
+    let res = CommonAPI::update_rules(&db, record).await?;
     Ok(res)
 }
