@@ -1,13 +1,12 @@
 use crate::types::{CommandResult, KittyResponse};
 use anyhow::Result;
-use entity::base_config;
+use entity::{base_config, rules};
 use sea_orm::DatabaseConnection;
 
 pub struct CommonAPI;
 
 impl CommonAPI {
-
-    #[cfg(any(target_os = "macos", target_os = "linux", target_os="windows"))]
+    #[cfg(any(target_os = "macos", target_os = "linux", target_os = "windows"))]
     pub async fn copy_proxy_env(db: &DatabaseConnection) -> Result<String> {
         let record = base_config::Model::first(db).await?.unwrap();
         let http_port = record.http_port;
@@ -41,5 +40,20 @@ impl CommonAPI {
         Ok(KittyResponse::<base_config::Model>::from_data(
             updated_record,
         ))
+    }
+
+    pub async fn add_rules(
+        db: &DatabaseConnection,
+        records: Vec<rules::Model>,
+    ) -> CommandResult<KittyResponse<()>> {
+        let _ = rules::Model::insert_many(db, records).await?;
+        Ok(KittyResponse::default())
+    }
+
+    pub async fn query_rules(
+        db: &DatabaseConnection,
+    ) -> CommandResult<KittyResponse<Vec<rules::Model>>> {
+        let res = rules::Model::fetch_all(db).await?;
+        Ok(KittyResponse::from_data(res))
     }
 }

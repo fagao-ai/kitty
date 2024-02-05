@@ -108,6 +108,8 @@ pub fn run() {
         common_api::copy_proxy_env_cmd,
         common_api::query_base_config,
         common_api::update_base_config,
+        common_api::query_rules,
+        common_api::add_rules,
         start_system_proxy,
         stop_system_proxy,
     ];
@@ -122,6 +124,8 @@ pub fn run() {
         xray_api::speed_xray_delay,
         common_api::query_base_config,
         common_api::update_base_config,
+        common_api::query_rules,
+        common_api::add_rules,
         start_system_proxy,
         stop_system_proxy,
     ];
@@ -138,6 +142,8 @@ pub fn run() {
         common_api::copy_proxy_env_cmd,
         common_api::query_base_config,
         common_api::update_base_config,
+        common_api::query_rules,
+        common_api::add_rules,
         start_system_proxy,
         stop_system_proxy,
     ];
@@ -162,6 +168,8 @@ pub fn run() {
         common_api::copy_proxy_env_cmd,
         common_api::query_base_config,
         common_api::update_base_config,
+        common_api::query_rules,
+        common_api::add_rules,
         start_system_proxy,
         stop_system_proxy,
     ];

@@ -2,6 +2,7 @@ use crate::apis::common_apis::CommonAPI;
 use crate::state::DatabaseState;
 use crate::types::{CommandResult, KittyResponse};
 use entity::base_config;
+use entity::rules;
 use sea_orm::DatabaseConnection;
 use tauri::State;
 use tauri_plugin_clipboard_manager::ClipboardExt;
@@ -50,5 +51,24 @@ pub async fn update_base_config<'a>(
 ) -> CommandResult<KittyResponse<base_config::Model>> {
     let db = state.get_db();
     let res = CommonAPI::update_base_config(&db, id, record).await?;
+    Ok(res)
+}
+
+#[tauri::command(rename_all = "snake_case")]
+pub async fn add_rules<'a>(
+    state: State<'a, DatabaseState>,
+    records: Vec<rules::Model>,
+) -> CommandResult<KittyResponse<()>> {
+    let db = state.get_db();
+    let _ = CommonAPI::add_rules(&db, records).await?;
+    Ok(KittyResponse::default())
+}
+
+#[tauri::command(rename_all = "snake_case")]
+pub async fn query_rules<'a>(
+    state: State<'a, DatabaseState>,
+) -> CommandResult<KittyResponse<Vec<rules::Model>>> {
+    let db = state.get_db();
+    let res = CommonAPI::query_rules(&db).await?;
     Ok(res)
 }
