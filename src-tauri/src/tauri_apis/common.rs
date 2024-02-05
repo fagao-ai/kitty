@@ -3,8 +3,10 @@ use crate::state::DatabaseState;
 use crate::types::{CommandResult, KittyResponse};
 use entity::base_config;
 use entity::rules;
+use log::Record;
 use sea_orm::DatabaseConnection;
 use tauri::State;
+use tauri_plugin_autostart::AutoLaunchManager;
 use tauri_plugin_clipboard_manager::ClipboardExt;
 
 #[cfg(any(target_os = "macos", target_os = "linux", target_os = "windows"))]
@@ -46,9 +48,21 @@ pub async fn query_base_config<'a>(
 #[tauri::command(rename_all = "snake_case")]
 pub async fn update_base_config<'a>(
     state: State<'a, DatabaseState>,
+    auto_start_state: State<'a, AutoLaunchManager>,
     record: base_config::Model,
 ) -> CommandResult<KittyResponse<base_config::Model>> {
     let db = state.get_db();
+    if let Ok(is_enable) = auto_start_state.is_enabled() {
+        if record.auto_start {
+            if !is_enable {
+                let _ = auto_start_state.enable();
+            }
+        } else {
+            if is_enable {
+                let _ = auto_start_state.disable();
+            }
+        }
+    }
     let res = CommonAPI::update_base_config(&db, record).await?;
     Ok(res)
 }

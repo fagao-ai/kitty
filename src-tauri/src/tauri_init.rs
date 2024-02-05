@@ -70,14 +70,24 @@ fn setup_kitty_proxy<'a>(handle: &tauri::AppHandle) -> Result<(), Box<dyn std::e
 
 fn setup_auto_start<'a>(handle: &tauri::AppHandle) -> Result<(), Box<dyn std::error::Error>> {
     let db_state: State<DatabaseState> = handle.state();
-    let auto_staart_state: State<AutoLaunchManager> = handle.state();
+    let auto_start_state: State<AutoLaunchManager> = handle.state();
     let db = db_state.get_db();
     tauri::async_runtime::block_on(async move {
         let record = base_config::Model::first(&db).await;
         if let Ok(record) = record {
             if let Some(auto_start) = record {
                 if auto_start.auto_start {
-                    let _ = auto_staart_state.enable();
+                    if let Ok(is_enable) = auto_start_state.is_enabled() {
+                        if !is_enable {
+                            let _ = auto_start_state.enable();
+                        }
+                    }
+                } else {
+                    if let Ok(is_enable) = auto_start_state.is_enabled() {
+                        if is_enable {
+                            let _ = auto_start_state.disable();
+                        }
+                    }
                 }
             }
         }
