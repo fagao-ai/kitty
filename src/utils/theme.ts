@@ -16,8 +16,11 @@ function useTheme() {
       textColor: primaryColor,
     },
     Menu: {
+      itemColorActive: primaryColor,
+      itemColorActiveHover: primaryColor,
       itemTextColorActive: 'whitesmoke',
       itemTextColorActiveHover: 'white',
+      borderRadius: '999px',
     },
     Switch: {
       railColorActive: primaryColor,
@@ -34,9 +37,13 @@ function useTheme() {
       textColor: primaryColor,
     },
     Menu: {
+      itemColorActive: primaryColor,
+      itemColorActiveHover: primaryColor,
+      itemColorHover: '#3b3c55',
       itemTextColor: '#5b7497',
       itemTextColorActive: 'whitesmoke',
       itemTextColorActiveHover: 'white',
+      borderRadius: '999px',
     },
     Switch: {
       railColorActive: primaryColor,

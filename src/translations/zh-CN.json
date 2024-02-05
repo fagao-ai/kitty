@@ -7,7 +7,8 @@
   "menubar": {
     "proxies": "代理",
     "settings": "设置",
-    "version": "版本"
+    "version": "版本",
+    "rules": "规则"
   },
   "setting": {
     "language": "语言",

@@ -7,7 +7,8 @@
   "menubar": {
     "proxies": "Proxies",
     "settings": "Settings",
-    "version": "version"
+    "version": "version",
+    "rules": "Rules"
   },
   "setting": {
     "language": "Language",

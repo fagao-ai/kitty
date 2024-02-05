@@ -9,4 +9,9 @@ export const routes = [
     name: 'setting',
     component: () => import('@/views/setting/SettingView.vue'),
   },
+  {
+    path: '/rule',
+    name: 'rule',
+    component: () => import('@/views/rule/RuleView.vue'),
+  },
 ]

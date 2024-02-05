@@ -27,6 +27,19 @@ const menuOptions: MenuOption[] = [
         RouterLink,
         {
           to: {
+            name: 'rule',
+          },
+        },
+        { default: () => t('menubar.rules') },
+      ),
+    key: 'rule',
+  },
+  {
+    label: () =>
+      h(
+        RouterLink,
+        {
+          to: {
             name: 'setting',
           },
         },
@@ -69,28 +82,7 @@ window.$message = useMessage()
 </template>
 
 <style scoped lang="scss">
-@keyframes roundAnimation {
-  0% {
-    border-radius: 0;
-  }
-
-  100% {
-    border-radius: 999px;
-  }
-}
-
 :deep(.n-menu) {
-  --n-item-color-active: #5352ed !important;
-  --n-item-color-active-hover: #5352ed !important;
-
-  .n-menu-item-content--selected {
-    &::before {
-      animation-name: roundAnimation;
-      animation-duration: 15s;
-      animation-fill-mode: forwards;
-    }
-  }
-
   .n-menu-item-content {
     @apply flex justify-center items-center;
     padding-left: 0 !important;
