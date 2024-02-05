@@ -1,12 +1,16 @@
 <script setup lang="ts">
+import { useI18n } from 'vue-i18n'
 import { NButton, NForm, NFormItem, NInput, NInputNumber, NScrollbar } from 'naive-ui'
 import { useVModel } from '@vueuse/core'
 import type { XrayProxy } from '@/types/proxy'
 
+const props = defineProps<Props>()
+
+const { t } = useI18n()
+
 interface Props {
   form: XrayProxy
 }
-const props = defineProps<Props>()
 const formState = useVModel(props, 'form')
 
 const streamSettingOptions = [{ label: 'WebSocket', value: 'ws' }, { label: 'Tcp', value: 'tcp' }, { label: 'http2', value: 'http2' }, { label: 'grpc', value: 'grpc' }, { label: 'kcp', value: 'kcp' }]
@@ -33,13 +37,13 @@ function handleAddHttp2Host() {
       label-width="auto"
     >
       <n-form-item
-        label="name"
+        :label="t('proxy.xray.proxyName')"
         path="name"
       >
         <n-input v-model:value="formState.name" />
       </n-form-item>
       <n-form-item
-        label="protocol"
+        :label="t('proxy.xray.protocol')"
         path="protocol"
       >
         <n-select
@@ -53,11 +57,11 @@ function handleAddHttp2Host() {
       >
         <n-input
           v-model:value="formState.uuid"
-          placeholder="xxxx-xxxx-xxxx"
+          placeholder="xxxx-xxxx-xxxx-xxxx"
         />
       </n-form-item>
       <n-form-item
-        label="address"
+        :label="t('proxy.xray.address')"
         path="address"
       >
         <n-input
@@ -66,7 +70,7 @@ function handleAddHttp2Host() {
         />
       </n-form-item>
       <n-form-item
-        label="port"
+        :label="t('proxy.xray.port')"
         path="port"
       >
         <n-input-number
@@ -77,14 +81,14 @@ function handleAddHttp2Host() {
           :min="1"
         />
       </n-form-item>
-      <n-form-item label="network">
+      <n-form-item :label="t('proxy.xray.network')">
         <n-select
           v-model:value="formState.streamSettings.network"
           :options="streamSettingOptions"
         />
       </n-form-item>
       <n-form-item
-        label="security"
+        :label="t('proxy.xray.streamSetting.security')"
         path="streamSetting.security"
       >
         <n-select
@@ -93,7 +97,7 @@ function handleAddHttp2Host() {
         />
       </n-form-item>
       <n-form-item
-        label="allow insecure"
+        :label="t('proxy.xray.streamSetting.tlsSettings.allowInsecure')"
         path="streamSetting.tlsSettings.allowInsecure"
       >
         <n-switch
@@ -102,7 +106,7 @@ function handleAddHttp2Host() {
         />
       </n-form-item>
       <n-form-item
-        label="server name"
+        :label="t('proxy.xray.streamSetting.tlsSettings.serverName')"
         path="streamSetting.tlsSettings.serverName"
       >
         <n-input
@@ -112,13 +116,13 @@ function handleAddHttp2Host() {
       </n-form-item>
       <template v-if="formState.streamSettings.network === 'ws'">
         <n-form-item
-          label="path"
+          :label="t('proxy.streamSetting.wsSettings.path')"
           path="streamSetting.wsSettings.path"
         >
           <n-input v-model:value="formState.streamSettings.wsSettings.path" />
         </n-form-item>
         <n-form-item
-          label="host"
+          :label="t('proxy.streamSetting.wsSettings.host')"
           path="streamSetting.wsSettings.headers.host"
         >
           <n-input v-model:value="formState.streamSettings.wsSettings.headers.host" />
@@ -127,7 +131,7 @@ function handleAddHttp2Host() {
 
       <template v-if="formState.streamSettings.network === 'http2'">
         <n-form-item
-          label="path"
+          :label="t('proxy.streamSetting.http2Settings.path')"
           path="streamSetting.http2Settings.path"
         >
           <n-input v-model:value="formState.streamSettings.http2Settings.path" />
@@ -135,7 +139,7 @@ function handleAddHttp2Host() {
         <n-form-item
           v-for="(item, index) in formState.streamSettings.http2Settings.host"
           :key="index"
-          :label="`host${index + 1}`"
+          :label="`${t('proxy.xray.streamSetting.http2Settings.headers.host')}${index + 1}`"
           :path="`streamSetting.http2Settings.headers.host[${index}]`"
         >
           <n-input v-model:value="formState.streamSettings.http2Settings.host[index]" />

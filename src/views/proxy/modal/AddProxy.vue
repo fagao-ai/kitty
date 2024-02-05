@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { reactive, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { NButton, NTabPane, NTabs } from 'naive-ui'
 import { useVModel } from '@vueuse/core'
 import { ProxyType } from '@/types/proxy'
@@ -7,6 +8,12 @@ import type { HysteriaProxy, XrayProxy } from '@/types/proxy'
 import { createHysteriaProxy, createXrayProxy } from '@/apis/proxy'
 import XrayForm from '@/views/proxy/form/XrayForm.vue'
 import HysteriaForm from '@/views/proxy/form/HysteriaForm.vue'
+
+const props = withDefaults(defineProps<Props>(), { showModal: false, currentTab: ProxyType.Hysteria })
+
+const emits = defineEmits<Emits>()
+
+const { t } = useI18n()
 
 interface Props {
   showModal: boolean
@@ -16,10 +23,6 @@ interface Props {
 interface Emits {
   (e: 'insertSubmit', tab: ProxyType): void
 }
-
-const props = withDefaults(defineProps<Props>(), { showModal: false, currentTab: ProxyType.Hysteria })
-
-const emits = defineEmits<Emits>()
 
 const showInsertModal = useVModel(props, 'showModal')
 
@@ -103,7 +106,7 @@ watch(() => props.currentTab, (tab) => {
     :mask-closable="false"
     transform-origin="center"
     preset="card"
-    title="添加代理"
+    :title="t('proxy.addProxy.title')"
     size="huge"
     :bordered="false"
     :segmented="true"
@@ -133,14 +136,14 @@ watch(() => props.currentTab, (tab) => {
           round
           @click="onCancelInsert"
         >
-          取消
+          {{ t('common.cancel') }}
         </n-button>
         <n-button
           round
           type="primary"
           @click="onInsertSubmit"
         >
-          添加
+          {{ t('common.add') }}
         </n-button>
       </div>
     </template>

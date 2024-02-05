@@ -1,12 +1,19 @@
 <script setup lang="ts">
 /* eslint-disable vue/valid-v-model */
 import { reactive, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useVModel } from '@vueuse/core'
 import type { HysteriaProxy, XrayProxy } from '@/types/proxy'
 import { ProxyType } from '@/types/proxy'
 import XrayForm from '@/views/proxy/form/XrayForm.vue'
 import HysteriaForm from '@/views/proxy/form/HysteriaForm.vue'
 import { updateHysteriaProxy, updateXrayProxy } from '@/apis/proxy'
+
+const props = defineProps<Props>()
+
+const emits = defineEmits<Emits>()
+
+const { t } = useI18n()
 
 interface Props {
   showModal: boolean
@@ -18,10 +25,6 @@ interface Emits {
   (e: 'onCancelEdit'): void
   (e: 'onProxyUpdated', proxyType: ProxyType): void
 }
-
-const props = defineProps<Props>()
-
-const emits = defineEmits<Emits>()
 
 const showEditModal = useVModel(props, 'showModal')
 
@@ -48,7 +51,7 @@ async function handleUpdateProxy() {
     :mask-closable="false"
     transform-origin="center"
     preset="card"
-    title="编辑代理"
+    :title="t('proxy.editProxy')"
     size="huge"
     :bordered="false"
     :segmented="true"
@@ -65,14 +68,14 @@ async function handleUpdateProxy() {
           round
           @click="emits('onCancelEdit')"
         >
-          取消
+          {{ t('common.cancel') }}
         </n-button>
         <n-button
           round
           type="primary"
           @click="handleUpdateProxy"
         >
-          更新
+          {{ t('common.update') }}
         </n-button>
       </div>
     </template>

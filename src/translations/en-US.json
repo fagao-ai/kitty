@@ -20,5 +20,10 @@
     "socks5Port": "Socks5 port",
     "httpPort": "HTTP port",
     "delayTestUrl": "Delay test url"
+  },
+  "proxy": {
+    "hysteria": {
+      "proxyName": "Proxy name"
+    }
   }
 }
