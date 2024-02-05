@@ -36,9 +36,10 @@
       {
         "fullscreen": false,
         "resizable": true,
-        "title": "kitty",
+        "title": "",
         "minWidth": 1024,
-        "minHeight": 720
+        "minHeight": 720,
+        "titleBarStyle": "Overlay"
       }
     ]
   },

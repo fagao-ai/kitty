@@ -41,7 +41,10 @@ window.$message = useMessage()
 </script>
 
 <template>
-  <div class="flex flex-col h-full p-4">
+  <div
+    class="flex flex-col h-full p-4"
+    data-tauri-drag-region
+  >
     <div class="flex-1 flex flex-col">
       <div class="text-5xl font-bold h-1/6 flex flex-center text-primay">
         kitty
