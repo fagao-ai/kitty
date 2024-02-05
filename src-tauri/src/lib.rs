@@ -1,7 +1,7 @@
 use state::{DatabaseState, ProcessManagerState};
 use std::env;
-use tauri::{generate_handler, ipc::Invoke, WindowEvent};
-use tauri::{AppHandle, Manager, RunEvent, State};
+use tauri::RunEvent;
+use tauri::{generate_handler, ipc::Invoke};
 #[cfg(feature = "hysteria")]
 use tauri_apis::hysteria as hysteria_api;
 #[cfg(feature = "xray")]

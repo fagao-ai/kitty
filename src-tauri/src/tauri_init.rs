@@ -1,6 +1,7 @@
 use migration::{Migrator, MigratorTrait};
 use sea_orm::{Database, DatabaseConnection, DbErr};
 use std::path::PathBuf;
+use tauri_plugin_autostart::AutoLaunchManager;
 
 use crate::{state::DatabaseState, tray::Tray};
 use anyhow::Result;
@@ -67,9 +68,29 @@ fn setup_kitty_proxy<'a>(handle: &tauri::AppHandle) -> Result<(), Box<dyn std::e
     Ok(())
 }
 
+fn setup_auto_start<'a>(handle: &tauri::AppHandle) -> Result<(), Box<dyn std::error::Error>> {
+    let db_state: State<DatabaseState> = handle.state();
+    let auto_staart_state: State<AutoLaunchManager> = handle.state();
+    let db = db_state.get_db();
+    tauri::async_runtime::block_on(async move {
+        let record = base_config::Model::first(&db).await;
+        if let Ok(record) = record {
+            if let Some(auto_start) = record {
+                if auto_start.auto_start {
+                    let _ = auto_staart_state.enable();
+                }
+            }
+        }
+    });
+
+    Ok(())
+}
+
 pub fn init_setup<'a>(app: &'a mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
     let handle = app.handle();
     let _ = setup_db(handle)?;
+    let _ = setup_db(handle)?;
+    let _ = setup_auto_start(handle)?;
     let _ = setup_kitty_proxy(handle)?;
     let _ = Tray::init_tray(handle);
     Ok(())

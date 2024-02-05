@@ -22,7 +22,16 @@ impl MigrationTrait for Migration {
                     .col(ColumnDef::new(BaseConfig::HttpPort).integer().not_null())
                     .col(ColumnDef::new(BaseConfig::SocksPort).integer().not_null())
                     .col(ColumnDef::new(BaseConfig::DelayTestUrl).string().not_null())
-                    .col(ColumnDef::new(BaseConfig::SysproxyFlag).boolean().not_null())
+                    .col(
+                        ColumnDef::new(BaseConfig::SysproxyFlag)
+                            .boolean()
+                            .not_null(),
+                    )
+                    .col(
+                        ColumnDef::new(BaseConfig::AutoStart)
+                            .boolean()
+                            .default(false),
+                    )
                     .to_owned(),
             )
             .await;
@@ -65,4 +74,5 @@ enum BaseConfig {
     SocksPort,
     DelayTestUrl,
     SysproxyFlag,
+    AutoStart,
 }
