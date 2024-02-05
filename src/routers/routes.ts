@@ -14,4 +14,9 @@ export const routes = [
     name: 'rule',
     component: () => import('@/views/rule/RuleView.vue'),
   },
+  {
+    path: '/log',
+    name: 'log',
+    component: () => import('@/views/log/LogView.vue'),
+  },
 ]

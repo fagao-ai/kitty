@@ -11,7 +11,8 @@
     "proxies": "代理",
     "settings": "设置",
     "version": "版本",
-    "rules": "规则"
+    "rules": "规则",
+    "logs": "日志"
   },
   "setting": {
     "language": "语言",

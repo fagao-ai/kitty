@@ -40,6 +40,19 @@ const menuOptions: MenuOption[] = [
         RouterLink,
         {
           to: {
+            name: 'log',
+          },
+        },
+        { default: () => t('menubar.logs') },
+      ),
+    key: 'log',
+  },
+  {
+    label: () =>
+      h(
+        RouterLink,
+        {
+          to: {
             name: 'setting',
           },
         },
