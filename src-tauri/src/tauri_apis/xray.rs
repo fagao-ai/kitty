@@ -115,3 +115,13 @@ pub async fn speed_xray_delay<'a>(
 
     Ok(new_result)
 }
+
+#[tauri::command(rename_all = "snake_case")]
+pub async fn refresh_xray_subscription<'a>(
+    state: State<'a, DatabaseState>,
+    record_ids: Option<Vec<i32>>,
+) -> CommandResult<()> {
+    let db = state.get_db();
+    let _ = XrayAPI::refresh_subscribe(&db, record_ids).await?;
+    Ok(())
+}

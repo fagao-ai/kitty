@@ -2,7 +2,6 @@ use anyhow::Result;
 use base64::{engine::general_purpose, Engine as _};
 use entity::subscribe;
 use entity::xray;
-use entity::xray::Relation;
 use sea_orm::ActiveModelTrait;
 use sea_orm::DatabaseConnection;
 use sea_orm::ModelTrait;
@@ -77,10 +76,7 @@ impl XrayAPI {
         Ok(())
     }
 
-    pub async fn refresh_subscribe(
-        db: &DatabaseConnection,
-        ids: Option<Vec<i32>>,
-    ) -> Result<String> {
+    pub async fn refresh_subscribe(db: &DatabaseConnection, ids: Option<Vec<i32>>) -> Result<()> {
         let res = if let Some(subscribe_ids) = ids {
             subscribe::Model::fetch_by_ids(db, subscribe_ids).await?
         } else {
@@ -111,6 +107,6 @@ impl XrayAPI {
                 txn.commit().await?;
             }
         }
-        Ok("aa".into())
+        Ok(())
     }
 }
