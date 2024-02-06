@@ -34,7 +34,7 @@ async function handleRemoveRule(index: number) {
 
 async function handleUpdateRule(rule: ProxyRule) {
   if (!rule.id) {
-    await createRule({ rule: rule.rule, ruleAction: rule.ruleAction, ruleType: rule.ruleType })
+    await createRule(rule)
     return
   }
   await updateRule({ id: rule.id, rule: rule.rule, ruleAction: rule.ruleAction, ruleType: rule.ruleType })

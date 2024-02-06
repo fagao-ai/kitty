@@ -116,7 +116,7 @@ impl TryFrom<url::form_urlencoded::Parse<'_>> for StreamSettings {
         let security = query_params
             .get("security")
             .map(|x| x.as_str())
-            .unwrap_or("");
+            .unwrap_or("none");
         let r#type = query_params
             .get("type")
             .map(|x| x.as_str())
@@ -142,7 +142,7 @@ impl TryFrom<url::form_urlencoded::Parse<'_>> for StreamSettings {
             }
             "tcp" => {
                 let tcp_protocol: TcpProtocol =
-                    TcpProtocol::new(r#type.into(), Some(security), Some(tls_settings));
+                    TcpProtocol::new(r#type.into(), None, None);
                 Ok(StreamSettings::Tcp(tcp_protocol))
             }
             _ => Err(anyhow!("convert stream_settings failed.")),
@@ -939,7 +939,7 @@ impl TryFrom<ShareWithProtocol> for Model {
             }
             "tcp" => {
                 let tcp_protocol: TcpProtocol =
-                    TcpProtocol::new(share.net, Some(security), Some(tls_settings));
+                    TcpProtocol::new(share.net, None, None);
                 Ok(StreamSettings::Tcp(tcp_protocol))
             }
             _ => Err(anyhow!("not support this protocol.")),

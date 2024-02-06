@@ -132,7 +132,7 @@ pub async fn start_system_proxy<'a>(
                 .collect::<Vec<String>>()
                 .join("_");
             let mut xray_config = XrayConfig::new(http_port, socks_port, xray_records);
-            xray_config.set_log_path(config_dir.clone(), Level::Info);
+            xray_config.set_log_path(config_dir.clone(), Level::Debug);
             let xray_bin_path = relative_command_path("xray".as_ref())?;
             let resource_dir = app_handle.path().resource_dir()?;
             let mut env_var = HashMap::new();
