@@ -1,6 +1,6 @@
 use crate::types::{CommandResult, KittyResponse};
 use anyhow::Result;
-use entity::{base_config, rules};
+use entity::{base_config, rules, subscribe};
 use sea_orm::DatabaseConnection;
 
 pub struct CommonAPI;
@@ -63,4 +63,5 @@ impl CommonAPI {
         let updated_record = record.update(db).await?;
         Ok(KittyResponse::<rules::Model>::from_data(updated_record))
     }
+
 }

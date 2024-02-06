@@ -13,14 +13,6 @@ use tauri::{Manager, State};
 
 use crate::state::KittyProxyState;
 
-use clokwerk::{Scheduler, TimeUnits};
-// Import week days and WeekDay
-use clokwerk::{AsyncScheduler, TimeUnits, Job};
-// Import week days and WeekDay
-use clokwerk::Interval::*;
-use std::time::Duration;
-
-
 pub async fn init_db(app_dir: PathBuf) -> Result<DatabaseConnection, DbErr> {
     println!("app_dir");
     let sqlite_path = app_dir.join("MyApp.sqlite");
@@ -102,26 +94,6 @@ fn setup_auto_start<'a>(handle: &tauri::AppHandle) -> Result<(), Box<dyn std::er
     });
 
     Ok(())
-}
-
-pub fn setup_timing_refresh_subcribe<'a>(handle: &tauri::AppHandle) -> Result<(), Box<dyn std::error::Error>>{
-    let db_state: State<DatabaseState> = handle.state();
-    let auto_start_state: State<AutoLaunchManager> = handle.state();
-    let db = db_state.get_db();
-    let mut scheduler = AsyncScheduler::new();
-    // Add some tasks to it
-    scheduler
-    .every(1.minutes())
-    .run(|| async {
-        let record = base_config::Model::first().await.unwrap().unwrap();
-        let subscribes = subscribe::Model::fetch_all().await.unwrap();
-    });
-    tokio::spawn(async move {
-        loop {
-          scheduler.run_pending().await;
-          tokio::time::sleep(Duration::from_millis(100)).await;
-        }
-      });
 }
 
 pub fn init_setup<'a>(app: &'a mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {

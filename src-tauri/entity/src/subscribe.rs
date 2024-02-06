@@ -15,6 +15,14 @@ pub enum Relation {
     Xray,
 }
 
+// impl RelationTrait for Relation {
+//     fn def(&self) -> RelationDef {
+//         match self {
+//             Self::Xray => Entity::has_many(super::xray::Entity)
+//         }
+//     }
+// }
+
 // `Related` trait has to be implemented by hand
 impl Related<super::xray::Entity> for Entity {
     fn to() -> RelationDef {

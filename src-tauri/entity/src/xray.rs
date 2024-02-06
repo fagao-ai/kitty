@@ -78,7 +78,9 @@ impl ActiveModelBehavior for ActiveModel {}
 
 impl Model {
     generate_model_functions!();
+
 }
+
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, FromJsonQueryResult)]
 #[serde(rename = "streamSettings")]
 pub enum StreamSettings {
@@ -141,8 +143,7 @@ impl TryFrom<url::form_urlencoded::Parse<'_>> for StreamSettings {
                 Ok(StreamSettings::WebSocket(ws_protocol))
             }
             "tcp" => {
-                let tcp_protocol: TcpProtocol =
-                    TcpProtocol::new(r#type.into(), None, None);
+                let tcp_protocol: TcpProtocol = TcpProtocol::new(r#type.into(), None, None);
                 Ok(StreamSettings::Tcp(tcp_protocol))
             }
             _ => Err(anyhow!("convert stream_settings failed.")),
@@ -938,8 +939,7 @@ impl TryFrom<ShareWithProtocol> for Model {
                 Ok(StreamSettings::WebSocket(ws_protocol))
             }
             "tcp" => {
-                let tcp_protocol: TcpProtocol =
-                    TcpProtocol::new(share.net, None, None);
+                let tcp_protocol: TcpProtocol = TcpProtocol::new(share.net, None, None);
                 Ok(StreamSettings::Tcp(tcp_protocol))
             }
             _ => Err(anyhow!("not support this protocol.")),

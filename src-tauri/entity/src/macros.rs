@@ -82,5 +82,16 @@ macro_rules! generate_model_functions {
             let _ = Entity::delete_by_id(id).exec(db).await?;
             Ok(())
         }
+
+        pub async fn delete_by_ids<C>(db: &C, ids: Vec<i32>) -> Result<(), DbErr>
+        where
+            C: ConnectionTrait,
+        {
+            let _ = Entity::delete_many()
+                .filter(self::Column::Id.is_in(ids))
+                .exec(db)
+                .await?;
+            Ok(())
+        }
     };
 }

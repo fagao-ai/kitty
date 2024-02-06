@@ -2,8 +2,10 @@ use anyhow::Result;
 use base64::{engine::general_purpose, Engine as _};
 use entity::subscribe;
 use entity::xray;
+use entity::xray::Relation;
 use sea_orm::ActiveModelTrait;
 use sea_orm::DatabaseConnection;
+use sea_orm::ModelTrait;
 use sea_orm::Set;
 use sea_orm::TransactionTrait;
 use std::str::FromStr;
@@ -73,5 +75,42 @@ impl XrayAPI {
         xray::Model::insert_many(&txn, xray_models).await?;
         txn.commit().await?;
         Ok(())
+    }
+
+    pub async fn refresh_subscribe(
+        db: &DatabaseConnection,
+        ids: Option<Vec<i32>>,
+    ) -> Result<String> {
+        let res = if let Some(subscribe_ids) = ids {
+            subscribe::Model::fetch_by_ids(db, subscribe_ids).await?
+        } else {
+            subscribe::Model::fetch_all(db).await?
+        };
+        if res.len() > 0 {
+            for subscribe_item in res {
+                let resp = reqwest::get(subscribe_item.url.as_str()).await?;
+                let resp_text = resp.text().await?;
+                let decode_bytes = general_purpose::STANDARD.decode(resp_text)?;
+                let share_protocol_string =
+                    std::string::String::from_utf8(decode_bytes).expect("Invalid UTF-8 sequence");
+                let xray_records = subscribe_item
+                    .find_related(xray::Entity)
+                    .all(db)
+                    .await
+                    .unwrap();
+                let txn = db.begin().await?;
+                let xray_ids: Vec<i32> = xray_records.iter().map(|x| x.id).collect();
+                let _ = xray::Model::delete_by_ids(&txn, xray_ids).await?;
+                let mut xray_models = Vec::new();
+                for line in share_protocol_string.lines() {
+                    let mut xray_model = xray::Model::from_str(line.trim())?;
+                    xray_model.subscribe_id = Some(subscribe_item.id);
+                    xray_models.push(xray_model)
+                }
+                xray::Model::insert_many(&txn, xray_models).await?;
+                txn.commit().await?;
+            }
+        }
+        Ok("aa".into())
     }
 }
