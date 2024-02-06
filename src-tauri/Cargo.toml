@@ -55,6 +55,7 @@ base64 = { version = "0.21.7", optional = true, features = [ "std" ] }
 tauri-plugin-clipboard-manager = "2.0.0-alpha"
 env_logger = "0.9"
 log = "0.4.20"
+clokwerk = "0.4.0"
 
 [workspace]
 members = [
