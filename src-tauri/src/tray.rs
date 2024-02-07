@@ -1,4 +1,3 @@
-use anyhow::{Ok, Result};
 use crate::state::DatabaseState;
 use crate::tauri_event_handler::on_exit_clear_commands;
 use std::env;
@@ -16,26 +15,26 @@ use crate::tauri_apis::common as common_api;
 pub struct Tray {}
 
 impl Tray {
-    fn tray_menu(app_handle: &AppHandle) -> Result<Menu<Wry>> {
+    fn tray_menu(app_handle: &AppHandle) ->  Result<Menu<Wry>, Box<dyn std::error::Error>> {
         let quit = MenuItemBuilder::with_id("quit", "Quit")
             .accelerator("CmdOrControl+Q")
-            .build(app_handle);
+            .build(app_handle)?;
         let hide = MenuItemBuilder::with_id("hide", "Hide")
             .accelerator("CmdOrControl+W")
-            .build(app_handle);
+            .build(app_handle)?;
         let system_proxy = MenuItemBuilder::with_id("system_proxy", "System Proxy")
             .accelerator("CmdOrControl+Shift+Y")
-            .build(app_handle);
+            .build(app_handle)?;
         let copy_env = MenuItemBuilder::with_id("copy_env", "Copy ENV")
             .accelerator("CmdOrControl+Shift+C")
-            .build(app_handle);
+            .build(app_handle)?;
         let menu = MenuBuilder::new(app_handle)
             .items(&[&quit, &hide, &system_proxy, &copy_env])
-            .build()?;
+            .build().unwrap();
         Ok(menu)
     }
 
-    pub fn init_tray(app_handle: &AppHandle) -> Result<()> {
+    pub fn init_tray(app_handle: &AppHandle) -> Result<(), Box<dyn std::error::Error>> {
         let menu = Tray::tray_menu(app_handle)?;
         let icon = Tray::icon()?;
         let _tray = TrayIconBuilder::new()
@@ -47,7 +46,7 @@ impl Tray {
             .on_tray_icon_event(|tray, event| {
                 if event.click_type == ClickType::Left {
                     let app = tray.app_handle();
-                    if let Some(window) = app.get_window("main") {
+                    if let Some(window) = app.get_webview_window("main") {
                         let _ = window.show();
                         let _ = window.set_focus();
                     }
@@ -57,7 +56,7 @@ impl Tray {
         Ok(())
     }
 
-    fn icon() -> Result<Icon> {
+    fn icon() -> Result<Icon, Box<dyn std::error::Error>> {
         let current_path = env::current_dir()?;
         println!("current_path: {:?}", current_path);
         let parent_dir = current_path.to_owned();
@@ -71,7 +70,7 @@ impl Tray {
     fn on_menu_event(app_handle: &AppHandle, event: &MenuEvent) -> () {
         match event.id().as_ref() {
             "hide" => {
-                let window = app_handle.get_window("main").unwrap();
+                let window = app_handle.get_webview_window("main").unwrap();
                 window.hide().unwrap();
             }
             "quit" => {

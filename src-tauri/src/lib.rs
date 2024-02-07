@@ -86,7 +86,7 @@ pub fn run() {
     let builder = builder.manage(ProcessManagerState::default());
     let builder = builder
         .manage(KittyProxyState::default())
-        .plugin(tauri_plugin_window::init())
+        // .plugin(tauri_plugin_window::init())
         .plugin(tauri_plugin_autostart::init(
             MacosLauncher::LaunchAgent,
             Some(vec![]),

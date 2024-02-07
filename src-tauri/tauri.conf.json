@@ -1,34 +1,14 @@
 {
+  "productName": "kitty",
+  "version": "0.0.0",
+  "identifier": "com.kitty.dev",
   "build": {
     "beforeDevCommand": "pnpm dev",
+    "devUrl": "http://localhost:1420",
     "beforeBuildCommand": "pnpm build",
-    "devPath": "http://localhost:1420",
-    "distDir": "../dist"
+    "frontendDist": "../dist"
   },
-  "package": {
-    "productName": "kitty",
-    "version": "0.0.0"
-  },
-  "tauri": {
-    "bundle": {
-      "active": true,
-      "targets": "all",
-      "identifier": "com.kitty.dev",
-      "icon": [
-        "icons/32x32.png",
-        "icons/128x128.png",
-        "icons/128x128@2x.png",
-        "icons/icon.icns",
-        "icons/icon.ico"
-      ],
-      "externalBin": [
-        "binaries/hysteria",
-        "binaries/xray"
-      ],
-      "resources": [
-        "static/*"
-      ]
-    },
+  "app": {
     "security": {
       "csp": null
     },
@@ -45,14 +25,26 @@
   },
   "plugins": {
     "shell": {
-      "open": true,
-      "scope": [
-        {
-          "name": "hysteria",
-          "cmd": "binaries/hysteria"
-        }
-      ]
+      "open": true
     },
     "sidecar": true
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "externalBin": [
+      "binaries/hysteria",
+      "binaries/xray"
+    ],
+    "resources": [
+      "static/*"
+    ]
   }
 }
