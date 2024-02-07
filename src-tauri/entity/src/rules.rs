@@ -21,9 +21,9 @@ pub enum RuleAction {
     #[serde(rename = "proxy")]
     #[sea_orm(string_value = "proxy")]
     Proxy,
-    #[serde(rename = "redirect")]
-    #[sea_orm(string_value = "redirect")]
-    Redirect,
+    #[serde(rename = "direct")]
+    #[sea_orm(string_value = "direct")]
+    Direct,
     #[serde(rename = "reject")]
     #[sea_orm(string_value = "reject")]
     Reject,

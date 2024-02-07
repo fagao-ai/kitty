@@ -2792,7 +2792,7 @@ dependencies = [
 [[package]]
 name = "kitty_proxy"
 version = "0.1.0"
-source = "git+https://github.com/hezhaozhao-git/kitty_proxy.git#beeb21b6e786a0f39d08985b08f129ebbae645b3"
+source = "git+https://github.com/hezhaozhao-git/kitty_proxy.git#7a0d6567e92a12811f4d09d12df4b33714514565"
 dependencies = [
  "addr",
  "anyhow",

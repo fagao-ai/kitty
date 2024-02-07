@@ -1,9 +1,12 @@
 use anyhow::{anyhow, Result};
-use entity::base_config;
 #[cfg(feature = "hysteria")]
 use entity::hysteria::{self as hysteria_entity, HysteriaConfig};
 #[cfg(feature = "xray")]
 use entity::xray::{self as xray_entity, XrayConfig};
+use entity::{
+    base_config,
+    rules::{self, RuleAction, RuleType},
+};
 #[cfg(feature = "hysteria")]
 use protocols::HysteriaCommandGroup;
 #[cfg(feature = "xray")]
@@ -176,7 +179,19 @@ pub async fn start_system_proxy<'a>(
         .await
         .unwrap();
     let mut match_proxy = proxy_state.match_proxy.lock().await;
-    let aa = match_proxy.as_mut().unwrap();
+    // let aa = match_proxy.as_mut().unwrap();
+    let rule_records = rules::Model::fetch_all(&db).await?;
+    // for rule_record in rule_records {
+    //     match rule_record.rule_action {
+    //         RuleAction::Direct => match rule_record.rule_type {
+    //             RuleType::Cidr => match_proxy.add_direct_cidr(rule_record.rule.as_str()).unwrap(),
+    //             RuleType::DomainPreffix => match_proxy.add_direct_domain_preffix(rule_record.rule),
+    //             RuleType::DomainSuffix => match_proxy.add_direct_domain_preffix(rule_record.rule),
+    //             RuleType::FullDomain => match_proxy.add_direct_root_domain(rule_record.rule),
+    //         },
+    //         _ => {}
+    //     }
+    // }
     let http_match_proxy = match_proxy.clone().unwrap();
     let socks_match_proxy = match_proxy.clone().unwrap();
     let (http_kill_tx, mut http_kill_rx) = watch::channel(false);
