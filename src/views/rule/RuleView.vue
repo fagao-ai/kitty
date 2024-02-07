@@ -71,7 +71,7 @@ initRules()
             <div class="flex space-x-4 w-full">
               <n-select
                 v-model:value="item.ruleAction"
-                :options="[{ label: 'proxy', value: 'proxy' }, { label: 'redirect', value: 'redirect' }, { label: 'reject', value: 'reject' }]"
+                :options="[{ label: 'proxy', value: 'proxy' }, { label: 'direct', value: 'direct' }, { label: 'reject', value: 'reject' }]"
               />
               <n-select
                 v-model:value="item.ruleType"
