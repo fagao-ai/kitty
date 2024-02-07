@@ -30,6 +30,9 @@ async function handleRemoveRule(index: number) {
     await deleteRule(id)
 
   rulesForm.rules.splice(index, 1)
+
+  if (rulesForm.rules.length === 0)
+    rulesForm.rules.push({ ...defaultRule })
 }
 
 async function handleUpdateRule(rule: ProxyRule) {
@@ -42,7 +45,7 @@ async function handleUpdateRule(rule: ProxyRule) {
 
 async function initRules() {
   const rules = await getAllRules()
-  Object.assign(rulesForm, { rules: rules.length === 0 ? defaultRulesFrom : rules })
+  Object.assign(rulesForm.rules, rules.length === 0 ? defaultRulesFrom : rules)
 }
 initRules()
 </script>
