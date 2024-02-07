@@ -175,7 +175,8 @@ pub async fn start_system_proxy<'a>(
     let mut socks_proxy = SocksProxy::new(record.local_ip.as_str(), socks_port, None)
         .await
         .unwrap();
-    let match_proxy = proxy_state.match_proxy.lock().await;
+    let mut match_proxy = proxy_state.match_proxy.lock().await;
+    let aa = match_proxy.as_mut().unwrap();
     let http_match_proxy = match_proxy.clone().unwrap();
     let socks_match_proxy = match_proxy.clone().unwrap();
     let (http_kill_tx, mut http_kill_rx) = watch::channel(false);
