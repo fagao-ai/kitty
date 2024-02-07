@@ -29,6 +29,7 @@ const showInsertModal = useVModel(props, 'showModal')
 const activeTab = ref<ProxyType>(props.currentTab)
 
 const defaultHysteriaForm: HysteriaProxy = {
+  id: 0,
   name: '',
   server: '',
   auth: '',
