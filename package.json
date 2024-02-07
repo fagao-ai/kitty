@@ -14,10 +14,10 @@
     "lint:fix": "eslint . --fix"
   },
   "dependencies": {
-    "@tauri-apps/api": "2.0.0-alpha.12",
-    "@tauri-apps/plugin-clipboard-manager": "2.0.0-alpha.5",
-    "@tauri-apps/plugin-notification": "2.0.0-alpha.5",
-    "@tauri-apps/plugin-shell": "^2.0.0-alpha.3",
+    "@tauri-apps/api": "^2.0.0-beta.0",
+    "@tauri-apps/plugin-clipboard-manager": "^2.0.0-beta.0",
+    "@tauri-apps/plugin-notification": "^2.0.0-beta.0",
+    "@tauri-apps/plugin-shell": "^2.0.0-beta",
     "@vueuse/core": "^10.6.1",
     "class-transformer": "^0.5.1",
     "highlight.js": "^11.9.0",
@@ -29,8 +29,8 @@
   },
   "devDependencies": {
     "@antfu/eslint-config": "^2.4.2",
-    "@tauri-apps/api": "2.0.0-alpha.12",
-    "@tauri-apps/cli": "^2.0.0-alpha.17",
+    "@tauri-apps/api": "^2.0.0-beta",
+    "@tauri-apps/cli": "^2.0.0-beta",
     "@types/humps": "^2.0.6",
     "@types/node": "18.14.0",
     "@typescript-eslint/eslint-plugin": "^6.4.0",

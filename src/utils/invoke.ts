@@ -1,6 +1,6 @@
-import { invoke as tauriInvoke } from '@tauri-apps/api/primitives'
+import { invoke as tauriInvoke } from '@tauri-apps/api/core'
 import { camelizeKeys } from 'humps'
-import type { InvokeArgs, InvokeOptions } from '@tauri-apps/api/types/primitives'
+import type { InvokeArgs, InvokeOptions } from '@tauri-apps/api/core'
 import type { KittyResponse } from '@/types'
 
 export async function invoke<T>(cmd: string, args?: InvokeArgs, options?: InvokeOptions): Promise<KittyResponse<T>> {

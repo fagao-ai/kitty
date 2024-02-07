@@ -2,13 +2,17 @@
   "common": {
     "global": "Global",
     "rules": "Rules",
-    "direct": "Direct"
+    "direct": "Direct",
+    "cancel": "Cancel",
+    "add": "Add",
+    "update": "Update"
   },
   "menubar": {
     "proxies": "Proxies",
     "settings": "Settings",
     "version": "version",
-    "rules": "Rules"
+    "rules": "Rules",
+    "logs": "Logs"
   },
   "setting": {
     "language": "Language",
@@ -23,7 +27,49 @@
   },
   "proxy": {
     "hysteria": {
-      "proxyName": "Proxy name"
-    }
+      "proxyName": "Proxy name",
+      "server": "Node address",
+      "auth": "Auth",
+      "authPlaceholder": "Auth password",
+      "bandwidth": {
+        "uplink": "Uplink",
+        "downlink": "Downlink"
+      },
+      "tls": {
+        "insecure": "Insecure"
+      }
+    },
+    "xray": {
+      "proxyName": "Proxy name",
+      "protocol": "protocol",
+      "address": "Node address",
+      "port": "port",
+      "network": "network",
+      "streamSetting": {
+        "security": "security",
+        "tlsSettings": {
+          "allowInsecure": "Allow insecure",
+          "serverName": "Server name"
+        },
+        "http2Settings": {
+          "headers": {
+            "host": "Host"
+          }
+        }
+      }
+    },
+    "streamSetting": {
+      "wsSettings": {
+        "path": "Path",
+        "host": "Host"
+      },
+      "http2Settings": {
+        "path": "Path"
+      }
+    },
+    "addProxy": {
+      "title": "Add Proxy"
+    },
+    "editProxy": "Edit Proxy"
   }
 }
