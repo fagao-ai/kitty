@@ -1,21 +1,18 @@
 use crate::state::DatabaseState;
 use crate::tauri_event_handler::on_exit_clear_commands;
-use std::env;
 use tauri::menu::{Menu, MenuEvent};
 use tauri::{
     menu::{MenuBuilder, MenuItemBuilder},
     tray::{ClickType, TrayIconBuilder},
-    Icon,
 };
 use tauri::{AppHandle, Manager, State, Wry};
-
 
 use crate::tauri_apis::common as common_api;
 
 pub struct Tray {}
 
 impl Tray {
-    fn tray_menu(app_handle: &AppHandle) ->  Result<Menu<Wry>, Box<dyn std::error::Error>> {
+    fn tray_menu(app_handle: &AppHandle) -> Result<Menu<Wry>, Box<dyn std::error::Error>> {
         let quit = MenuItemBuilder::with_id("quit", "Quit")
             .accelerator("CmdOrControl+Q")
             .build(app_handle)?;
@@ -30,16 +27,17 @@ impl Tray {
             .build(app_handle)?;
         let menu = MenuBuilder::new(app_handle)
             .items(&[&quit, &hide, &system_proxy, &copy_env])
-            .build().unwrap();
+            .build()
+            .unwrap();
         Ok(menu)
     }
 
     pub fn init_tray(app_handle: &AppHandle) -> Result<(), Box<dyn std::error::Error>> {
         let menu = Tray::tray_menu(app_handle)?;
-        let icon = Tray::icon()?;
+        // let icon = Tray::icon()?;
         let _tray = TrayIconBuilder::new()
             .menu(&menu)
-            .icon(icon)
+            // .icon(icon)
             .on_menu_event(move |app, event: tauri::menu::MenuEvent| {
                 Tray::on_menu_event(app, &event)
             })
@@ -56,17 +54,6 @@ impl Tray {
         Ok(())
     }
 
-    fn icon() -> Result<Icon, Box<dyn std::error::Error>> {
-        let current_path = env::current_dir()?;
-        println!("current_path: {:?}", current_path);
-        let parent_dir = current_path.to_owned();
-        let icon_path = parent_dir.join("icons").join("icons8-48.png");
-        println!("icon_path: {:?}", icon_path);
-        let icon = Icon::File(icon_path);
-        print!("set_system_tray");
-        Ok(icon)
-    }
-
     fn on_menu_event(app_handle: &AppHandle, event: &MenuEvent) -> () {
         match event.id().as_ref() {
             "hide" => {
@@ -76,7 +63,7 @@ impl Tray {
             "quit" => {
                 on_exit_clear_commands(app_handle);
                 app_handle.exit(0);
-                // std::process::exit(0);
+                std::process::exit(0);
             }
             "system_proxy" => (),
             "copy_env" => {
