@@ -17,11 +17,14 @@ use protocols::KittyCommandGroupTrait;
 use kitty_proxy::{HttpProxy, NodeInfo, SocksProxy};
 
 use std::{
+    borrow::BorrowMut,
     collections::HashMap,
     net::{IpAddr, Ipv4Addr},
 };
 use tauri::{AppHandle, Manager, State};
 use tokio::sync::watch;
+
+use std::sync::Arc;
 
 use crate::{
     proxy::system_proxy::{clear_system_proxy, set_system_proxy},
@@ -178,22 +181,23 @@ pub async fn start_system_proxy<'a>(
     let mut socks_proxy = SocksProxy::new(record.local_ip.as_str(), socks_port, None)
         .await
         .unwrap();
-    let mut match_proxy = proxy_state.match_proxy.lock().await;
-    // let aa = match_proxy.as_mut().unwrap();
+    let match_proxy = proxy_state.match_proxy.lock().await.clone().unwrap();
+    let shared_match_proxy = Arc::clone(&match_proxy);
+    let mut match_proxy_write_share = shared_match_proxy.write().await;
     let rule_records = rules::Model::fetch_all(&db).await?;
-    // for rule_record in rule_records {
-    //     match rule_record.rule_action {
-    //         RuleAction::Direct => match rule_record.rule_type {
-    //             RuleType::Cidr => match_proxy.add_direct_cidr(rule_record.rule.as_str()).unwrap(),
-    //             RuleType::DomainPreffix => match_proxy.add_direct_domain_preffix(rule_record.rule),
-    //             RuleType::DomainSuffix => match_proxy.add_direct_domain_preffix(rule_record.rule),
-    //             RuleType::FullDomain => match_proxy.add_direct_root_domain(rule_record.rule),
-    //         },
-    //         _ => {}
-    //     }
-    // }
-    let http_match_proxy = match_proxy.clone().unwrap();
-    let socks_match_proxy = match_proxy.clone().unwrap();
+    for rule_record in rule_records {
+        match rule_record.rule_action {
+            RuleAction::Direct => match rule_record.rule_type {
+                RuleType::Cidr => match_proxy_write_share.add_direct_cidr(rule_record.rule.as_str()).unwrap(),
+                RuleType::DomainPreffix => match_proxy_write_share.add_direct_domain_preffix(rule_record.rule),
+                RuleType::DomainSuffix => match_proxy_write_share.add_direct_domain_preffix(rule_record.rule),
+                RuleType::FullDomain => match_proxy_write_share.add_direct_root_domain(rule_record.rule),
+            },
+            _ => {}
+        }
+    }
+    let http_match_proxy = Arc::clone(&match_proxy);
+    let socks_match_proxy = Arc::clone(&match_proxy);
     let (http_kill_tx, mut http_kill_rx) = watch::channel(false);
     let (socks_kill_tx, mut socks_kill_rx) = watch::channel(false);
     *proxy_state.http_proxy_sx.lock().await = Some(http_kill_tx);

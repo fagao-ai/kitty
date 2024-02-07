@@ -1,5 +1,6 @@
 use migration::{Migrator, MigratorTrait};
 use sea_orm::{Database, DatabaseConnection, DbErr};
+use tokio::sync::RwLock;
 use std::path::PathBuf;
 use tauri_plugin_autostart::AutoLaunchManager;
 
@@ -62,7 +63,7 @@ fn setup_kitty_proxy<'a>(handle: &tauri::AppHandle) -> Result<(), Box<dyn std::e
         println!("geoip_file: {:?}", geoip_file);
         println!("geosite_file: {:?}", geosite_file);
         let match_proxy = MatchProxy::from_geo_dat(Some(&geoip_file), Some(&geosite_file)).unwrap();
-        *app_state.match_proxy.lock().await = Some(Arc::new(match_proxy));
+        *app_state.match_proxy.lock().await = Some(Arc::new(RwLock::new(match_proxy)));
     });
 
     Ok(())

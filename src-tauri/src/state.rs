@@ -7,7 +7,7 @@ use sea_orm::DatabaseConnection;
 use std::collections::HashSet;
 use std::sync::Arc;
 use tokio::sync::watch::Sender;
-use tokio::sync::Mutex;
+use tokio::sync::{Mutex, RwLock};
 
 pub struct DatabaseState {
     pub db: std::sync::Mutex<Option<DatabaseConnection>>,
@@ -43,7 +43,7 @@ impl<'a> Default for ProcessManagerState {
 pub struct KittyProxyState {
     // pub http_proxy: Mutex<Option<HttpProxy>>,
     // pub socks_proxy: Mutex<Option<SocksProxy>>,
-    pub match_proxy: Mutex<Option<Arc<MatchProxy>>>,
+    pub match_proxy: Mutex<Option<Arc<RwLock<MatchProxy>>>>,
     pub http_proxy_sx: Mutex<Option<Sender<bool>>>,
     pub socks_proxy_sx: Mutex<Option<Sender<bool>>>,
     pub used_ports: Mutex<HashSet<u16>>,
