@@ -56,6 +56,14 @@ impl CommonAPI {
         Ok(KittyResponse::from_data(res))
     }
 
+    pub async fn delete_rules(
+        db: &DatabaseConnection,
+        ids: Vec<i32>,
+    ) -> CommandResult<KittyResponse<()>> {
+        let _ = rules::Model::delete_by_ids(db, ids).await?;
+        Ok(KittyResponse::default())
+    }
+
     pub async fn update_rules(
         db: &DatabaseConnection,
         record: rules::Model,

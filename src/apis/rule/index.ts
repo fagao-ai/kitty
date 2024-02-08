@@ -16,5 +16,5 @@ export async function createRule(rule: ProxyRule) {
 }
 
 export async function deleteRule(id: number) {
-  await invoke('delete_rules', { id })
+  await invoke('delete_rules', { ids: [id] })
 }

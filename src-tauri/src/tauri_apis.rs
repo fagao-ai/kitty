@@ -182,10 +182,15 @@ pub async fn start_system_proxy<'a>(
         .await
         .unwrap();
     let match_proxy = proxy_state.match_proxy.lock().await.clone().unwrap();
+    println!("match_proxy");
     let shared_match_proxy = Arc::clone(&match_proxy);
+    println!("shared_match_proxy");
     let mut match_proxy_write_share = shared_match_proxy.write().await;
+    println!("match_proxy_write_share");
     let rule_records = rules::Model::fetch_all(&db).await?;
+    println!("rule_records: {:?}", rule_records);
     for rule_record in rule_records {
+        println!("rule_record: {:?}", rule_record);
         match rule_record.rule_action {
             RuleAction::Direct => match rule_record.rule_type {
                 RuleType::Cidr => match_proxy_write_share.add_direct_cidr(rule_record.rule.as_str()).unwrap(),
@@ -196,6 +201,7 @@ pub async fn start_system_proxy<'a>(
             _ => {}
         }
     }
+    drop(match_proxy_write_share);
     let http_match_proxy = Arc::clone(&match_proxy);
     let socks_match_proxy = Arc::clone(&match_proxy);
     let (http_kill_tx, mut http_kill_rx) = watch::channel(false);

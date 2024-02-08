@@ -87,6 +87,16 @@ pub async fn query_rules<'a>(
 }
 
 #[tauri::command(rename_all = "snake_case")]
+pub async fn delete_rules<'a>(
+    state: State<'a, DatabaseState>,
+    ids: Vec<i32>,
+) -> CommandResult<KittyResponse<()>> {
+    let db = state.get_db();
+    let _ = CommonAPI::delete_rules(&db, ids).await?;
+    Ok(KittyResponse::default())
+}
+
+#[tauri::command(rename_all = "snake_case")]
 pub async fn update_rules_item<'a>(
     state: State<'a, DatabaseState>,
     record: rules::Model,
