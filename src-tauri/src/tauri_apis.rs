@@ -17,7 +17,6 @@ use protocols::KittyCommandGroupTrait;
 use kitty_proxy::{HttpProxy, NodeInfo, SocksProxy};
 
 use std::{
-    borrow::BorrowMut,
     collections::HashMap,
     net::{IpAddr, Ipv4Addr},
 };
@@ -29,7 +28,7 @@ use std::sync::Arc;
 use crate::{
     proxy::system_proxy::{clear_system_proxy, set_system_proxy},
     state::{DatabaseState, KittyProxyState, ProcessManagerState},
-    tauri_apis::utils::relative_command_path,
+    tauri_apis::utils::{add_rule2match_proxy, relative_command_path},
     types::{CommandResult, KittyCommandError, KittyResponse},
 };
 use log::Level;
@@ -187,21 +186,12 @@ pub async fn start_system_proxy<'a>(
     println!("shared_match_proxy");
     let rule_records = rules::Model::fetch_all(&db).await?;
     println!("rule_records: {:?}", rule_records);
-    let mut match_proxy_write_share = shared_match_proxy.write().await;
+    let mut match_proxy_write_share: tokio::sync::RwLockWriteGuard<'_, kitty_proxy::MatchProxy> =
+        shared_match_proxy.write().await;
     println!("match_proxy_write_share");
     for rule_record in rule_records {
         println!("rule_record: {:?}", rule_record);
-        match rule_record.rule_action {
-            
-            RuleAction::Direct => match rule_record.rule_type {
-                RuleType::Cidr => match_proxy_write_share.add_direct_cidr(rule_record.rule.as_str()).unwrap(),
-                RuleType::DomainPreffix => match_proxy_write_share.add_direct_domain_preffix(rule_record.rule),
-                RuleType::DomainSuffix => match_proxy_write_share.add_direct_domain_preffix(rule_record.rule),
-                RuleType::FullDomain => match_proxy_write_share.add_direct_full_domain(rule_record.rule),
-                RuleType::DomainRoot => match_proxy_write_share.add_direct_root_domain(rule_record.rule),
-            },
-            _ => {}
-        }
+        add_rule2match_proxy(&mut match_proxy_write_share, &rule_record).await;
     }
     drop(match_proxy_write_share);
     let http_match_proxy = Arc::clone(&match_proxy);

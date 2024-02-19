@@ -1,8 +1,9 @@
 use crate::apis::common_apis::CommonAPI;
-use crate::state::DatabaseState;
+use crate::state::{DatabaseState, KittyProxyState};
 use crate::types::{CommandResult, KittyResponse};
 use entity::base_config;
 use entity::rules;
+use kitty_proxy::MatchProxy;
 use log::Record;
 use sea_orm::DatabaseConnection;
 use tauri::State;
@@ -12,6 +13,8 @@ use tauri_plugin_clipboard_manager::ClipboardExt;
 #[cfg(any(target_os = "macos", target_os = "linux", target_os = "windows"))]
 use tauri::AppHandle;
 use tauri::Runtime;
+
+use super::utils::add_rule2match_proxy;
 
 pub async fn copy_proxy_env<R: Runtime>(
     app_handle: &AppHandle<R>,
@@ -67,12 +70,20 @@ pub async fn update_base_config<'a>(
     Ok(res)
 }
 
+
 #[tauri::command(rename_all = "snake_case")]
 pub async fn add_rules<'a>(
     state: State<'a, DatabaseState>,
+    proxy_state: State<'a, KittyProxyState>,
     records: Vec<rules::Model>,
 ) -> CommandResult<KittyResponse<()>> {
     let db = state.get_db();
+    let match_proxy = proxy_state.match_proxy.lock().await.clone().unwrap();
+    let mut match_proxy_write_share = match_proxy.write().await;
+    for rule_record in records.iter() {
+        add_rule2match_proxy(&mut match_proxy_write_share, rule_record).await;
+    }
+    drop(match_proxy_write_share);
     let _ = CommonAPI::add_rules(&db, records).await?;
     Ok(KittyResponse::default())
 }
