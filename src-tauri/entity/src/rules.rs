@@ -44,6 +44,9 @@ pub enum RuleType {
     #[serde(rename = "cidr")]
     #[sea_orm(string_value = "cidr")]
     Cidr,
+    #[serde(rename = "domain_root")]
+    #[sea_orm(string_value = "domain_root")]
+    DomainRoot,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]

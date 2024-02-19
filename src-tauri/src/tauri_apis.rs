@@ -185,18 +185,20 @@ pub async fn start_system_proxy<'a>(
     println!("match_proxy");
     let shared_match_proxy = Arc::clone(&match_proxy);
     println!("shared_match_proxy");
-    let mut match_proxy_write_share = shared_match_proxy.write().await;
-    println!("match_proxy_write_share");
     let rule_records = rules::Model::fetch_all(&db).await?;
     println!("rule_records: {:?}", rule_records);
+    let mut match_proxy_write_share = shared_match_proxy.write().await;
+    println!("match_proxy_write_share");
     for rule_record in rule_records {
         println!("rule_record: {:?}", rule_record);
         match rule_record.rule_action {
+            
             RuleAction::Direct => match rule_record.rule_type {
                 RuleType::Cidr => match_proxy_write_share.add_direct_cidr(rule_record.rule.as_str()).unwrap(),
                 RuleType::DomainPreffix => match_proxy_write_share.add_direct_domain_preffix(rule_record.rule),
                 RuleType::DomainSuffix => match_proxy_write_share.add_direct_domain_preffix(rule_record.rule),
-                RuleType::FullDomain => match_proxy_write_share.add_direct_root_domain(rule_record.rule),
+                RuleType::FullDomain => match_proxy_write_share.add_direct_full_domain(rule_record.rule),
+                RuleType::DomainRoot => match_proxy_write_share.add_direct_root_domain(rule_record.rule),
             },
             _ => {}
         }
