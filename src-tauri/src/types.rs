@@ -48,9 +48,6 @@ pub enum KittyCommandError {
     TauriError(#[from] tauri::Error),
 
     #[error(transparent)]
-    TauriShellError(#[from] tauri_plugin_shell::Error),
-
-    #[error(transparent)]
     AnyHowError(#[from] anyhow::Error),
 
     #[error(transparent)]

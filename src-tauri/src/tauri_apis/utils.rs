@@ -1,14 +1,12 @@
 use anyhow::{anyhow, Result};
 use entity::rules::{self, RuleAction, RuleType};
 use entity::utils::get_random_port;
-use kitty_proxy::MatchProxy;
+use kitty_proxy::TrafficStreamRule;
 use reqwest;
-use tokio::sync::RwLock;
 use std::collections::{HashMap, HashSet};
 use std::path::{Path, PathBuf};
 use std::time::{self, Duration};
 use tauri::utils::platform;
-use std::sync::Arc;
 use tokio::task::JoinSet;
 
 pub fn get_http_socks_ports(used_ports: &mut HashSet<u16>) -> (u16, u16) {
@@ -67,16 +65,30 @@ pub async fn speed_delay(
     Ok(delay_dict)
 }
 
-
-pub async fn add_rule2match_proxy(rwlock_share: &mut tokio::sync::RwLockWriteGuard<'_, kitty_proxy::MatchProxy>, rule_record: &rules::Model) {
-    match rule_record.rule_action {
-        RuleAction::Direct => match rule_record.rule_type {
-            RuleType::Cidr => rwlock_share.add_direct_cidr(rule_record.rule.as_str()).unwrap(),
-            RuleType::DomainPreffix => rwlock_share.add_direct_domain_preffix(rule_record.rule.clone()),
-            RuleType::DomainSuffix => rwlock_share.add_direct_domain_preffix(rule_record.rule.clone()),
-            RuleType::FullDomain => rwlock_share.add_direct_full_domain(rule_record.rule.clone()),
-            RuleType::DomainRoot => rwlock_share.add_direct_root_domain(rule_record.rule.clone()),
-        },
-        _ => {}
+pub async fn add_rule2match_proxy(
+    rwlock_share: &mut tokio::sync::RwLockWriteGuard<'_, kitty_proxy::MatchProxy>,
+    rule_record: &rules::Model,
+) {
+    let traffic_stream_rule = match rule_record.rule_action {
+        RuleAction::Reject => TrafficStreamRule::Reject,
+        RuleAction::Direct => TrafficStreamRule::Direct,
+        RuleAction::Proxy => TrafficStreamRule::Proxy,
+    };
+    match rule_record.rule_type {
+        RuleType::Cidr => rwlock_share
+            .add_cidr(rule_record.rule.as_str(), traffic_stream_rule)
+            .unwrap(),
+        RuleType::DomainPreffix => {
+            rwlock_share.add_domain_preffix(rule_record.rule.clone(), traffic_stream_rule)
+        }
+        RuleType::DomainSuffix => {
+            rwlock_share.add_domain_suffix(rule_record.rule.as_str(), traffic_stream_rule)
+        }
+        RuleType::FullDomain => {
+            rwlock_share.add_full_domain(rule_record.rule.clone(), traffic_stream_rule)
+        }
+        RuleType::DomainRoot => {
+            rwlock_share.add_root_domain(rule_record.rule.as_str(), traffic_stream_rule)
+        }
     }
 }

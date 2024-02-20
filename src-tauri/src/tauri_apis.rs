@@ -172,8 +172,6 @@ pub async fn start_system_proxy<'a>(
     let record: base_config::Model = base_config::Model::first(&db).await.unwrap().unwrap();
     let http_port = record.http_port;
     let socks_port = record.socks_port;
-    println!("http_port: {http_port}");
-    println!("socks_port: {socks_port}");
     let mut http_proxy = HttpProxy::new(record.local_ip.as_str(), http_port, None)
         .await
         .unwrap();
@@ -181,16 +179,11 @@ pub async fn start_system_proxy<'a>(
         .await
         .unwrap();
     let match_proxy = proxy_state.match_proxy.lock().await.clone().unwrap();
-    println!("match_proxy");
     let shared_match_proxy = Arc::clone(&match_proxy);
-    println!("shared_match_proxy");
     let rule_records = rules::Model::fetch_all(&db).await?;
-    println!("rule_records: {:?}", rule_records);
     let mut match_proxy_write_share: tokio::sync::RwLockWriteGuard<'_, kitty_proxy::MatchProxy> =
         shared_match_proxy.write().await;
-    println!("match_proxy_write_share");
     for rule_record in rule_records {
-        println!("rule_record: {:?}", rule_record);
         add_rule2match_proxy(&mut match_proxy_write_share, &rule_record).await;
     }
     drop(match_proxy_write_share);

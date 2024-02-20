@@ -23,12 +23,6 @@
       }
     ]
   },
-  "plugins": {
-    "shell": {
-      "open": true
-    },
-    "sidecar": true
-  },
   "bundle": {
     "active": true,
     "targets": "all",
