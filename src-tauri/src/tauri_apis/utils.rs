@@ -3,6 +3,7 @@ use entity::rules::{self, RuleAction, RuleType};
 use entity::utils::get_random_port;
 use kitty_proxy::TrafficStreamRule;
 use reqwest;
+use sea_orm::ConnectionTrait;
 use std::collections::{HashMap, HashSet};
 use std::path::{Path, PathBuf};
 use std::time::{self, Duration};
@@ -82,7 +83,7 @@ pub async fn add_rule2match_proxy(
             rwlock_share.add_domain_preffix(rule_record.rule.clone(), traffic_stream_rule)
         }
         RuleType::DomainSuffix => {
-            rwlock_share.add_domain_suffix(rule_record.rule.as_str(), traffic_stream_rule)
+            rwlock_share.add_domain_suffix(rule_record.rule.clone(), traffic_stream_rule)
         }
         RuleType::FullDomain => {
             rwlock_share.add_full_domain(rule_record.rule.clone(), traffic_stream_rule)
@@ -91,4 +92,58 @@ pub async fn add_rule2match_proxy(
             rwlock_share.add_root_domain(rule_record.rule.as_str(), traffic_stream_rule)
         }
     }
+}
+
+pub async fn delete_rule2match_proxy<C>(
+    db: &C,
+    rwlock_share: &mut tokio::sync::RwLockWriteGuard<'_, kitty_proxy::MatchProxy>,
+    rule_records: Vec<rules::Model>,
+) -> Result<()>
+where
+    C: ConnectionTrait,
+{
+    if rule_records.is_empty() {
+        return Ok(());
+    }
+    let has_direct = rule_records
+        .iter()
+        .any(|x| x.rule_action == RuleAction::Direct && x.rule_type == RuleType::Cidr);
+    let has_not_direct = rule_records.iter().any(|x| {
+        (x.rule_action == RuleAction::Proxy || x.rule_action == RuleAction::Reject)
+            && x.rule_type == RuleType::Cidr
+    });
+    let cidr_rules = rules::Model::fetch_by_rule_type(db, RuleType::Cidr).await?;
+    if has_direct {
+        rwlock_share.reset_direct_cidr();
+    }
+    if has_not_direct {
+        rwlock_share.clear_not_direct_cidr();
+    }
+    if has_not_direct || has_direct {
+        for rule_record in cidr_rules {
+            let traffic_stream_rule = match rule_record.rule_action {
+                RuleAction::Reject => TrafficStreamRule::Reject,
+                RuleAction::Direct => TrafficStreamRule::Direct,
+                RuleAction::Proxy => TrafficStreamRule::Proxy,
+            };
+            rwlock_share.add_cidr(rule_record.rule.as_str(), traffic_stream_rule)?;
+        }
+    }
+    let remain_delete_rule_records: Vec<rules::Model> = rule_records
+        .iter()
+        .filter(|&x| x.rule_type != RuleType::Cidr)
+        .cloned()
+        .collect();
+    for rule_record in remain_delete_rule_records {
+        match rule_record.rule_type {
+            RuleType::DomainPreffix => {
+                rwlock_share.delete_domain_preffix(rule_record.rule.as_str())
+            }
+            RuleType::DomainSuffix => rwlock_share.delete_domain_suffix(rule_record.rule.as_str()),
+            RuleType::FullDomain => rwlock_share.delete_full_domain(rule_record.rule.as_str()),
+            RuleType::DomainRoot => rwlock_share.delete_root_domain(rule_record.rule.as_str()),
+            _ => (),
+        }
+    }
+    Ok(())
 }

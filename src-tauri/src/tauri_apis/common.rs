@@ -5,7 +5,7 @@ use entity::base_config;
 use entity::rules;
 use kitty_proxy::MatchProxy;
 use log::Record;
-use sea_orm::DatabaseConnection;
+use sea_orm::{DatabaseConnection, TransactionTrait};
 use tauri::State;
 use tauri_plugin_autostart::AutoLaunchManager;
 use tauri_plugin_clipboard_manager::ClipboardExt;
@@ -14,7 +14,7 @@ use tauri_plugin_clipboard_manager::ClipboardExt;
 use tauri::AppHandle;
 use tauri::Runtime;
 
-use super::utils::add_rule2match_proxy;
+use super::utils::{add_rule2match_proxy, delete_rule2match_proxy};
 
 pub async fn copy_proxy_env<R: Runtime>(
     app_handle: &AppHandle<R>,
@@ -70,7 +70,6 @@ pub async fn update_base_config<'a>(
     Ok(res)
 }
 
-
 #[tauri::command(rename_all = "snake_case")]
 pub async fn add_rules<'a>(
     state: State<'a, DatabaseState>,
@@ -100,15 +99,23 @@ pub async fn query_rules<'a>(
 #[tauri::command(rename_all = "snake_case")]
 pub async fn delete_rules<'a>(
     state: State<'a, DatabaseState>,
+    proxy_state: State<'a, KittyProxyState>,
     ids: Vec<i32>,
 ) -> CommandResult<KittyResponse<()>> {
     let db = state.get_db();
-    let _ = CommonAPI::delete_rules(&db, ids).await?;
+    let delete_rules = rules::Model::fetch_by_ids(&db, ids.clone()).await?;
+    let txn = db.begin().await?;
+    let match_proxy = proxy_state.match_proxy.lock().await.clone().unwrap();
+    let mut match_proxy_write_share = match_proxy.write().await;
+    let _ = delete_rule2match_proxy(&txn, &mut match_proxy_write_share, delete_rules);
+    drop(match_proxy_write_share);
+    let _ = CommonAPI::delete_rules(&txn, ids).await?;
+    txn.commit().await?;
     Ok(KittyResponse::default())
 }
 
 #[tauri::command(rename_all = "snake_case")]
-pub async fn update_rules_item<'a>(
+pub async fn update_rule_item<'a>(
     state: State<'a, DatabaseState>,
     record: rules::Model,
 ) -> CommandResult<KittyResponse<rules::Model>> {

@@ -56,4 +56,15 @@ impl ActiveModelBehavior for ActiveModel {}
 
 impl Model {
     generate_model_functions!();
+
+    pub async fn fetch_by_rule_type<C>(db: &C, rule_type: RuleType) -> Result<Vec<Model>, DbErr>
+    where
+        C: ConnectionTrait,
+    {
+        let results = self::Entity::find()
+            .filter(self::Column::RuleType.eq(rule_type))
+            .all(db)
+            .await?;
+        Ok(results)
+    }
 }
