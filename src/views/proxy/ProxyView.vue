@@ -87,7 +87,7 @@ function handleCancelEdit() {
 
 <template>
   <div class="flex flex-col w-full h-full space-y-4">
-    <div class="h-8 flex justify-between items-center">
+    <div class="h-8 flex justify-between items-center space-y-1">
       <div class="text-primay text-2xl font-extrabold">
         Proxies
       </div>

@@ -73,6 +73,7 @@ onMounted(() => {
         ref="logInstRef"
         class="w-full h-full"
         :log="logRef"
+        :rows="35"
         language="naive-log"
         trim
       />
@@ -81,7 +82,7 @@ onMounted(() => {
 </template>
 
 <style lang="scss" scoped>
-:deep(.n-log) {
-  height: 100% !important;
-}
+// :deep(.n-log) {
+//   height: 100% !important;
+// }
 </style>

@@ -68,8 +68,7 @@ window.$message = useMessage()
 
 <template>
   <div
-    class="flex flex-col h-full p-4"
-    data-tauri-drag-region
+    class="flex flex-col h-full px-4 pb-4"
   >
     <div class="flex-1 flex flex-col">
       <div class="text-5xl font-bold h-1/6 flex flex-center text-primay">
