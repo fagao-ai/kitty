@@ -1,10 +1,9 @@
 use crate::apis::common_apis::CommonAPI;
 use crate::state::{DatabaseState, KittyProxyState};
 use crate::types::{CommandResult, KittyResponse};
+use anyhow::anyhow;
 use entity::base_config;
 use entity::rules;
-use kitty_proxy::MatchProxy;
-use log::Record;
 use sea_orm::{DatabaseConnection, TransactionTrait};
 use tauri::State;
 use tauri_plugin_autostart::AutoLaunchManager;
@@ -115,11 +114,28 @@ pub async fn delete_rules<'a>(
 }
 
 #[tauri::command(rename_all = "snake_case")]
-pub async fn update_rule_item<'a>(
+pub async fn update_rules_item<'a>(
     state: State<'a, DatabaseState>,
-    record: rules::Model,
-) -> CommandResult<KittyResponse<rules::Model>> {
+    proxy_state: State<'a, KittyProxyState>,
+    records: Vec<rules::Model>,
+) -> CommandResult<KittyResponse<()>> {
     let db = state.get_db();
-    let res = CommonAPI::update_rules(&db, record).await?;
-    Ok(res)
+    let delete_record_ids: Vec<i32> = records.iter().map(|x| x.id).collect();
+    let origin_records = rules::Model::fetch_by_ids(&db, delete_record_ids.clone()).await?;
+    if !origin_records.is_empty() {
+        let txn = db.begin().await?;
+        let match_proxy = proxy_state.match_proxy.lock().await.clone().unwrap();
+        let mut match_proxy_write_share = match_proxy.write().await;
+        let _ = delete_rule2match_proxy(&txn, &mut match_proxy_write_share, origin_records);
+        for rule_record in records.iter() {
+            add_rule2match_proxy(&mut match_proxy_write_share, rule_record).await;
+        }
+        drop(match_proxy_write_share);
+        let _ = CommonAPI::delete_rules(&txn, delete_record_ids).await?;
+        let res = CommonAPI::add_rules(&db, records).await?;
+        txn.commit().await?;
+        Ok(res)
+    } else {
+        Err(anyhow!("records not exists!").into())
+    }
 }

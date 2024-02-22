@@ -111,7 +111,7 @@ pub fn run() {
         common_api::query_rules,
         common_api::delete_rules,
         common_api::add_rules,
-        common_api::update_rule_item,
+        common_api::update_rules_item,
         start_system_proxy,
         stop_system_proxy,
     ];
@@ -130,7 +130,7 @@ pub fn run() {
         common_api::query_rules,
         common_api::delete_rules,
         common_api::add_rules,
-        common_api::update_rule_item,
+        common_api::update_rules_item,
         start_system_proxy,
         stop_system_proxy,
     ];
@@ -150,7 +150,7 @@ pub fn run() {
         common_api::query_rules,
         common_api::delete_rules,
         common_api::add_rules,
-        common_api::update_rule_item,
+        common_api::update_rules_item,
         start_system_proxy,
         stop_system_proxy,
     ];
@@ -179,7 +179,7 @@ pub fn run() {
         common_api::query_rules,
         common_api::delete_rules,
         common_api::add_rules,
-        common_api::update_rule_item,
+        common_api::update_rules_item,
         start_system_proxy,
         stop_system_proxy,
     ];
