@@ -187,7 +187,7 @@ fn download_xray() -> Result<()> {
     let target = build_target::target().unwrap();
     let source_name = get_xray_source_name(&target);
     let download_url =
-        format!("https://github.com/XTLS/Xray-core/releases/download/v1.8.6/{source_name}");
+        format!("https://github.com/XTLS/Xray-core/releases/download/v1.8.7/{source_name}");
     println!("download url: {}", download_url);
     let suffix = match target.os {
         Os::Windows => ".exe",

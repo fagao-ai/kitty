@@ -53,6 +53,7 @@ impl KittyCommandGroupTrait for XrayCommandGroup {
                 &self.config_dir,
                 env_mapping.clone().unwrap_or(HashMap::new()),
             )?;
+            println!("xray runed");
             let socket_addrs = self.get_socket_addrs(&config)?;
             kitty_command.check_status(
                 "Reading config:",
@@ -73,8 +74,11 @@ impl KittyCommandGroupTrait for XrayCommandGroup {
         let mut res = Vec::new();
         if let Some(inbounds) = config_value["inbounds"].as_array() {
             for inbound in inbounds {
-                let listen = &inbound["listen"].as_str().unwrap();
-                let port = &inbound["port"].as_i64().unwrap();
+                let mut listen = inbound["listen"].as_str().unwrap();
+                if listen == "0.0.0.0" {
+                    listen = "127.0.0.1";
+                }
+                let port = inbound["port"].as_i64().unwrap();
                 let ip_addr: IpAddr = IpAddr::from_str(listen)?;
                 let socket_addr = SocketAddr::new(ip_addr, port.to_owned() as u16);
                 res.push(socket_addr);
