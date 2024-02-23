@@ -11,7 +11,6 @@ impl APIServiceTrait for HysteriaAPI {}
 impl HysteriaAPI {
     pub async fn get_all(&self, db: &DatabaseConnection) -> Result<Vec<hysteria::Model>> {
         let hy_proxies = hysteria::Model::fetch_all(db).await?;
-        println!("hy_proxies: {:?}", hy_proxies);
         Ok(hy_proxies)
     }
 

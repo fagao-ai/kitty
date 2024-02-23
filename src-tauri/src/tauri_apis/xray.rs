@@ -30,7 +30,6 @@ pub async fn add_xray_item<'a>(
     record: xray::Model,
 ) -> CommandResult<()> {
     let db = state.get_db();
-    println!("{:?}", record);
     XrayAPI.add_xray_item(&db, record).await?;
     Ok(())
 }
@@ -49,7 +48,6 @@ pub async fn import_xray_subscribe<'a>(
     state: State<'a, DatabaseState>,
     url: &str,
 ) -> CommandResult<()> {
-    println!("url: {}", url);
     let db = state.get_db();
     let _res = XrayAPI.import_xray_from_subscribe(&db, url).await?;
     Ok(())

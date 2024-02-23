@@ -67,8 +67,7 @@ impl KittyCommand {
     pub fn check_socket_addrs(&self, socket_addrs: Vec<SocketAddr>) -> Result<()> {
         for socket_addr in socket_addrs {
             if !socket_addr_busy(socket_addr) {
-                println!("{socket_addr} socket_addr_busy is false");
-                return Err(anyhow!(anyhow!("xray start failed!")));
+                return Err(anyhow!(anyhow!("check_socket_addrs failed, xray start failed!")));
             }
         }
         Ok(())
@@ -89,7 +88,6 @@ impl KittyCommand {
                         let reader = io::BufReader::new(pipe_out);
                         for line in reader.lines() {
                             if let Ok(line) = line {
-                                println!("stderr: {line}");
                                 if line.to_lowercase().contains(&started_str.to_lowercase()) {
                                     thread::sleep(time::Duration::from_millis(500));
                                     self.check_socket_addrs(socket_addrs)?;
@@ -105,7 +103,6 @@ impl KittyCommand {
                         let reader = io::BufReader::new(pipe_out);
                         for line in reader.lines() {
                             if let Ok(line) = line {
-                                println!("stdout: {line}");
                                 if line.to_lowercase().contains(&started_str.to_lowercase()) {
                                     thread::sleep(time::Duration::from_millis(500));
                                     self.check_socket_addrs(socket_addrs)?;
@@ -121,7 +118,6 @@ impl KittyCommand {
     }
 
     pub fn terminate_backend(&mut self) -> Result<()> {
-        println!("kill command");
         self.child.kill()?;
         Ok(())
     }

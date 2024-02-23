@@ -963,7 +963,6 @@ impl FromStr for Model {
     fn from_str(url: &str) -> Result<Self> {
         let url = Url::parse(url)?;
         let username = url.username();
-        println!("uuid_or_base64: {username}");
         if username == "" {
             let decode_bytes = general_purpose::STANDARD.decode(url.domain().unwrap())?;
             let share_json = String::from_utf8(decode_bytes).expect("Invalid UTF-8 sequence");
@@ -1087,8 +1086,6 @@ mod tests {
     fn test_add() {
         let aa = r#"trojan://uuid@ip:60195?sni=address#aa"#;
         let model = Model::from_str(aa).unwrap();
-        println!("{:?}", model);
-
         let stream_settings = serde_json::to_string(&model.stream_settings);
         println!("stream_settings: {:?}", stream_settings);
 

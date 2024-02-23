@@ -190,7 +190,6 @@ pub fn run() {
         .expect("error while running tauri application")
         .run(|app, event| {
             if let RunEvent::Exit = event {
-                println!("RunEvent exit!!!");
                 // clear_command(app);
                 on_exit_clear_commands(app);
             }

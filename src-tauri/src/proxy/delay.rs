@@ -26,7 +26,6 @@ pub async fn kitty_proxies_delay(proxies: Vec<ProxyInfo>) -> Vec<ProxyDelay> {
         match response {
             Ok(_) => {
                 let elapsed = start_time.elapsed();
-                println!("{}ms", elapsed.as_millis());
                 let proxy_delay = ProxyDelay {
                     id: proxy.id,
                     delay: elapsed.as_millis(),

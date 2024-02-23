@@ -1,3 +1,4 @@
+use log::trace;
 use migration::{Migrator, MigratorTrait};
 use sea_orm::{Database, DatabaseConnection, DbErr};
 use tokio::sync::RwLock;
@@ -15,18 +16,17 @@ use tauri::{Manager, State};
 use crate::state::KittyProxyState;
 
 pub async fn init_db(app_dir: PathBuf) -> Result<DatabaseConnection, DbErr> {
-    println!("app_dir");
     let sqlite_path = app_dir.join("MyApp.sqlite");
+    trace!("{:?}", sqlite_path);
     let sqlite_url = format!("sqlite://{}?mode=rwc", sqlite_path.to_string_lossy());
     let db: DatabaseConnection = Database::connect(&sqlite_url).await?;
     Migrator::up(&db, None).await?;
     base_config::Model::update_sysproxy_flag(&db, false).await?;
-    println!("Migrator");
+    trace!("Migrator");
     Ok(db)
 }
 
 fn setup_db<'a>(handle: &tauri::AppHandle) -> Result<(), Box<dyn std::error::Error>> {
-    println!("setup_db!!!");
     let app_dir = handle
         .path()
         .app_local_data_dir()
@@ -34,7 +34,7 @@ fn setup_db<'a>(handle: &tauri::AppHandle) -> Result<(), Box<dyn std::error::Err
     if !app_dir.exists() {
         fs::create_dir_all(&app_dir)?;
     }
-    println!("app_dir: {:?}", app_dir);
+    trace!("app_dir: {:?}", app_dir);
     let app_state: State<DatabaseState> = handle.state();
     let db = tauri::async_runtime::block_on(async move {
         let db = init_db(app_dir).await;
@@ -53,15 +53,13 @@ fn setup_kitty_proxy<'a>(handle: &tauri::AppHandle) -> Result<(), Box<dyn std::e
     let resource_dir = handle.path().resource_dir()?.join("static");
     let app_state: State<KittyProxyState> = handle.state();
     tauri::async_runtime::block_on(async move {
-        println!(
+        trace!(
             "resource_dir: {:?}, exists: {}",
             resource_dir,
             resource_dir.exists()
         );
         let geoip_file = resource_dir.join("kitty_geoip.dat");
         let geosite_file = resource_dir.join("kitty_geosite.dat");
-        println!("geoip_file: {:?}", geoip_file);
-        println!("geosite_file: {:?}", geosite_file);
         let match_proxy = MatchProxy::from_geo_dat(Some(&geoip_file), Some(&geosite_file)).unwrap();
         *app_state.match_proxy.lock().await = Some(Arc::new(RwLock::new(match_proxy)));
     });
