@@ -1,6 +1,14 @@
 use anyhow::Result;
 use sysproxy::Sysproxy;
 
+
+#[cfg(target_os = "windows")]
+static DEFAULT_BYPASS: &str = "localhost;127.*;192.168.*;<local>";
+#[cfg(target_os = "linux")]
+static DEFAULT_BYPASS: &str = "localhost,127.0.0.1,::1";
+#[cfg(target_os = "macos")]
+static DEFAULT_BYPASS: &str = "127.0.0.1,localhost,<local>";
+
 #[cfg(target_os = "windows")]
 pub fn set_system_proxy(host: &str, _socks_port: u16, http_port: Option<u16>) -> Result<()> {
     use anyhow::anyhow;
@@ -10,7 +18,7 @@ pub fn set_system_proxy(host: &str, _socks_port: u16, http_port: Option<u16>) ->
             enable: true,
             host: host.into(),
             port: port,
-            bypass: "localhost;127.*".into(),
+            bypass: DEFAULT_BYPASS.into(),
         };
 
         let _ = socks_sysproxy.set_system_proxy();
@@ -27,7 +35,7 @@ pub fn set_system_proxy(host: &str, socks_port: u16, http_port: Option<u16>) -> 
         enable: true,
         host: host.into(),
         port: socks_port,
-        bypass: "localhost,127.0.0.1/8".into(),
+        bypass: DEFAULT_BYPASS.into(),
     };
     let _ = socks_sysproxy.set_enable()?;
     let _ = socks_sysproxy.set_socks();
@@ -37,7 +45,7 @@ pub fn set_system_proxy(host: &str, socks_port: u16, http_port: Option<u16>) -> 
                 enable: true,
                 host: host.into(),
                 port: http_port,
-                bypass: "localhost,127.0.0.1/8".into(),
+                bypass: DEFAULT_BYPASS.into(),
             };
             let _ = socks_sysproxy.set_http();
             let _ = socks_sysproxy.set_https();
@@ -97,12 +105,11 @@ pub fn set_system_proxy(host: &str, socks_port: u16, http_port: Option<u16>) -> 
     use anyhow::Ok;
 
     let service = get_active_network_interface()?;
-    println!("servie: {}", service);
     let socks_sysproxy = Sysproxy {
         enable: true,
         host: host.into(),
         port: socks_port,
-        bypass: "localhost,127.0.0.1/8".into(),
+        bypass: DEFAULT_BYPASS.into(),
     };
     let _ = socks_sysproxy.set_socks(service.as_str());
     match http_port {
@@ -111,7 +118,7 @@ pub fn set_system_proxy(host: &str, socks_port: u16, http_port: Option<u16>) -> 
                 enable: true,
                 host: host.into(),
                 port: http_port,
-                bypass: "localhost,127.0.0.1/8".into(),
+                bypass: DEFAULT_BYPASS.into(),
             };
             let _ = socks_sysproxy.set_http(service.as_str());
             let _ = socks_sysproxy.set_https(service.as_str());
@@ -127,9 +134,7 @@ pub fn clear_system_proxy() -> Result<()>{
         enable: false,
         host: "127.0.0.1".into(),
         port: 10086,
-        bypass: "localhost;127.*".into(),
-        #[cfg(not(target_os = "windows"))]
-        bypass: "localhost,127.0.0.1/8".into(),
+        bypass: DEFAULT_BYPASS.into(),
     };
     let _ = socks_sysproxy.set_system_proxy();
     Ok(())
@@ -152,7 +157,7 @@ pub fn clear_system_proxy() -> Result<()> {
         enable: false,
         host: "127.0.0.1".into(),
         port: 10086,
-        bypass: "localhost;127.*".into(),
+        bypass: DEFAULT_BYPASS.into(),
     };
 
     let _ = socks_sysproxy.set_system_proxy();
