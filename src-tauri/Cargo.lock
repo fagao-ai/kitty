@@ -3979,6 +3979,7 @@ name = "protocols"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "log 0.4.20",
  "serde",
  "serde_json",
  "shared_child",

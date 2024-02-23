@@ -12,6 +12,7 @@ use std::process::{Command, Stdio};
 use std::sync::Arc;
 use std::{thread, time};
 use uuid::Uuid;
+use log::debug;
 
 
 
@@ -88,6 +89,7 @@ impl KittyCommand {
                         let reader = io::BufReader::new(pipe_out);
                         for line in reader.lines() {
                             if let Ok(line) = line {
+                                debug!("stderr: {}", line);
                                 if line.to_lowercase().contains(&started_str.to_lowercase()) {
                                     thread::sleep(time::Duration::from_millis(500));
                                     self.check_socket_addrs(socket_addrs)?;
@@ -103,6 +105,7 @@ impl KittyCommand {
                         let reader = io::BufReader::new(pipe_out);
                         for line in reader.lines() {
                             if let Ok(line) = line {
+                                debug!("stdout: {}", line);
                                 if line.to_lowercase().contains(&started_str.to_lowercase()) {
                                     thread::sleep(time::Duration::from_millis(500));
                                     self.check_socket_addrs(socket_addrs)?;
