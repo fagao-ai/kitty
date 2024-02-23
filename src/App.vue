@@ -26,10 +26,10 @@ hljs.registerLanguage('naive-log', () => ({
     class="flex flex-col w-full h-full bg-[#fdfdfd] dark:bg-[#373839]"
   >
     <div
-      class="h-4 w-full"
+      class="h-4 w-full cursor-move"
       data-tauri-drag-region
     >
-&nbsp;
+      &nbsp;
     </div>
     <div class="flex-l flex w-full h-full">
       <n-message-provider>

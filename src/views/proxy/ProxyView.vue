@@ -126,7 +126,7 @@ function handleCancelEdit() {
         </n-radio-button>
       </n-radio-group>
     </div>
-    <div class="flex-1 w-full">
+    <div class="flex-1 w-full overflow-y-hidden">
       <proxy-card-list
         :data="cards"
         @dblclick="handleCardDblClick"

@@ -12,6 +12,8 @@
     "app:default",
     "resources:default",
     "menu:default",
-    "tray:default"
+    "tray:default",
+    "window:allow-start-dragging",
+    "notification:allow-is-permission-granted"
   ]
 }
