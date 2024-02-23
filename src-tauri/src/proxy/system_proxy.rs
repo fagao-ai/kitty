@@ -5,9 +5,9 @@ use sysproxy::Sysproxy;
 #[cfg(target_os = "windows")]
 static DEFAULT_BYPASS: &str = "localhost;127.*;192.168.*;<local>";
 #[cfg(target_os = "linux")]
-static DEFAULT_BYPASS: &str = "localhost,127.0.0.1,::1";
+static DEFAULT_BYPASS: &str = "192.168.0.0/16,10.0.0.0/8,172.16.0.0/12,127.0.0.1,localhost,*.local,::1";
 #[cfg(target_os = "macos")]
-static DEFAULT_BYPASS: &str = "127.0.0.1,localhost,<local>";
+static DEFAULT_BYPASS: &str = "192.168.0.0/16,10.0.0.0/8,172.16.0.0/12,127.0.0.1,localhost,*.local,timestamp.apple.com,sequoia.apple.com,seed-sequoia.siri.apple.com";
 
 #[cfg(target_os = "windows")]
 pub fn set_system_proxy(host: &str, _socks_port: u16, http_port: Option<u16>) -> Result<()> {
