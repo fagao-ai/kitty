@@ -109,4 +109,8 @@ impl XrayAPI {
         }
         Ok(())
     }
+
+    pub async fn batch_get_subscriptions(db: &DatabaseConnection) -> Result<Vec<subscribe::Model>> {
+        Ok(subscribe::Model::fetch_all(db).await?)
+    }
 }

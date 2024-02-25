@@ -23,7 +23,8 @@
     "mode": "代理模式",
     "httpPort": "HTTP 代理端口",
     "socks5Port": "Socks5 代理端口",
-    "delayTestUrl": "延迟测试地址"
+    "delayTestUrl": "延迟测试地址",
+    "subscriptionAutoUpdate": "订阅自动更新(h)"
   },
   "proxy": {
     "hysteria": {

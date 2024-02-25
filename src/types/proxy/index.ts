@@ -51,3 +51,5 @@ export interface ImportProxy {
   id?: number
   url: string
 }
+
+export type Subscription = Required<ImportProxy>

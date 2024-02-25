@@ -3,7 +3,7 @@ import { camelizeKeys, decamelizeKeys } from 'humps'
 import { instanceToPlain, plainToInstance } from 'class-transformer'
 import { Xray } from '@/models/xray'
 import { invoke } from '@/utils/invoke'
-import type { HysteriaProxy, ImportProxy, XrayProxy } from '@/types/proxy'
+import type { HysteriaProxy, ImportProxy, Subscription, XrayProxy } from '@/types/proxy'
 import { ProxyType } from '@/types/proxy'
 
 export async function getAllHysterias() {
@@ -66,4 +66,13 @@ export async function updateXrayProxy(xrayForm: XrayProxy) {
 
 export async function updateHysteriaProxy(hysteriaForm: HysteriaProxy) {
   await invoke('update_xray_item', { record: decamelizeKeys(hysteriaForm) })
+}
+
+export async function autoUpdateSubscription(subscriptionIds: number[]) {
+  await invoke('refresh_xray_subscription', { record_ids: subscriptionIds })
+}
+
+export async function batchGetSubscriptions(): Promise<Subscription[]> {
+  const res = await invoke<Subscription[]>('batch_get_subscriptions')
+  return res.data
 }

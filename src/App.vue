@@ -1,12 +1,16 @@
 <script setup lang="ts">
+import { onUnmounted, watch } from 'vue'
 import { NConfigProvider, NMessageProvider } from 'naive-ui'
 import hljs from 'highlight.js/lib/core'
 import { useTheme } from '@/utils/theme'
+import { useSubscriptionAutoUpdate } from '@/tools'
+import { settingStore } from '@/views/setting/store'
 import MenuView from '@/views/menu/MenuView.vue'
 import 'vfonts/FiraCode.css'
 import 'vfonts/Lato.css'
 
 const { theme, lightThemeOverrides, darkThemeOverrides } = useTheme()
+const { stopAutoUpdate } = useSubscriptionAutoUpdate()
 
 hljs.registerLanguage('naive-log', () => ({
   contains: [
@@ -16,6 +20,18 @@ hljs.registerLanguage('naive-log', () => ({
     },
   ],
 }))
+
+watch(settingStore, (val, oldVal) => {
+  if (!oldVal || val.autoUpdate !== oldVal.autoUpdate) {
+    // console.log('startttt', val.autoUpdate)
+    // stopAutoUpdate()
+    // autoUpdate(val.autoUpdate)
+  }
+}, { immediate: true })
+
+onUnmounted(() => {
+  stopAutoUpdate()
+})
 </script>
 
 <template>

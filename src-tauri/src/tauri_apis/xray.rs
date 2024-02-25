@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
-use entity::base_config;
 use entity::xray::{self, XrayConfig};
+use entity::{base_config, subscribe};
 use protocols::XrayCommandGroup;
 use tauri::{AppHandle, Manager, State};
 
@@ -122,4 +122,13 @@ pub async fn refresh_xray_subscription<'a>(
     let db = state.get_db();
     let _ = XrayAPI::refresh_subscribe(&db, record_ids).await?;
     Ok(())
+}
+
+#[tauri::command(rename_all = "snake_case")]
+pub async fn batch_get_subscriptions<'a>(
+    state: State<'a, DatabaseState>,
+) -> CommandResult<KittyResponse<Vec<subscribe::Model>>> {
+    let db = state.get_db();
+    let subscriptions = XrayAPI::batch_get_subscriptions(&db).await?;
+    Ok(KittyResponse::from_data(subscriptions))
 }

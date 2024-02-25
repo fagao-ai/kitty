@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { NButton, useMessage } from 'naive-ui'
 import { computed, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { ProxyType } from '@/types/proxy'
 import AddProxy from '@/views/proxy/modal/AddProxy.vue'
 import type { ProxyCard as Card, HysteriaProxy, XrayProxy } from '@/types/proxy'
@@ -10,6 +11,7 @@ import { getAllHysterias, getAllXraies, getProxyByIdAndType } from '@/apis/proxy
 import ImportProxy from '@/views/proxy/modal/ImportProxy.vue'
 import EditProxy from '@/views/proxy/modal/EditProxy.vue'
 
+const { t } = useI18n()
 const message = useMessage()
 
 const showInsertModal = ref(false)
@@ -89,7 +91,7 @@ function handleCancelEdit() {
   <div class="flex flex-col w-full h-full space-y-4">
     <div class="h-8 flex justify-between items-center space-y-1">
       <div class="text-primay text-2xl font-extrabold">
-        Proxies
+        {{ t('menubar.proxies') }}
       </div>
       <div class="flex space-x-3">
         <n-button
@@ -156,6 +158,8 @@ function handleCancelEdit() {
 
 <style lang="scss" scoped>
 :deep(.n-radio-button) {
+  --n-button-border-radius: 12px;
+
   .n-radio__label {
     @apply flex items-center justify-center;
   }

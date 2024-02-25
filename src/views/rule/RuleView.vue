@@ -1,8 +1,11 @@
 <script setup lang="ts">
 import { reactive } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { NForm, NFormItem } from 'naive-ui'
 import type { ProxyRule } from '@/types/rule'
 import { createRule, deleteRule, getAllRules, updateRule } from '@/apis/rule'
+
+const { t } = useI18n()
 
 interface RulesForm {
   rules: ProxyRule[]
@@ -53,7 +56,7 @@ initRules()
 <template>
   <div class="flex w-full h-full flex-col">
     <div class="h-8 flex justify-between items-center text-primay text-2xl font-extrabold">
-      Rules
+      {{ t('menubar.rules') }}
     </div>
     <div class="flex-1 overflow-y-auto">
       <n-scrollbar style="max-height: 100%;">

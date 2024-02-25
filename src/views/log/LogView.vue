@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import { nextTick, onMounted, ref, watch, watchEffect } from 'vue'
 import type { LogInst } from 'naive-ui'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 function log() {
   const l: string[] = []
@@ -44,7 +47,7 @@ onMounted(() => {
   <div class="flex w-full h-full flex-col space-y-3">
     <div class="h-8 flex justify-between items-center">
       <div class="text-primay text-2xl font-extrabold">
-        Logs
+        {{ t('menubar.logs') }}
       </div>
       <div class="flex justify-center items-center space-x-3">
         <n-icon

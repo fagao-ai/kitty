@@ -164,6 +164,8 @@ pub fn run() {
         hysteria_api::delete_hysteria_item,
         hysteria_api::speed_hysteria_delay,
         hysteria_api::get_hysteria_by_id,
+        xray_api::refresh_xray_subscription,
+        xray_api::batch_get_subscriptions,
         xray_api::add_xray_item,
         xray_api::get_all_xrays,
         xray_api::import_xray_subscribe,

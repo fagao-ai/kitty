@@ -4,6 +4,7 @@ export interface KittyBaseConfig {
   socksPort: number
   delayTestUrl: string
   sysproxyFlag: boolean
+  autoUpdate: number
   startAtLogin?: boolean
   language?: string
   allowLan?: boolean

@@ -1,3 +1,4 @@
+import 'reflect-metadata'
 import { Exclude, Expose, Type } from 'class-transformer'
 
 class TLSSetting {

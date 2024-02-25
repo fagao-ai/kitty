@@ -23,7 +23,8 @@
     "mode": "Mode",
     "socks5Port": "Socks5 port",
     "httpPort": "HTTP port",
-    "delayTestUrl": "Delay test url"
+    "delayTestUrl": "Delay test url",
+    "subscriptionAutoUpdate": "Subscription Auto Update (h)"
   },
   "proxy": {
     "hysteria": {

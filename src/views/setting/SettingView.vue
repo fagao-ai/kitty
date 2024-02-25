@@ -16,6 +16,7 @@ const baseConfig = reactive<KittyBaseConfig>({
   socksPort: 10087,
   delayTestUrl: 'https://gstatic.com/generate_204',
   sysproxyFlag: false,
+  autoUpdate: 3,
 })
 async function handleSwitchProxy(value: boolean) {
   proxyLoading.value = true
@@ -39,7 +40,7 @@ async function getBaseConfig() {
 }
 
 async function onBaseConfigUpdate() {
-  await invoke('update_base_config', { base_config: decamelizeKeys(baseConfig) })
+  await invoke('update_base_config', { record: decamelizeKeys(baseConfig) })
 }
 getBaseConfig()
 
@@ -52,6 +53,9 @@ function whenLanguageChanged(lang: string) {
 }
 
 watch(language, whenLanguageChanged, { immediate: true })
+watch(() => baseConfig.autoUpdate, (val) => {
+  settingStore.value.autoUpdate = val
+})
 </script>
 
 <template>
@@ -161,12 +165,28 @@ watch(language, whenLanguageChanged, { immediate: true })
           <div class="font-semibold">
             {{ t('setting.delayTestUrl') }}
           </div>
-          <div class="font-medium w-20">
+          <div class="font-medium w-60">
             <n-input
               v-model:value="baseConfig.delayTestUrl"
               type="text"
               :show-button="false"
               :max="65535"
+              :min="1"
+              @blur="onBaseConfigUpdate"
+            />
+          </div>
+        </div>
+
+        <div class="flex justify-between items-center">
+          <div class="font-semibold">
+            {{ t('setting.subscriptionAutoUpdate') }}
+          </div>
+          <div class="font-medium w-20">
+            <n-input-number
+              v-model:value="baseConfig.autoUpdate"
+              type="text"
+              :show-button="false"
+              :max="48"
               :min="1"
               @blur="onBaseConfigUpdate"
             />
