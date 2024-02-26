@@ -10,8 +10,7 @@ import 'vfonts/FiraCode.css'
 import 'vfonts/Lato.css'
 
 const { theme, lightThemeOverrides, darkThemeOverrides } = useTheme()
-const { stopAutoUpdate } = useSubscriptionAutoUpdate()
-
+const { stopAutoUpdate, autoUpdate } = useSubscriptionAutoUpdate()
 hljs.registerLanguage('naive-log', () => ({
   contains: [
     {
@@ -23,9 +22,8 @@ hljs.registerLanguage('naive-log', () => ({
 
 watch(settingStore, (val, oldVal) => {
   if (!oldVal || val.autoUpdate !== oldVal.autoUpdate) {
-    // console.log('startttt', val.autoUpdate)
-    // stopAutoUpdate()
-    // autoUpdate(val.autoUpdate)
+    stopAutoUpdate()
+    autoUpdate(val.autoUpdate)
   }
 }, { immediate: true })
 

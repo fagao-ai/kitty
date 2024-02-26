@@ -5,8 +5,9 @@ use entity::hysteria::{self as hysteria_entity, HysteriaConfig};
 use entity::xray::{self as xray_entity, XrayConfig};
 use entity::{
     base_config,
-    rules::{self, RuleAction, RuleType},
+    rules::{self},
 };
+use entity::utils::is_port_available;
 #[cfg(feature = "hysteria")]
 use protocols::HysteriaCommandGroup;
 #[cfg(feature = "xray")]
@@ -98,6 +99,15 @@ pub async fn start_system_proxy<'a>(
     let mut socks_vpn_node_infos = Vec::new();
     let mut used_ports = proxy_state.used_ports.lock().await;
     let mut start_cmd_flag = false;
+
+    let record: base_config::Model = base_config::Model::first(&db).await.unwrap().unwrap();
+    let http_port = record.http_port;
+    let socks_port = record.socks_port;
+    for port in vec![http_port, socks_port] {
+        if !is_port_available(port) {
+            return Err(KittyCommandError::AnyHowError(anyhow!("port {} already is used.", port)));
+        }
+    }
     #[cfg(feature = "hysteria")]
     {
         let hysteria_record = hysteria_entity::Model::first(&db).await?;
@@ -169,9 +179,7 @@ pub async fn start_system_proxy<'a>(
         let error = anyhow!("Not have any proxy, please add proxy");
         return Err(KittyCommandError::AnyHowError(error));
     }
-    let record: base_config::Model = base_config::Model::first(&db).await.unwrap().unwrap();
-    let http_port = record.http_port;
-    let socks_port = record.socks_port;
+
     let mut http_proxy = HttpProxy::new(record.local_ip.as_str(), http_port, None)
         .await
         .unwrap();

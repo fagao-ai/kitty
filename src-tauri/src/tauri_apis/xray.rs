@@ -119,6 +119,7 @@ pub async fn refresh_xray_subscription<'a>(
     state: State<'a, DatabaseState>,
     record_ids: Option<Vec<i32>>,
 ) -> CommandResult<()> {
+    println!("refresh_xray_subscription: {:?}", record_ids);
     let db = state.get_db();
     let _ = XrayAPI::refresh_subscribe(&db, record_ids).await?;
     Ok(())

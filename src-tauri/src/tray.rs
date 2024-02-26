@@ -5,7 +5,7 @@ use tauri::{
     menu::{MenuBuilder, MenuItemBuilder},
     tray::{ClickType, TrayIconBuilder},
 };
-use tauri::{AppHandle, Manager, State, Wry};
+use tauri::{AppHandle, Icon, Manager, State, Wry};
 
 use crate::tauri_apis::common as common_api;
 
@@ -35,7 +35,7 @@ impl Tray {
     pub fn init_tray(app_handle: &AppHandle) -> Result<(), Box<dyn std::error::Error>> {
         let menu = Tray::tray_menu(app_handle)?;
         // let icon = Tray::icon()?;
-        let _tray = TrayIconBuilder::new()
+        let tray = TrayIconBuilder::new()
             .menu(&menu)
             // .icon(icon)
             .on_menu_event(move |app, event: tauri::menu::MenuEvent| {
@@ -51,6 +51,11 @@ impl Tray {
                 }
             })
             .build(app_handle)?;
+
+            let _ = tray.set_icon(Some(Icon::Raw(
+                include_bytes!("../icons/icon.png").to_vec(),
+            )));
+            let _ = tray.set_icon_as_template(false);
         Ok(())
     }
 

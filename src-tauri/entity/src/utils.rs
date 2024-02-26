@@ -5,7 +5,7 @@ use std::net::TcpListener;
 const START_PORT: u16 = 20000;
 const END_PORT: u16 = 30000;
 
-fn is_port_available(port: u16) -> bool {
+pub fn is_port_available(port: u16) -> bool {
     if let Ok(listener) = TcpListener::bind(("127.0.0.1", port)) {
         drop(listener);
         return true;
