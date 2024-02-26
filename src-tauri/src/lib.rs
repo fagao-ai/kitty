@@ -23,6 +23,7 @@ mod tauri_event_handler;
 mod tauri_init;
 mod tray;
 mod types;
+mod logger;
 
 // async fn on_window_exit(event: tauri::GlobalWindowEvent) {
 //     println!("on_window_exit call!!!");
