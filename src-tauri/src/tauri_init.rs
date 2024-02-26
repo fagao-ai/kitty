@@ -1,11 +1,16 @@
-use log::trace;
+use log::{debug, trace, LevelFilter};
 use migration::{Migrator, MigratorTrait};
 use sea_orm::{Database, DatabaseConnection, DbErr};
-use tokio::sync::RwLock;
-use std::path::PathBuf;
+use simplelog::{ColorChoice, CombinedLogger, Config, TermLogger, TerminalMode};
+use std::{path::PathBuf, sync::mpsc};
 use tauri_plugin_autostart::AutoLaunchManager;
+use tokio::sync::RwLock;
 
-use crate::{state::DatabaseState, tray::Tray};
+use crate::{
+    logger::KittyLogger,
+    state::{DatabaseState, KittyLoggerState},
+    tray::Tray,
+};
 use anyhow::Result;
 use entity::base_config;
 use kitty_proxy::MatchProxy;
@@ -18,6 +23,7 @@ use crate::state::KittyProxyState;
 pub async fn init_db(app_dir: PathBuf) -> Result<DatabaseConnection, DbErr> {
     let sqlite_path = app_dir.join("MyApp.sqlite");
     trace!("{:?}", sqlite_path);
+    println!("{:?}", sqlite_path);
     let sqlite_url = format!("sqlite://{}?mode=rwc", sqlite_path.to_string_lossy());
     let db: DatabaseConnection = Database::connect(&sqlite_url).await?;
     Migrator::up(&db, None).await?;
@@ -52,6 +58,7 @@ fn setup_db<'a>(handle: &tauri::AppHandle) -> Result<(), Box<dyn std::error::Err
 fn setup_kitty_proxy<'a>(handle: &tauri::AppHandle) -> Result<(), Box<dyn std::error::Error>> {
     let resource_dir = handle.path().resource_dir()?.join("static");
     let app_state: State<KittyProxyState> = handle.state();
+    // tauri::async_runtime::spawn(task)
     tauri::async_runtime::block_on(async move {
         trace!(
             "resource_dir: {:?}, exists: {}",
@@ -95,8 +102,40 @@ fn setup_auto_start<'a>(handle: &tauri::AppHandle) -> Result<(), Box<dyn std::er
     Ok(())
 }
 
+fn setup_kitty_logger(app: &tauri::AppHandle) -> Result<(), Box<dyn std::error::Error>> {
+    let (sender, receiver) = mpsc::channel();
+    CombinedLogger::init(vec![
+        TermLogger::new(
+            LevelFilter::Warn,
+            Config::default(),
+            TerminalMode::Mixed,
+            ColorChoice::Auto,
+        ),
+        KittyLogger::new(LevelFilter::Info, Config::default(), sender),
+    ])
+    .unwrap();
+    let app_clone = app.clone();
+    tauri::async_runtime::spawn(async move {
+        loop {
+            match receiver.recv() {
+                Ok(message) =>{
+                    println!("logger message: {message}");
+                    app_clone.emit("kitty_logger", message).unwrap()
+                } ,
+                Err(_) => {
+                    debug!("Channel closed");
+                    break;
+                }
+            }
+        }
+    });
+
+    Ok(())
+}
+
 pub fn init_setup<'a>(app: &'a mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
     let handle = app.handle();
+    let _ = setup_kitty_logger(handle)?;
     let _ = setup_db(handle)?;
     let _ = setup_db(handle)?;
     let _ = setup_auto_start(handle)?;

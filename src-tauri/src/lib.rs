@@ -1,4 +1,4 @@
-use state::{DatabaseState, ProcessManagerState};
+use state::{DatabaseState, KittyLoggerState, ProcessManagerState};
 use std::env;
 use tauri::RunEvent;
 use tauri::{generate_handler, ipc::Invoke};
@@ -85,6 +85,7 @@ pub fn run() {
         db: Default::default(),
     });
     let builder = builder.manage(ProcessManagerState::default());
+    let builder = builder.manage(KittyLoggerState::default());
     let builder = builder
         .manage(KittyProxyState::default())
         // .plugin(tauri_plugin_window::init())

@@ -52,9 +52,8 @@ reqwest = { version = "0.11.22", features = [ "json" ] }
 kitty_proxy = { git = "https://github.com/hezhaozhao-git/kitty_proxy.git", version = "0.1.0" }
 base64 = { version = "0.21.7", optional = true, features = [ "std" ] }
 tauri-plugin-clipboard-manager = "2.0.0-beta"
-env_logger = "0.9"
 log = "0.4.20"
-clokwerk = "0.4.0"
+simplelog = "0.12.1"
 
 [workspace]
 members = [

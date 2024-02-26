@@ -5,6 +5,7 @@ use protocols::HysteriaCommandGroup;
 use protocols::XrayCommandGroup;
 use sea_orm::DatabaseConnection;
 use std::collections::HashSet;
+use std::sync::mpsc::Receiver;
 use std::sync::Arc;
 use tokio::sync::watch::Sender;
 use tokio::sync::{Mutex, RwLock};
@@ -58,6 +59,18 @@ impl Default for KittyProxyState {
             http_proxy_sx: Mutex::new(None),
             socks_proxy_sx: Mutex::new(None),
             used_ports: Mutex::new(HashSet::new()),
+        }
+    }
+}
+
+pub struct KittyLoggerState {
+    pub logger_reciver: Mutex<Option<Receiver<String>>>,
+}
+
+impl Default for KittyLoggerState {
+    fn default() -> Self {
+        Self {
+            logger_reciver: Mutex::new(None),
         }
     }
 }
