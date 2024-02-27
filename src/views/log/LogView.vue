@@ -3,6 +3,10 @@ import { nextTick, onMounted, ref, watch, watchEffect } from 'vue'
 import type { LogInst } from 'naive-ui'
 import { useI18n } from 'vue-i18n'
 
+// import { useQueueRef } from '@/tools/logHook'
+
+// const logs = useQueueRef<string>()
+
 const { t } = useI18n()
 
 function log() {

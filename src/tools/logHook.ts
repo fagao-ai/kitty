@@ -1,20 +1,23 @@
-export class KittyLogQueue {
-  private queue: string[]
-  private maxSize: number
+import { customRef } from 'vue'
 
-  constructor(size: number) {
-    this.queue = []
-    this.maxSize = size
-  }
+export function useQueueRef<T>(size: number = 1000) {
+  return customRef((track, trigger) => {
+    const queue: T[] = []
+    return {
+      get() {
+        track()
+        return queue
+      },
+      set(value) {
+        if (queue.length >= size)
+          queue.shift()
 
-  push(item: string): void {
-    if (this.queue.length >= this.maxSize)
-      this.queue.shift()
-
-    this.queue.push(item)
-  }
-
-  getQueue(): string[] {
-    return this.queue
-  }
+        const item = value.at(-1)
+        if (!item)
+          return
+        queue.push(item)
+        trigger()
+      },
+    }
+  })
 }
