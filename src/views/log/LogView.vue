@@ -1,19 +1,16 @@
 <script setup lang="ts">
-import { nextTick, onMounted, ref, watch, watchEffect } from 'vue'
+import { computed, nextTick, onMounted, ref, watch, watchEffect } from 'vue'
 import type { LogInst } from 'naive-ui'
 import { useI18n } from 'vue-i18n'
-import { listen } from '@tauri-apps/api/event';
-import { onUnmounted } from 'vue';
+import { useLogQueue } from '@/views/log/store'
 
-// import { useQueueRef } from '@/tools/logHook'
-
-// const logs = useQueueRef<string>()
+const { logQueue } = useLogQueue(1000)
 
 const { t } = useI18n()
 
 function log() {
   const l: string[] = []
-  for (let i = 0;i < 40;++i)
+  for (let i = 0; i < 40; ++i)
     l.push(Math.random().toString(16))
 
   return `${l.join('\n')}\n`
@@ -24,27 +21,18 @@ const logRef = ref(log())
 const logInstRef = ref<LogInst | null>(null)
 
 const startRef = ref(false)
-const timerRef = ref<number | null>(null)
+
+const logs = computed(() => {
+  return logQueue.value.join('\n')
+})
+
 function startRealtime() {
   startRef.value = !startRef.value
-  if (startRef.value) {
-    timerRef.value = window.setInterval(() => {
-      logRef.value = logRef.value + log()
-    }, 1000)
-  }
-  else if (timerRef.value) {
-    clearInterval(timerRef.value)
-    timerRef.value = null
-  }
+  if (startRef.value)
+    logRef.value = logs.value
 }
-
-let unlisten: any
-
 watch(realtimeUpdate, startRealtime)
-onMounted(async () => {
-  unlisten = await listen<string>('kitty_logger', (event) => {
-    console.log(`log is ${event.payload}`);
-  })
+onMounted(() => {
   watchEffect(() => {
     if (logRef.value) {
       nextTick(() => {
@@ -52,10 +40,6 @@ onMounted(async () => {
       })
     }
   })
-})
-
-onUnmounted(() => {
-  unlisten?.()
 })
 </script>
 
@@ -91,7 +75,7 @@ onUnmounted(() => {
       <n-log
         ref="logInstRef"
         class="w-full h-full"
-        :log="logRef"
+        :lines="logQueue"
         :rows="35"
         language="naive-log"
         trim

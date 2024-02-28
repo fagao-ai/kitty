@@ -2,12 +2,12 @@
 import { onMounted, onUnmounted, watch } from 'vue'
 import { NConfigProvider, NMessageProvider } from 'naive-ui'
 import hljs from 'highlight.js/lib/core'
-import { listen, type UnlistenFn } from '@tauri-apps/api/event'
+import { type UnlistenFn, listen } from '@tauri-apps/api/event'
 import { useTheme } from '@/utils/theme'
 import { useSubscriptionAutoUpdate } from '@/tools'
 import { settingStore } from '@/views/setting/store'
+import { useLogQueue } from '@/views/log/store'
 import MenuView from '@/views/menu/MenuView.vue'
-import { logStore } from '@/global'
 import 'vfonts/FiraCode.css'
 import 'vfonts/Lato.css'
 
@@ -21,12 +21,20 @@ hljs.registerLanguage('naive-log', () => ({
     },
   ],
 }))
+
+const { enqueueLog } = useLogQueue(1000)
+// let ii = 1
+// const logId = setInterval(() => {
+//   enqueueLog(`${ii}`)
+//   ii++
+// }, 1000)
+
 let unlisten: UnlistenFn | undefined
 onMounted(async () => {
   unlisten = await listen<string>('kitty_logger', (event) => {
-    console.log(`log is ${event.payload}`);
+    console.log(`log is ${event.payload}`)
 
-    logStore.value.push(event.payload)
+    enqueueLog(event.payload)
   })
 })
 
@@ -37,6 +45,7 @@ watch(settingStore, (val, oldVal) => {
 }, { immediate: true })
 
 onUnmounted(() => {
+  // clearInterval(logId)
   stopAutoUpdate()
   unlisten?.()
 })
