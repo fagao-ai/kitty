@@ -1,11 +1,13 @@
 <script setup lang="ts">
-import { onUnmounted, watch } from 'vue'
+import { onMounted, onUnmounted, watch } from 'vue'
 import { NConfigProvider, NMessageProvider } from 'naive-ui'
 import hljs from 'highlight.js/lib/core'
+import { listen, type UnlistenFn } from '@tauri-apps/api/event'
 import { useTheme } from '@/utils/theme'
 import { useSubscriptionAutoUpdate } from '@/tools'
 import { settingStore } from '@/views/setting/store'
 import MenuView from '@/views/menu/MenuView.vue'
+import { logStore } from '@/global'
 import 'vfonts/FiraCode.css'
 import 'vfonts/Lato.css'
 
@@ -19,15 +21,24 @@ hljs.registerLanguage('naive-log', () => ({
     },
   ],
 }))
+let unlisten: UnlistenFn | undefined
+onMounted(async () => {
+  unlisten = await listen<string>('kitty_logger', (event) => {
+    console.log(`log is ${event.payload}`);
+
+    logStore.value.push(event.payload)
+  })
+})
 
 watch(settingStore, (val, oldVal) => {
   if (!oldVal || val.autoUpdate !== oldVal.autoUpdate)
     stopAutoUpdate()
-    // autoUpdate(val.autoUpdate)
+  // autoUpdate(val.autoUpdate)
 }, { immediate: true })
 
 onUnmounted(() => {
   stopAutoUpdate()
+  unlisten?.()
 })
 </script>
 

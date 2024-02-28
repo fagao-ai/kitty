@@ -1,4 +1,4 @@
 import { useSubscriptionAutoUpdate } from '@/tools/autoUpdateHook'
-import { KittyLogQueue } from '@/tools/logHook'
+import { useQueueRef } from '@/tools/logHook'
 
-export { useSubscriptionAutoUpdate, KittyLogQueue }
+export { useSubscriptionAutoUpdate, useQueueRef }
