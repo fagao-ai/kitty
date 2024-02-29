@@ -5,9 +5,10 @@ target = "x86_64-pc-windows-msvc"
 linker = "$NDK_HOME/toolchains/llvm/prebuilt/windows-x86_64/bin/x86_64-linux-android24-clang"
 rustflags = [
   "-L",
-  "/home/one/code/chat-gpt-gui-dev/server/.cargo",
+  "E:/opdensource/kitty/src-tauri/.cargo",
   "-Clink-arg=-landroid",
   "-Clink-arg=-llog",
   "-Clink-arg=-lOpenSLES",
   "-Clink-arg=-lOpenSLES",
+  "-Clink-arg=$NDK_HOME/toolchains/llvm/prebuilt/windows-x86_64/lib64/clang/14.0.6/lib/linux/libclang_rt.builtins-x86_64-android.a",
 ]

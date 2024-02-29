@@ -54,6 +54,7 @@ base64 = { version = "0.21.7", optional = true, features = [ "std" ] }
 tauri-plugin-clipboard-manager = "2.0.0-beta"
 log = "0.4.20"
 simplelog = "0.12.1"
+cc = "1.0.88"
 
 [workspace]
 members = [
