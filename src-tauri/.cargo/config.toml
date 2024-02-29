@@ -1,0 +1,13 @@
+[build]
+target = "x86_64-pc-windows-msvc"
+
+[target.x86_64-linux-android]
+linker = "$NDK_HOME/toolchains/llvm/prebuilt/windows-x86_64/bin/x86_64-linux-android24-clang"
+rustflags = [
+  "-L",
+  "/home/one/code/chat-gpt-gui-dev/server/.cargo",
+  "-Clink-arg=-landroid",
+  "-Clink-arg=-llog",
+  "-Clink-arg=-lOpenSLES",
+  "-Clink-arg=-lOpenSLES",
+]
