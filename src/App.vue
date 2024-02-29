@@ -13,27 +13,28 @@ import 'vfonts/Lato.css'
 
 const { theme, lightThemeOverrides, darkThemeOverrides } = useTheme()
 const { stopAutoUpdate } = useSubscriptionAutoUpdate()
-hljs.registerLanguage('naive-log', () => ({
+hljs.registerLanguage('kitty-log', () => ({
   contains: [
+    // {
+    //   className: 'string',
+    //   keywords: ['proxy', 'direct']
+    // },
+    {
+      className: 'string',
+      begin: /\[[A-Z]+\]/,
+    },
     {
       className: 'number',
-      begin: /\d+/,
+      match: /^(?:https?:\/\/)?(?:www\.)?([a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*)(?::\d+)?(?:\/.*)?$/,
     },
   ],
 }))
 
 const { enqueueLog } = useLogQueue(1000)
-// let ii = 1
-// const logId = setInterval(() => {
-//   enqueueLog(`${ii}`)
-//   ii++
-// }, 1000)
 
 let unlisten: UnlistenFn | undefined
 onMounted(async () => {
   unlisten = await listen<string>('kitty_logger', (event) => {
-    console.log(`log is ${event.payload}`)
-
     enqueueLog(event.payload)
   })
 })
