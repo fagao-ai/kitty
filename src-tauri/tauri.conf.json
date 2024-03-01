@@ -39,6 +39,7 @@
     ],
     "resources": [
       "static/*"
-    ]
+    ],
+    "iOS": {"developmentTeam": "123"}
   }
 }

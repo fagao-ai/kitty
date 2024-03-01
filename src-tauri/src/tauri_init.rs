@@ -3,14 +3,17 @@ use migration::{Migrator, MigratorTrait};
 use sea_orm::{Database, DatabaseConnection, DbErr};
 use simplelog::{ColorChoice, CombinedLogger, Config, TermLogger, TerminalMode};
 use std::{path::PathBuf, sync::mpsc};
+#[cfg(any(target_os = "macos", target_os = "linux", target_os = "windows"))]
 use tauri_plugin_autostart::AutoLaunchManager;
 use tokio::sync::RwLock;
 
 use crate::{
     logger::KittyLogger,
-    state::{DatabaseState, KittyLoggerState},
-    tray::Tray,
+    state::DatabaseState,
 };
+
+#[cfg(any(target_os = "macos", target_os = "linux", target_os = "windows"))]
+use crate::tray::Tray;
 use anyhow::Result;
 use entity::base_config;
 use kitty_proxy::MatchProxy;
@@ -23,7 +26,6 @@ use crate::state::KittyProxyState;
 pub async fn init_db(app_dir: PathBuf) -> Result<DatabaseConnection, DbErr> {
     let sqlite_path = app_dir.join("MyApp.sqlite");
     trace!("{:?}", sqlite_path);
-    println!("{:?}", sqlite_path);
     let sqlite_url = format!("sqlite://{}?mode=rwc", sqlite_path.to_string_lossy());
     let db: DatabaseConnection = Database::connect(&sqlite_url).await?;
     Migrator::up(&db, None).await?;
@@ -58,7 +60,6 @@ fn setup_db<'a>(handle: &tauri::AppHandle) -> Result<(), Box<dyn std::error::Err
 fn setup_kitty_proxy<'a>(handle: &tauri::AppHandle) -> Result<(), Box<dyn std::error::Error>> {
     let resource_dir = handle.path().resource_dir()?.join("static");
     let app_state: State<KittyProxyState> = handle.state();
-    // tauri::async_runtime::spawn(task)
     tauri::async_runtime::block_on(async move {
         trace!(
             "resource_dir: {:?}, exists: {}",
@@ -74,6 +75,7 @@ fn setup_kitty_proxy<'a>(handle: &tauri::AppHandle) -> Result<(), Box<dyn std::e
     Ok(())
 }
 
+#[cfg(any(target_os = "macos", target_os = "linux", target_os = "windows"))]
 fn setup_auto_start<'a>(handle: &tauri::AppHandle) -> Result<(), Box<dyn std::error::Error>> {
     let db_state: State<DatabaseState> = handle.state();
     let auto_start_state: State<AutoLaunchManager> = handle.state();
@@ -135,11 +137,12 @@ fn setup_kitty_logger(app: &tauri::AppHandle) -> Result<(), Box<dyn std::error::
 
 pub fn init_setup<'a>(app: &'a mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
     let handle = app.handle();
-    let _ = setup_kitty_logger(handle)?;
-    let _ = setup_db(handle)?;
-    let _ = setup_db(handle)?;
+    // let _ = setup_kitty_logger(handle)?;
+    // let _ = setup_db(handle)?;
+    #[cfg(any(target_os = "macos", target_os = "linux", target_os = "windows"))]
     let _ = setup_auto_start(handle)?;
-    let _ = setup_kitty_proxy(handle)?;
+    // let _ = setup_kitty_proxy(handle)?;
+    #[cfg(any(target_os = "macos", target_os = "linux", target_os = "windows"))]
     let _ = Tray::init_tray(handle);
     Ok(())
 }

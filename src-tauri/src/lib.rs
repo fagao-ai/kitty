@@ -9,6 +9,7 @@ use tauri_apis::xray as xray_api;
 use tauri_init::init_setup;
 
 use tauri_apis::common as common_api;
+#[cfg(any(target_os = "macos", target_os = "linux", target_os = "windows"))]
 use tauri_plugin_autostart::MacosLauncher;
 
 use crate::state::KittyProxyState;
@@ -87,13 +88,13 @@ pub fn run() {
     let builder = builder.manage(ProcessManagerState::default());
     let builder = builder.manage(KittyLoggerState::default());
     let builder = builder
-        .manage(KittyProxyState::default())
-        // .plugin(tauri_plugin_window::init())
-        .plugin(tauri_plugin_autostart::init(
-            MacosLauncher::LaunchAgent,
-            Some(vec![]),
-        ))
-        .plugin(tauri_plugin_notification::init())
+        .manage(KittyProxyState::default());
+    #[cfg(any(target_os = "macos", target_os = "linux", target_os = "windows"))]
+    let builder = builder.plugin(tauri_plugin_autostart::init(
+        MacosLauncher::LaunchAgent,
+        Some(vec![]),
+    ));
+    let builder = builder.plugin(tauri_plugin_notification::init())
         .plugin(tauri_plugin_clipboard_manager::init())
         .setup(init_setup);
     // .on_window_event(on_window_exit_func);

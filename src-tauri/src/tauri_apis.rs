@@ -27,11 +27,11 @@ use tokio::sync::watch;
 use std::sync::Arc;
 
 use crate::{
-    proxy::system_proxy::{clear_system_proxy, set_system_proxy},
     state::{DatabaseState, KittyProxyState, ProcessManagerState},
     tauri_apis::utils::{add_rule2match_proxy, relative_command_path},
     types::{CommandResult, KittyCommandError, KittyResponse},
 };
+use crate::proxy::system_proxy::{clear_system_proxy, set_system_proxy};
 use log::Level;
 
 use utils::get_http_socks_ports;

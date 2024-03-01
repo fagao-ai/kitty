@@ -1,3 +1,5 @@
+#![cfg(not(any(target_os = "android", target_os = "ios")))]
+
 use crate::state::DatabaseState;
 use crate::tauri_event_handler::on_exit_clear_commands;
 use tauri::menu::{Menu, MenuEvent};

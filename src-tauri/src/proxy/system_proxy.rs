@@ -1,11 +1,12 @@
 use anyhow::Result;
+#[cfg(any(target_os = "macos", target_os = "linux", target_os = "windows"))]
 use sysproxy::Sysproxy;
-
 
 #[cfg(target_os = "windows")]
 static DEFAULT_BYPASS: &str = "localhost;127.*;192.168.*;<local>";
 #[cfg(target_os = "linux")]
-static DEFAULT_BYPASS: &str = "192.168.0.0/16,10.0.0.0/8,172.16.0.0/12,127.0.0.1,localhost,*.local,::1";
+static DEFAULT_BYPASS: &str =
+    "192.168.0.0/16,10.0.0.0/8,172.16.0.0/12,127.0.0.1,localhost,*.local,::1";
 #[cfg(target_os = "macos")]
 static DEFAULT_BYPASS: &str = "192.168.0.0/16,10.0.0.0/8,172.16.0.0/12,127.0.0.1,localhost,*.local,timestamp.apple.com,sequoia.apple.com,seed-sequoia.siri.apple.com";
 
@@ -129,7 +130,7 @@ pub fn set_system_proxy(host: &str, socks_port: u16, http_port: Option<u16>) -> 
 }
 
 #[cfg(target_os = "windows")]
-pub fn clear_system_proxy() -> Result<()>{
+pub fn clear_system_proxy() -> Result<()> {
     let socks_sysproxy = Sysproxy {
         enable: false,
         host: "127.0.0.1".into(),
@@ -169,4 +170,19 @@ pub fn clear_system_proxy() -> Result<()> {
 pub fn has_sys_proxy() -> Result<bool> {
     let sys_proxy = Sysproxy::get_system_proxy()?;
     Ok(sys_proxy.enable)
+}
+
+#[cfg(any(target_os = "ios", target_os = "android"))]
+pub fn has_sys_proxy() -> Result<bool> {
+    Ok(true)
+}
+
+#[cfg(any(target_os = "ios", target_os = "android"))]
+pub fn clear_system_proxy() -> Result<()> {
+    Ok(())
+}
+
+#[cfg(any(target_os = "ios", target_os = "android"))]
+pub fn set_system_proxy(host: &str, socks_port: u16, http_port: Option<u16>) -> Result<&str> {
+    Ok("")
 }

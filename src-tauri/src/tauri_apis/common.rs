@@ -5,16 +5,17 @@ use anyhow::anyhow;
 use entity::base_config;
 use entity::rules;
 use sea_orm::{DatabaseConnection, TransactionTrait};
-use tauri::State;
+use tauri::{Manager, State};
+#[cfg(any(target_os = "macos", target_os = "linux", target_os = "windows"))]
 use tauri_plugin_autostart::AutoLaunchManager;
 use tauri_plugin_clipboard_manager::ClipboardExt;
 
-#[cfg(any(target_os = "macos", target_os = "linux", target_os = "windows"))]
 use tauri::AppHandle;
 use tauri::Runtime;
 
 use super::utils::{add_rule2match_proxy, delete_rule2match_proxy};
 
+#[cfg(any(target_os = "macos", target_os = "linux", target_os = "windows"))]
 pub async fn copy_proxy_env<R: Runtime>(
     app_handle: &AppHandle<R>,
     db: &DatabaseConnection,
@@ -48,12 +49,15 @@ pub async fn query_base_config<'a>(
 }
 
 #[tauri::command(rename_all = "snake_case")]
-pub async fn update_base_config<'a>(
+pub async fn update_base_config<'a, R: Runtime>(
+    app_handle: AppHandle<R>,
     state: State<'a, DatabaseState>,
-    auto_start_state: State<'a, AutoLaunchManager>,
     record: base_config::Model,
 ) -> CommandResult<KittyResponse<base_config::Model>> {
     let db = state.get_db();
+    #[cfg(any(target_os = "macos", target_os = "linux", target_os = "windows"))]
+    let auto_start_state: State<AutoLaunchManager> = app_handle.state();
+    #[cfg(any(target_os = "macos", target_os = "linux", target_os = "windows"))]
     if let Ok(is_enable) = auto_start_state.is_enabled() {
         if record.auto_start {
             if !is_enable {

@@ -1,7 +1,6 @@
-use crate::{
-    proxy::system_proxy::{clear_system_proxy, has_sys_proxy},
-    state::ProcessManagerState,
-};
+use crate::state::ProcessManagerState;
+#[cfg(any(target_os = "macos", target_os = "linux", target_os = "windows"))]
+use crate::proxy::system_proxy::{clear_system_proxy, has_sys_proxy};
 use log::trace;
 use protocols::KittyCommandGroupTrait;
 use tauri::{AppHandle, Manager, State};
@@ -26,6 +25,7 @@ async fn clear_command(app_handle: &AppHandle) {
             process_manager.terminate_backends().unwrap();
         }
     }
+    #[cfg(any(target_os = "macos", target_os = "linux", target_os = "windows"))]
     if has_sys_proxy().is_ok() {
         clear_system_proxy().unwrap()
     };
