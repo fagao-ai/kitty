@@ -73,3 +73,6 @@ default = [
 ]
 xray = [ "dep:base64" ]
 hysteria = []
+
+[target."cfg(not(any(target_os = \"android\", target_os = \"ios\")))".dependencies]
+tauri-plugin-global-shortcut = "2.0.0-beta"

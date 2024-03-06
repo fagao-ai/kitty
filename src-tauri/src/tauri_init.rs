@@ -8,7 +8,7 @@ use tokio::sync::RwLock;
 
 use crate::{
     logger::KittyLogger,
-    state::{DatabaseState, KittyLoggerState},
+    state::{DatabaseState},
     tray::Tray,
 };
 use anyhow::Result;
@@ -106,7 +106,7 @@ fn setup_kitty_logger(app: &tauri::AppHandle) -> Result<(), Box<dyn std::error::
     let (sender, receiver) = mpsc::channel();
     CombinedLogger::init(vec![
         TermLogger::new(
-            LevelFilter::Warn,
+            LevelFilter::Info,
             Config::default(),
             TerminalMode::Mixed,
             ColorChoice::Auto,
@@ -118,10 +118,7 @@ fn setup_kitty_logger(app: &tauri::AppHandle) -> Result<(), Box<dyn std::error::
     tauri::async_runtime::spawn(async move {
         loop {
             match receiver.recv() {
-                Ok(message) =>{
-                    println!("logger message: {message}");
-                    app_clone.emit("kitty_logger", message).unwrap()
-                } ,
+                Ok(message) => app_clone.emit("kitty_logger", message).unwrap(),
                 Err(_) => {
                     debug!("Channel closed");
                     break;
@@ -133,6 +130,26 @@ fn setup_kitty_logger(app: &tauri::AppHandle) -> Result<(), Box<dyn std::error::
     Ok(())
 }
 
+fn setup_global_shortcut<'a>(handle: &tauri::AppHandle) -> Result<(), Box<dyn std::error::Error>> {
+    use tauri_plugin_global_shortcut::{Code, GlobalShortcutExt, Modifiers, Shortcut};
+
+    let command_w_shortcut = Shortcut::new(Some(Modifiers::META), Code::KeyW);
+    // let command_w_shortcut = Shortcut::new(Some(Modifiers::META), Code::KeyW);
+    let app_handle = handle.clone();
+    handle.plugin(
+        tauri_plugin_global_shortcut::Builder::with_handler(move |_app, shortcut| {
+            if shortcut == &command_w_shortcut {
+                let window = app_handle.get_webview_window("main").unwrap();
+                window.hide().unwrap();
+            }
+        })
+        .build(),
+    )?;
+
+    handle.global_shortcut().register(command_w_shortcut)?;
+    Ok(())
+}
+
 pub fn init_setup<'a>(app: &'a mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
     let handle = app.handle();
     let _ = setup_kitty_logger(handle)?;
@@ -140,6 +157,7 @@ pub fn init_setup<'a>(app: &'a mut tauri::App) -> Result<(), Box<dyn std::error:
     let _ = setup_db(handle)?;
     let _ = setup_auto_start(handle)?;
     let _ = setup_kitty_proxy(handle)?;
-    let _ = Tray::init_tray(handle);
+    let _ = Tray::init_tray(handle)?;
+    let _ = setup_global_shortcut(handle)?;
     Ok(())
 }

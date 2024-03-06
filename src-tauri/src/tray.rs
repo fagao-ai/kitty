@@ -5,6 +5,8 @@ use tauri::{
     menu::{MenuBuilder, MenuItemBuilder},
     tray::{ClickType, TrayIconBuilder},
 };
+
+
 use tauri::{AppHandle, Icon, Manager, State, Wry};
 
 use crate::tauri_apis::common as common_api;
@@ -82,4 +84,5 @@ impl Tray {
             _ => (),
         }
     }
+    
 }
