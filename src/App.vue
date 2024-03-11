@@ -10,7 +10,7 @@ import 'vfonts/FiraCode.css'
 import 'vfonts/Lato.css'
 
 const { theme, lightThemeOverrides, darkThemeOverrides } = useTheme()
-const { stopAutoUpdate } = useSubscriptionAutoUpdate()
+const { autoUpdate, stopAutoUpdate } = useSubscriptionAutoUpdate()
 hljs.registerLanguage('kitty-log', () => ({
   contains: [
     // {
@@ -31,7 +31,7 @@ hljs.registerLanguage('kitty-log', () => ({
 const unwatch = watch(settingStore, (val, oldVal) => {
   if (!oldVal || val.autoUpdate !== oldVal.autoUpdate)
     stopAutoUpdate()
-  // autoUpdate(val.autoUpdate)
+  autoUpdate(val.autoUpdate)
 }, { immediate: true })
 
 onUnmounted(() => {

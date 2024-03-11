@@ -1,17 +1,18 @@
 import { autoUpdateSubscription, batchGetSubscriptions } from '@/apis/proxy'
+import { useTask } from '@/tools/useTask'
 
 export function useSubscriptionAutoUpdate() {
-  let intervalId: any
+  const { startTask, stopTask } = useTask(3, async () => {
+    const subscriptions = await batchGetSubscriptions()
+    await autoUpdateSubscription(subscriptions.map(item => item.id))
+  })
 
-  function autoUpdate(t: number) {
-    intervalId = setInterval(async () => {
-      const subscriptions = await batchGetSubscriptions()
-      await autoUpdateSubscription(subscriptions.map(item => item.id))
-    }, t * 3600 * 1000)
+  function autoUpdate() {
+    startTask()
   }
 
   function stopAutoUpdate() {
-    clearInterval(intervalId)
+    stopTask()
   }
 
   return { autoUpdate, stopAutoUpdate }
