@@ -1,6 +1,9 @@
-<script setup lang="ts">
+<script
+  setup
+  lang="ts"
+>
 import { NButton, useMessage } from 'naive-ui'
-import { computed, ref, watch } from 'vue'
+import { computed, onUnmounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { ProxyType } from '@/types/proxy'
 import AddProxy from '@/views/proxy/modal/AddProxy.vue'
@@ -10,6 +13,7 @@ import ProxyCardList from '@/components/ProxyCardList.vue'
 import { getAllHysterias, getAllXraies, getProxyByIdAndType } from '@/apis/proxy'
 import ImportProxy from '@/views/proxy/modal/ImportProxy.vue'
 import EditProxy from '@/views/proxy/modal/EditProxy.vue'
+import { useSubscriptionAutoUpdate } from '@/tools/autoUpdateHook'
 
 const { t } = useI18n()
 const message = useMessage()
@@ -61,7 +65,7 @@ function handleGetAllProxyByType(proxyType: ProxyType) {
   initXray()
 }
 
-watch(proxyStore, () => {
+const unwatchProxyStore = watch(proxyStore, () => {
   handleGetAllProxyByType(proxyStore.value.currentProxy)
 }, { immediate: true, deep: true })
 
@@ -85,6 +89,18 @@ function handleCancelEdit() {
   showEditModal.value = false
   editingProxy.value = {}
 }
+
+const { updateStatus } = useSubscriptionAutoUpdate()
+
+const unwatchUpdateStatus = watch(updateStatus, (newStatus, oldStatus) => {
+  if (oldStatus === 'running' && newStatus === 'stop')
+    handleGetAllProxyByType(ProxyType.Xray)
+})
+
+onUnmounted(() => {
+  unwatchProxyStore()
+  unwatchUpdateStatus()
+})
 </script>
 
 <template>
@@ -156,7 +172,10 @@ function handleCancelEdit() {
   />
 </template>
 
-<style lang="scss" scoped>
+<style
+  lang="scss"
+  scoped
+>
 :deep(.n-radio-button) {
   --n-button-border-radius: 12px;
 
