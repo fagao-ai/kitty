@@ -47,14 +47,27 @@ hljs.registerLanguage('kitty-log', () => ({
           <menu-view />
         </div>
         <div class="flex-1 px-4 pb-4 h-full w-full overflow-y-hidden">
-          <!-- TODO: add transition -->
           <router-view v-slot="{ Component }">
-            <keep-alive>
-              <component :is="Component" />
-            </keep-alive>
+            <transition name="fade">
+              <keep-alive>
+                <component :is="Component" />
+              </keep-alive>
+            </transition>
           </router-view>
         </div>
       </n-message-provider>
     </div>
   </n-config-provider>
 </template>
+
+<style scoped>
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+</style>

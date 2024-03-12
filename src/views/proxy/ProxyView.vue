@@ -150,26 +150,26 @@ onUnmounted(() => {
         @dblclick="handleCardDblClick"
       />
     </div>
-  </div>
-  <add-proxy
-    v-model:showModal="showInsertModal"
-    :current-tab="proxyStore.currentProxy"
-    @insert-submit="handleGetAllProxyByType"
-  />
+    <add-proxy
+      v-model:showModal="showInsertModal"
+      :current-tab="proxyStore.currentProxy"
+      @insert-submit="handleGetAllProxyByType"
+    />
 
-  <import-proxy
-    v-model:showModal="showImportModal"
-    :current-tab="ProxyType.Xray"
-    :disabled-tab="ProxyType.Hysteria"
-    @on-import="handleGetAllProxyByType"
-  />
-  <edit-proxy
-    v-model:show-modal="showEditModal"
-    :proxy-type="editProxyType"
-    :form="(editingProxy as HysteriaProxy | XrayProxy)"
-    @on-cancel-edit="handleCancelEdit"
-    @on-proxy-updated="handleGetAllProxyByType"
-  />
+    <import-proxy
+      v-model:showModal="showImportModal"
+      :current-tab="ProxyType.Xray"
+      :disabled-tab="ProxyType.Hysteria"
+      @on-import="handleGetAllProxyByType"
+    />
+    <edit-proxy
+      v-model:show-modal="showEditModal"
+      :proxy-type="editProxyType"
+      :form="(editingProxy as HysteriaProxy | XrayProxy)"
+      @on-cancel-edit="handleCancelEdit"
+      @on-proxy-updated="handleGetAllProxyByType"
+    />
+  </div>
 </template>
 
 <style
