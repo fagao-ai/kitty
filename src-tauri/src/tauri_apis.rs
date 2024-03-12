@@ -119,7 +119,7 @@ pub async fn start_system_proxy<'a>(
                 HysteriaCommandGroup::new(hysteria_bin_path, config_dir.clone());
             let mut config_hash_map: HashMap<String, HysteriaConfig> = HashMap::new();
             config_hash_map.insert(hysteria_config.server.clone(), hysteria_config);
-            let _ = hysteria_command_group.start_commands(config_hash_map, None);
+            let _ = hysteria_command_group.start_commands(config_hash_map, None)?;
             *process_state.hy_process_manager.lock().await = Some(hysteria_command_group);
             http_vpn_node_infos.push(NodeInfo::new(
                 IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)),

@@ -67,8 +67,9 @@ impl KittyCommand {
 
     pub fn check_socket_addrs(&self, socket_addrs: Vec<SocketAddr>) -> Result<()> {
         for socket_addr in socket_addrs {
-            if !socket_addr_busy(socket_addr) {
-                return Err(anyhow!(anyhow!("check_socket_addrs failed, xray start failed!")));
+            let res = socket_addr_busy(socket_addr);
+            if !res {
+                return Err(anyhow!(anyhow!("check_socket_addrs failed, process start failed!")));
             }
         }
         Ok(())
@@ -97,6 +98,7 @@ impl KittyCommand {
                                 }
                             }
                         }
+                        return Ok(());
                     }
                 }
                 CheckStatusCommandPipe::StdOut => {
@@ -117,7 +119,7 @@ impl KittyCommand {
                 }
             }
         }
-        Err(anyhow!("xray start failed!"))
+        Err(anyhow!("process start failed!"))
     }
 
     pub fn terminate_backend(&mut self) -> Result<()> {
