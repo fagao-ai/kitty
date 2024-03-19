@@ -46,3 +46,14 @@ const emits = defineEmits<Emits>()
     </n-scrollbar>
   </div>
 </template>
+
+<style
+  lang="scss"
+  scoped
+>
+:deep(.n-scrollbar) {
+  .n-scrollbar-content {
+    @apply pl-4 py-4;
+  }
+}
+</style>

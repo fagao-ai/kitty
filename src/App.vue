@@ -44,7 +44,7 @@ hljs.registerLanguage('kitty-log', () => ({
           <menu-view />
         </div>
         <div
-          class="flex-1 p-4 h-full w-full overflow-y-hidden"
+          class="flex-1 h-full w-full overflow-y-hidden"
           data-tauri-drag-region
         >
           <router-view v-slot="{ Component }">

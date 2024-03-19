@@ -1,6 +1,6 @@
 <template>
   <div
-    class="h-8 flex justify-between items-center gap-y-1"
+    class="h-16 flex justify-between items-center gap-y-1 p-4"
     data-tauri-drag-region
   >
     <div
