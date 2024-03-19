@@ -1,4 +1,7 @@
-<script setup lang="ts">
+<script
+  setup
+  lang="ts"
+>
 import ProxyCard from '@/components/ProxyCard.vue'
 import Empty from '@/components/Empty.vue'
 import type { ProxyCard as Card, ProxyType } from '@/types/proxy'

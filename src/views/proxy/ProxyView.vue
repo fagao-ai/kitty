@@ -13,6 +13,7 @@ import ProxyCardList from '@/components/ProxyCardList.vue'
 import { getAllHysterias, getAllXraies, getProxyByIdAndType } from '@/apis/proxy'
 import ImportProxy from '@/views/proxy/modal/ImportProxy.vue'
 import EditProxy from '@/views/proxy/modal/EditProxy.vue'
+import HeaderBar from '@/components/HeaderBar.vue'
 import { useSubscriptionAutoUpdate } from '@/tools/autoUpdateHook'
 
 const { t } = useI18n()
@@ -104,26 +105,28 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="flex flex-col w-full h-full space-y-4">
-    <div class="h-8 flex justify-between items-center space-y-1">
-      <div class="text-primay text-2xl font-extrabold">
+  <div class="flex flex-col w-full h-full gap-y-4">
+    <header-bar>
+      <template #title>
         {{ t('menubar.proxies') }}
-      </div>
-      <div class="flex space-x-3">
+      </template>
+      <template #default>
         <n-button
           round
+          size="small"
           @click="showInsertModal = true"
         >
           add
         </n-button>
         <n-button
           round
+          size="small"
           @click="showImportModal = true"
         >
           import
         </n-button>
-      </div>
-    </div>
+      </template>
+    </header-bar>
     <div class="h-8 flex justify-center items-center">
       <n-radio-group
         v-model:value="proxyStore.currentProxy"

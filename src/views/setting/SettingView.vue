@@ -1,4 +1,7 @@
-<script setup lang="ts">
+<script
+  setup
+  lang="ts"
+>
 import { reactive, ref, unref, watch } from 'vue'
 import { NRadioGroup, NSwitch } from 'naive-ui'
 import { decamelizeKeys } from 'humps'
@@ -6,6 +9,7 @@ import { useI18n } from 'vue-i18n'
 import { invoke } from '@/utils/invoke'
 import { settingStore } from '@/views/setting/store'
 import type { KittyBaseConfig } from '@/types/setting'
+import HeaderBar from '@/components/HeaderBar.vue'
 
 const { t, locale } = useI18n()
 
@@ -59,11 +63,13 @@ watch(() => baseConfig.autoUpdate, (val) => {
 </script>
 
 <template>
-  <div class="w-full h-full flex flex-col space-y-4">
-    <div class="h-8 text-2xl text-primay font-extrabold">
-      {{ t('setting.title') }}
-    </div>
-    <div class="flex-1 flex flex-col space-y-6">
+  <div class="w-full h-full flex flex-col gap-y-4">
+    <header-bar>
+      <template #title>
+        {{ t('setting.title') }}
+      </template>
+    </header-bar>
+    <div class="flex-1 flex flex-col gap-y-6">
       <div
         class="dark:bg-dark grid grid-cols-2 grid-rows-2 gap-x-16 gap-y-4 p-6 bg-[#f9f7f7] shadow-lg rounded-md text-[#5b7497] dark:text-slate-300"
       >

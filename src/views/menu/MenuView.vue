@@ -1,4 +1,7 @@
-<script setup lang="ts">
+<script
+  setup
+  lang="ts"
+>
 import { h } from 'vue'
 import { NMenu, useMessage } from 'naive-ui'
 import type { MenuOption } from 'naive-ui'
@@ -69,12 +72,19 @@ window.$message = useMessage()
 <template>
   <div
     class="flex flex-col h-full px-4 pb-4"
+    data-tauri-drag-region
   >
     <div class="flex-1 flex flex-col">
-      <div class="text-5xl font-bold h-1/6 flex flex-center text-primay">
+      <div
+        data-tauri-drag-region
+        class="text-5xl font-bold h-1/6 flex flex-center text-primay cursor-default"
+      >
         kitty
       </div>
-      <div class="flex-1 text-white text-lg">
+      <div
+        class="flex-1 text-white text-lg"
+        data-tauri-drag-region
+      >
         <n-menu
           :value="route.name as string ?? 'proxy'"
           :default-value="route.name as string ?? 'proxy'"
@@ -93,7 +103,10 @@ window.$message = useMessage()
   </div>
 </template>
 
-<style scoped lang="scss">
+<style
+  scoped
+  lang="scss"
+>
 :deep(.n-menu) {
   .n-menu-item-content {
     @apply flex justify-center items-center;

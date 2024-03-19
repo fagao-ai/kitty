@@ -1,9 +1,13 @@
-<script setup lang="ts">
+<script
+  setup
+  lang="ts"
+>
 import { reactive } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { NForm, NFormItem } from 'naive-ui'
 import type { ProxyRule } from '@/types/rule'
 import { createRule, deleteRule, getAllRules, updateRule } from '@/apis/rule'
+import HeaderBar from '@/components/HeaderBar.vue'
 
 const { t } = useI18n()
 
@@ -55,10 +59,12 @@ initRules()
 
 <template>
   <div class="flex w-full h-full flex-col">
-    <div class="h-8 flex justify-between items-center text-primay text-2xl font-extrabold">
-      {{ t('menubar.rules') }}
-    </div>
-    <div class="flex-1 overflow-y-auto">
+    <header-bar>
+      <template #title>
+        {{ t('menubar.rules') }}
+      </template>
+    </header-bar>
+    <div class="flex-1 overflow-y-auto pt-4">
       <n-scrollbar style="max-height: 100%;">
         <n-form
           :model="rulesForm"
@@ -71,14 +77,14 @@ initRules()
             :key="index"
             :path="`rulesForm.rules[${index}]`"
           >
-            <div class="flex space-x-4 w-full">
+            <div class="flex gap-x-4 w-full">
               <n-select
                 v-model:value="item.ruleAction"
-                :options="[{ label: 'proxy', value: 'proxy' }, { label: 'direct', value: 'direct' }, { label: 'reject', value: 'reject' }]"
+                :options="[{ label: 'PROXY', value: 'proxy' }, { label: 'DIRECT', value: 'direct' }, { label: 'REJECT', value: 'reject' }]"
               />
               <n-select
                 v-model:value="item.ruleType"
-                :options="[{ label: 'domain suffix', value: 'domain_suffix' }, { label: 'domain preffix', value: 'domain_preffix' }, { label: 'full domain', value: 'full_domain' }, { label: 'cidr', value: 'cidr' }]"
+                :options="[{ label: 'DOMAIN SUFFIX', value: 'domain_suffix' }, { label: 'DOMAIN PREFFIX', value: 'domain_preffix' }, { label: 'FULL DOMAIN', value: 'full_domain' }, { label: 'CIDR', value: 'cidr' }]"
               />
               <n-input
                 v-model:value="item.rule"

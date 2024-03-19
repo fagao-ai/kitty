@@ -1,9 +1,13 @@
-<script setup lang="ts">
+<script
+  setup
+  lang="ts"
+>
 import { type WatchStopHandle, nextTick, onMounted, onUnmounted, ref, watchEffect } from 'vue'
 import type { LogInst } from 'naive-ui'
 import { useI18n } from 'vue-i18n'
 import { type UnlistenFn, listen } from '@tauri-apps/api/event'
 import { useLogQueue } from '@/views/log/store'
+import HeaderBar from '@/components/HeaderBar.vue'
 
 const { t } = useI18n()
 
@@ -33,14 +37,21 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="flex w-full h-full flex-col space-y-3">
-    <div class="h-8 flex justify-between items-center">
-      <div class="text-primay text-2xl font-extrabold">
+  <div class="flex w-full h-full flex-col">
+    <header-bar>
+      <template #title>
         {{ t('menubar.logs') }}
-      </div>
-    </div>
+      </template>
+    </header-bar>
     <div class="flex-1 overflow-y-auto max-w-full h-full">
-      <n-log ref="logInstRef" class="w-full h-full" :lines="logQueue" :rows="35" language="kitty-log" trim />
+      <n-log
+        ref="logInstRef"
+        class="w-full h-full"
+        :lines="logQueue"
+        :rows="35"
+        language="kitty-log"
+        trim
+      />
     </div>
   </div>
 </template>
