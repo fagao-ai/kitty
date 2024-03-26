@@ -43,6 +43,9 @@ async function handleRemoveRule(index: number) {
 }
 
 async function handleUpdateRule(rule: ProxyRule) {
+  if (!rule.rule)
+    return
+
   if (!rule.id) {
     await createRule(rule)
     return
@@ -64,7 +67,7 @@ initRules()
         {{ t('menubar.rules') }}
       </template>
     </header-bar>
-    <div class="flex-1 overflow-y-auto pt-4">
+    <div class="flex-1 overflow-y-auto pr-4">
       <n-scrollbar style="max-height: 100%;">
         <n-form
           :model="rulesForm"
@@ -81,10 +84,12 @@ initRules()
               <n-select
                 v-model:value="item.ruleAction"
                 :options="[{ label: 'PROXY', value: 'proxy' }, { label: 'DIRECT', value: 'direct' }, { label: 'REJECT', value: 'reject' }]"
+                @blur="handleUpdateRule(item)"
               />
               <n-select
                 v-model:value="item.ruleType"
                 :options="[{ label: 'DOMAIN SUFFIX', value: 'domain_suffix' }, { label: 'DOMAIN PREFFIX', value: 'domain_preffix' }, { label: 'FULL DOMAIN', value: 'full_domain' }, { label: 'CIDR', value: 'cidr' }]"
+                @blur="handleUpdateRule(item)"
               />
               <n-input
                 v-model:value="item.rule"

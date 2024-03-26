@@ -69,7 +69,7 @@ watch(() => baseConfig.autoUpdate, (val) => {
         {{ t('setting.title') }}
       </template>
     </header-bar>
-    <div class="flex-1 flex flex-col gap-y-6">
+    <div class="flex-1 flex flex-col gap-y-6 pr-4">
       <div
         class="dark:bg-dark grid grid-cols-2 grid-rows-2 gap-x-16 gap-y-4 p-6 bg-[#f9f7f7] shadow-lg rounded-md text-[#5b7497] dark:text-slate-300"
       >

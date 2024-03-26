@@ -3,7 +3,7 @@ import type { ProxyRule } from '@/types/rule'
 import { invoke } from '@/utils/invoke'
 
 export async function updateRule(rule: ProxyRule) {
-  await invoke('update_rules_item', { record: decamelizeKeys(rule) })
+  await invoke('update_rules_item', { records: [decamelizeKeys(rule)] })
 }
 
 export async function getAllRules() {
