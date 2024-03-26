@@ -11,8 +11,6 @@ impl CommonAPI {
     where
         C: ConnectionTrait,
     {
-        use sea_orm::ConnectionTrait;
-
         let record = base_config::Model::first(db).await?.unwrap();
         let http_port = record.http_port;
         let socks_port = record.socks_port;

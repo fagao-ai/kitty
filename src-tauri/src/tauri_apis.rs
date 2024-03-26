@@ -115,6 +115,7 @@ pub async fn start_system_proxy<'a>(
             let (http_port, socks_port) = get_http_socks_ports(&mut used_ports);
             let hysteria_config = HysteriaConfig::new(http_port, socks_port, hysteria_record);
             let hysteria_bin_path = relative_command_path("hysteria".as_ref())?;
+            println!("hysteria_bin_path: {:?}", hysteria_bin_path);
             let mut hysteria_command_group =
                 HysteriaCommandGroup::new(hysteria_bin_path, config_dir.clone());
             let mut config_hash_map: HashMap<String, HysteriaConfig> = HashMap::new();
