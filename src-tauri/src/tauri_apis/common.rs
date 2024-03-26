@@ -132,7 +132,7 @@ pub async fn update_rules_item<'a>(
         }
         drop(match_proxy_write_share);
         let _ = CommonAPI::delete_rules(&txn, delete_record_ids).await?;
-        let res = CommonAPI::add_rules(&db, records).await?;
+        let res = CommonAPI::add_rules(&txn, records).await?;
         txn.commit().await?;
         Ok(res)
     } else {

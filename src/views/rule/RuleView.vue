@@ -66,6 +66,26 @@ initRules()
       <template #title>
         {{ t('menubar.rules') }}
       </template>
+      <template #default>
+        <n-button
+          text
+          class="text-4xl"
+          @click="handleAddRule"
+        >
+          <n-icon>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              xmlns:xlink="http://www.w3.org/1999/xlink"
+              viewBox="0 0 24 24"
+            >
+              <path
+                d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10s10-4.48 10-10S17.52 2 12 2zm4 11h-3v3c0 .55-.45 1-1 1s-1-.45-1-1v-3H8c-.55 0-1-.45-1-1s.45-1 1-1h3V8c0-.55.45-1 1-1s1 .45 1 1v3h3c.55 0 1 .45 1 1s-.45 1-1 1z"
+                fill="currentColor"
+              />
+            </svg>
+          </n-icon>
+        </n-button>
+      </template>
     </header-bar>
     <div class="flex-1 overflow-y-auto pr-4">
       <n-scrollbar style="max-height: 100%;">
@@ -96,16 +116,22 @@ initRules()
                 @blur="handleUpdateRule(item)"
               />
               <n-button
-                class="pl-3"
-                @click="handleAddRule"
-              >
-                +
-              </n-button>
-              <n-button
-                class="pl-3"
+                class="text-2xl"
+                text
                 @click="handleRemoveRule(index)"
               >
-                -
+                <n-icon>
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    xmlns:xlink="http://www.w3.org/1999/xlink"
+                    viewBox="0 0 1024 1024"
+                  >
+                    <path
+                      d="M512 64C264.6 64 64 264.6 64 512s200.6 448 448 448s448-200.6 448-448S759.4 64 512 64zm192 472c0 4.4-3.6 8-8 8H328c-4.4 0-8-3.6-8-8v-48c0-4.4 3.6-8 8-8h368c4.4 0 8 3.6 8 8v48z"
+                      fill="currentColor"
+                    />
+                  </svg>
+                </n-icon>
               </n-button>
             </div>
           </n-form-item>
