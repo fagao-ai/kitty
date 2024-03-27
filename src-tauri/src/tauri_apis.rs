@@ -212,7 +212,7 @@ pub async fn start_system_proxy<'a>(
             .serve(socks_match_proxy, &mut socks_kill_rx, socks_vpn_node_infos)
             .await;
     });
-    set_system_proxy(&record.local_ip, record.socks_port, Some(record.http_port))?;
+    set_system_proxy(&record.local_ip, record.socks_port, Some(record.http_port));
     let db = db_state.get_db();
     base_config::Model::update_sysproxy_flag(&db, true).await?;
     Ok(KittyResponse::default())
@@ -223,7 +223,7 @@ pub async fn stop_system_proxy<'a>(
     db_state: State<'a, DatabaseState>,
 ) -> CommandResult<KittyResponse<()>> {
     let db = db_state.get_db();
-    clear_system_proxy()?;
+    clear_system_proxy();
     base_config::Model::update_sysproxy_flag(&db, false).await?;
     Ok(KittyResponse::default())
 }

@@ -1,5 +1,5 @@
 use crate::{
-    proxy::system_proxy::{clear_system_proxy, has_sys_proxy},
+    proxy::system_proxy::clear_system_proxy,
     state::ProcessManagerState,
 };
 use log::trace;
@@ -26,12 +26,8 @@ async fn clear_command(app_handle: &AppHandle) {
             process_manager.terminate_backends().unwrap();
         }
     }
-    // if has_sys_proxy().is_ok() {
-    //     println!("clear_system_proxy called");
-    //     clear_system_proxy().unwrap()
-    // };
     println!("clear_system_proxy called");
-    clear_system_proxy().unwrap();
+    clear_system_proxy();
 }
 
 pub fn on_exit_clear_commands(app_handle: &AppHandle) {
