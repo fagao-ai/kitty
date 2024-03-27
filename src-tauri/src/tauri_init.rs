@@ -25,7 +25,7 @@ pub async fn init_db(app_dir: PathBuf) -> Result<DatabaseConnection, DbErr> {
     trace!("{:?}", sqlite_path);
     println!("{:?}", sqlite_path);
     let sqlite_url = format!("sqlite://{}?mode=rwc", sqlite_path.to_string_lossy());
-    let connect_options = ConnectOptions::new(sqlite_url).sqlx_logging_level(LevelFilter::Error).to_owned();
+    let connect_options = ConnectOptions::new(sqlite_url).sqlx_logging(false).to_owned();
     let db: DatabaseConnection = Database::connect(connect_options).await?;
     Migrator::up(&db, None).await?;
     base_config::Model::update_sysproxy_flag(&db, false).await?;
