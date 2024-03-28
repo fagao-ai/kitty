@@ -1,5 +1,5 @@
 import 'reflect-metadata'
-import { Exclude, Expose, Type } from 'class-transformer'
+import { Expose, Type } from 'class-transformer'
 
 class TLSSetting {
   @Expose({ name: 'allowInsecure', toPlainOnly: true })
@@ -60,7 +60,8 @@ class StreamSettings {
 }
 
 export class Xray {
-  @Exclude({ toPlainOnly: true })
+  // @Exclude({ toPlainOnly: true })
+  @Expose()
   id!: number
 
   @Expose()
