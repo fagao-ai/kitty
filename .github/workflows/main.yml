@@ -37,8 +37,10 @@ jobs:
       - name: Sync node version and setup cache
         uses: actions/setup-node@v4
         with:
-          node-version: 'lts/*'
-          cache: 'pnpm' # Set this to npm, yarn or pnpm.
+          node-version: '18.14.0'
+          # cache: 'pnpm' # Set this to npm, yarn or pnpm.
+      - name: Install PNPM
+        run: npm i -g pnpm
 
       - name: Install frontend dependencies
         # If you don't have `beforeBuildCommand` configured you may want to build your frontend here too.
