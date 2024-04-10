@@ -64,6 +64,8 @@ jobs:
 
             - name: Build Tauri App
               uses: tauri-apps/tauri-action@dev
+              env:
+                GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
               with:
                   tagName: kitty___VERSION__ # the action automatically replaces \_\_VERSION\_\_ with the app version
                   releaseName: 'kitty __VERSION__'
