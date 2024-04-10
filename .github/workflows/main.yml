@@ -54,11 +54,6 @@ jobs:
               if: matrix.platform == 'macos-latest'
               run: |
                   rustup target add aarch64-apple-darwin
-            - uses: actions/cache@v2
-              with:
-                  path: '**/node_modules'
-                  key: ${{ runner.os }}-node-modules-${{ hashFiles('**/pnpm-lock.yaml') }}
-
             - name: install frontend dependencies
               run: pnpm install # change this to npm or pnpm depending on which one you use
 
