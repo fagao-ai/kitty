@@ -62,11 +62,6 @@ jobs:
             - name: install frontend dependencies
               run: pnpm install # change this to npm or pnpm depending on which one you use
 
-            - name: Change Version
-              env:
-                  VERSION: '${{ steps.get_version.outputs.version-without-v }}'
-              run: make change-version
-
             - name: Build Tauri App
               uses: tauri-apps/tauri-action@dev
               env:
