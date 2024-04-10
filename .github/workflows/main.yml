@@ -75,8 +75,8 @@ jobs:
                 APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
                 APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
               with:
-                  tagName: kitty-v__VERSION__ # the action automatically replaces \_\_VERSION\_\_ with the app version
-                  releaseName: 'kitty v__VERSION__'
+                  tagName: kitty___VERSION__ # the action automatically replaces \_\_VERSION\_\_ with the app version
+                  releaseName: 'kitty __VERSION__'
                   releaseBody: 'See the assets to download this version and install.'
                   releaseDraft: true
                   prerelease: false
