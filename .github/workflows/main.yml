@@ -1,7 +1,9 @@
-name: 'publish'
+name: Release App
+
 on:
-    push:
-        tags: [v\d+\.\d+\.\d+]
+  workflow_dispatch:
+  release:
+    types: [published]
 
 jobs:
     publish-tauri:
