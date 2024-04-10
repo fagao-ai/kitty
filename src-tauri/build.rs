@@ -33,7 +33,11 @@ fn get_file_path(file_name: &str, file_enum: FileEnum) -> PathBuf {
         FileEnum::Binary => "binaries",
         FileEnum::Static => "static",
     };
-    let binaries_path = project_dir.join(folder_name).join(file_name);
+    let binaries_dir = project_dir.join(folder_name);
+    if !binaries_dir.exists() {
+        fs::create_dir_all(&binaries_dir).expect("create_dir_all failed!");
+    }
+    let binaries_path = binaries_dir.join(file_name);
     binaries_path
 }
 
