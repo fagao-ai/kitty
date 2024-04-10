@@ -26,11 +26,16 @@ jobs:
         uses: actions/github-script@v6
         with:
           script: |
-            const res = await github.rest.repos.getLatestRelease({
+          try{
+            const {data} = await github.rest.repos.getLatestRelease({
               owner: context.repo.owner,
               repo: context.repo.repo,
             })
-            return res?.data.id || "0.0.1"
+            return data.id
+          }
+          catch {
+            return "0.0.1"
+          }
 
   build-tauri:
     needs: create-release
