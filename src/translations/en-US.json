@@ -5,7 +5,10 @@
     "direct": "Direct",
     "cancel": "Cancel",
     "add": "Add",
-    "update": "Update"
+    "update": "Update",
+    "createSuccess": "Create Success",
+    "updateSuccess": "Update Success",
+    "deleteSuccess": "Delete Success"
   },
   "menubar": {
     "proxies": "Proxies",
@@ -72,5 +75,8 @@
       "title": "Add Proxy"
     },
     "editProxy": "Edit Proxy"
+  },
+  "rule": {
+    "invalidCIDR": "Invalid CIDR"
   }
 }

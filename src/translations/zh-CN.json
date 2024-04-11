@@ -5,7 +5,10 @@
     "direct": "直连",
     "cancel": "取消",
     "add": "添加",
-    "update": "更新"
+    "update": "更新",
+    "createSuccess": "添加成功",
+    "updateSuccess": "更新成功",
+    "deleteSuccess": "删除成功"
   },
   "menubar": {
     "proxies": "代理",
@@ -72,5 +75,8 @@
       "title": "添加代理"
     },
     "editProxy": "编辑代理"
+  },
+  "rule": {
+    "invalidCIDR": "无效的子网地址"
   }
 }

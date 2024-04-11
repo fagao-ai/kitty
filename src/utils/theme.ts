@@ -1,5 +1,5 @@
 import { ref, watch } from 'vue'
-import { type GlobalThemeOverrides, darkTheme, useOsTheme } from 'naive-ui'
+import { type GlobalThemeOverrides, darkTheme, lightTheme, useOsTheme } from 'naive-ui'
 import type { BuiltInGlobalTheme } from 'naive-ui/es/themes/interface'
 
 function useTheme() {
@@ -50,14 +50,14 @@ function useTheme() {
     },
   }
 
-  watch(() => osThemeRef.value, (value) => {
+  watch(osThemeRef, (value) => {
     if (value === 'dark') {
       document.documentElement.classList.add('dark')
       theme.value = darkTheme
       return
     }
     document.documentElement.classList.remove('dark')
-    theme.value = null
+    theme.value = lightTheme
   }, { immediate: true })
 
   return {

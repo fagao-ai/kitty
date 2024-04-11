@@ -4,12 +4,14 @@
 >
 import { reactive } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { NForm, NFormItem } from 'naive-ui'
+import { NForm, NFormItem, useMessage } from 'naive-ui'
+import CIDR from 'ip-cidr'
 import type { ProxyRule } from '@/types/rule'
 import { createRule, deleteRule, getAllRules, updateRule } from '@/apis/rule'
 import HeaderBar from '@/components/HeaderBar.vue'
 
 const { t } = useI18n()
+const message = useMessage()
 
 interface RulesForm {
   rules: ProxyRule[]
@@ -17,8 +19,8 @@ interface RulesForm {
 
 const defaultRule: ProxyRule = {
   id: 0,
-  ruleAction: 'proxy',
-  ruleType: 'full_domain',
+  ruleAction: 'direct',
+  ruleType: 'domain_suffix',
   rule: '',
 }
 
@@ -46,11 +48,18 @@ async function handleUpdateRule(rule: ProxyRule) {
   if (!rule.rule)
     return
 
+  if (rule.ruleType === 'cidr' && !CIDR.isValidCIDR(rule.rule)) {
+    message.error(t('rule.invalidCIDR'))
+    return
+  }
+
   if (!rule.id) {
     await createRule(rule)
+    message.success(t('common.createSuccess'))
     return
   }
   await updateRule({ id: rule.id, rule: rule.rule, ruleAction: rule.ruleAction, ruleType: rule.ruleType })
+  message.success(t('common.createSuccess'))
 }
 
 async function initRules() {
@@ -103,7 +112,7 @@ initRules()
             <div class="flex gap-x-4 w-full">
               <n-select
                 v-model:value="item.ruleAction"
-                :options="[{ label: 'PROXY', value: 'proxy' }, { label: 'DIRECT', value: 'direct' }, { label: 'REJECT', value: 'reject' }]"
+                :options="[{ label: 'DIRECT', value: 'direct' }, { label: 'PROXY', value: 'proxy' }, { label: 'REJECT', value: 'reject' }]"
                 @blur="handleUpdateRule(item)"
               />
               <n-select
