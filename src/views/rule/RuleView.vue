@@ -35,8 +35,10 @@ function handleAddRule() {
 
 async function handleRemoveRule(index: number) {
   const id = rulesForm.rules[index].id
-  if (id)
+  if (id) {
     await deleteRule(id)
+    message.success(t('common.deleteSuccess'))
+  }
 
   rulesForm.rules.splice(index, 1)
 
@@ -49,7 +51,7 @@ async function handleUpdateRule(rule: ProxyRule) {
     return
 
   if (rule.ruleType === 'cidr' && !CIDR.isValidCIDR(rule.rule)) {
-    message.error(t('rule.invalidCIDR'))
+    message.error(t('rule.invalidCIDR'), { duration: 5000 })
     return
   }
 

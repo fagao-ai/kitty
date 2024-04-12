@@ -55,3 +55,13 @@ onUnmounted(() => {
     </div>
   </div>
 </template>
+
+<style
+  lang="scss"
+  scoped
+>
+:deep(.n-log) {
+  user-select: text;
+  -webkit-user-select: text;
+}
+</style>
