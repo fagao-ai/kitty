@@ -7,7 +7,8 @@ use tauri::{
 };
 
 
-use tauri::{AppHandle, Icon, Manager, State, Wry};
+use tauri::{AppHandle, Manager, State, Wry};
+use tauri::image::Image;
 
 use crate::tauri_apis::common as common_api;
 
@@ -53,10 +54,8 @@ impl Tray {
                 }
             })
             .build(app_handle)?;
-
-            let _ = tray.set_icon(Some(Icon::Raw(
-                include_bytes!("../icons/icon.png").to_vec(),
-            )));
+            app_handle.path().picture_dir();
+            let _ = tray.set_icon(Some(Image::from_path("./icons/icon.png")?));
             let _ = tray.set_icon_as_template(false);
         Ok(())
     }
