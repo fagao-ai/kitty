@@ -1,3 +1,5 @@
+use std::path::{Path, PathBuf};
+
 use crate::state::DatabaseState;
 use crate::tauri_event_handler::on_exit_clear_commands;
 use tauri::menu::{Menu, MenuEvent};
@@ -6,9 +8,8 @@ use tauri::{
     tray::{ClickType, TrayIconBuilder},
 };
 
-
-use tauri::{AppHandle, Manager, State, Wry};
 use tauri::image::Image;
+use tauri::{AppHandle, Manager, State, Wry};
 
 use crate::tauri_apis::common as common_api;
 
@@ -54,8 +55,9 @@ impl Tray {
                 }
             })
             .build(app_handle)?;
-            let _ = tray.set_icon(Some(Image::from_path("./icons/icon.png")?));
-            let _ = tray.set_icon_as_template(false);
+        // app_handle.path().resource_dir()
+        let _ = tray.set_icon(Some(Image::from_bytes(include_bytes!("../icons/icon.png"))?));
+        let _ = tray.set_icon_as_template(false);
         Ok(())
     }
 
@@ -83,5 +85,4 @@ impl Tray {
             _ => (),
         }
     }
-    
 }
