@@ -54,7 +54,6 @@ impl Tray {
                 }
             })
             .build(app_handle)?;
-            app_handle.path().picture_dir();
             let _ = tray.set_icon(Some(Image::from_path("./icons/icon.png")?));
             let _ = tray.set_icon_as_template(false);
         Ok(())
