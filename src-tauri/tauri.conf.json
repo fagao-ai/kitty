@@ -1,6 +1,6 @@
 {
   "productName": "kitty",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "identifier": "com.kitty.dev",
   "build": {
     "beforeDevCommand": "pnpm dev",
