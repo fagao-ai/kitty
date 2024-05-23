@@ -97,7 +97,7 @@ window.$message = useMessage()
         {{ t('menubar.version') }}
       </div>
       <div class="text-primay text-xs">
-        0.0.2.1.beta
+        0.0.3.beta
       </div>
     </div>
   </div>
