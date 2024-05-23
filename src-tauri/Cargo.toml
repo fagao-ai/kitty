@@ -24,7 +24,7 @@ build-target = "0.4.0"
 zip = "0.5"
 
 [dependencies]
-tauri = { version = "=2.0.0-beta.15", features = [
+tauri = { version = "2.0.0-beta", features = [
   "tray-icon",
   # "icon-ico",
   "image-ico",

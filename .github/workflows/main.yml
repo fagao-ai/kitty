@@ -67,7 +67,7 @@ jobs:
               with:
                   tagName: kitty___VERSION__ # the action automatically replaces \_\_VERSION\_\_ with the app version
                   releaseName: 'kitty __VERSION__'
-                  releaseBody: 'upgrade tauri version'
+                  releaseBody: 'upgrade hysteria to v2.4.4'
                   releaseDraft: false
                   prerelease: false
                   args: --target ${{matrix.target}}
