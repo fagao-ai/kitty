@@ -11,6 +11,8 @@ use std::str::FromStr;
 
 use crate::apis::api_traits::APIServiceTrait;
 
+use super::parse_subscription::download_subcriptions;
+
 pub struct XrayAPI;
 
 impl APIServiceTrait for XrayAPI {}
@@ -54,11 +56,7 @@ impl XrayAPI {
         db: &DatabaseConnection,
         url: &str,
     ) -> Result<()> {
-        let resp = reqwest::get(url).await?;
-        let resp_text = resp.text().await?;
-        let decode_bytes = general_purpose::STANDARD.decode(resp_text)?;
-        let share_protocol_string =
-            std::string::String::from_utf8(decode_bytes).expect("Invalid UTF-8 sequence");
+        let subscriptions = download_subcriptions(url).await?;
         let mut xray_models = Vec::new();
         let subscribe = subscribe::ActiveModel {
             url: Set(url.to_owned()),
@@ -66,8 +64,11 @@ impl XrayAPI {
         };
         let txn = db.begin().await?;
         let exec_subscribe_res = subscribe.insert(&txn).await?;
-        for line in share_protocol_string.lines() {
-            let mut xray_model = xray::Model::from_str(line.trim())?;
+        for line in subscriptions {
+            if !line.is_xray() {
+                continue
+            }
+            let mut xray_model = xray::Model::from_str(&line.line.trim())?;
             xray_model.subscribe_id = Some(exec_subscribe_res.id);
             xray_models.push(xray_model)
         }
@@ -84,11 +85,7 @@ impl XrayAPI {
         };
         if res.len() > 0 {
             for subscribe_item in res {
-                let resp = reqwest::get(subscribe_item.url.as_str()).await?;
-                let resp_text = resp.text().await?;
-                let decode_bytes = general_purpose::STANDARD.decode(resp_text)?;
-                let share_protocol_string =
-                    std::string::String::from_utf8(decode_bytes).expect("Invalid UTF-8 sequence");
+                let subscriptions = download_subcriptions(&subscribe_item.url).await?;
                 let xray_records = subscribe_item
                     .find_related(xray::Entity)
                     .all(db)
@@ -98,8 +95,11 @@ impl XrayAPI {
                 let xray_ids: Vec<i32> = xray_records.iter().map(|x| x.id).collect();
                 let _ = xray::Model::delete_by_ids(&txn, xray_ids).await?;
                 let mut xray_models = Vec::new();
-                for line in share_protocol_string.lines() {
-                    let mut xray_model = xray::Model::from_str(line.trim())?;
+                for line in subscriptions {
+                    if !line.is_xray() {
+                        continue
+                    } 
+                    let mut xray_model = xray::Model::from_str(&line.line.trim())?;
                     xray_model.subscribe_id = Some(subscribe_item.id);
                     xray_models.push(xray_model)
                 }

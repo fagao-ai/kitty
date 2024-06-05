@@ -2723,7 +2723,7 @@ dependencies = [
 
 [[package]]
 name = "kitty"
-version = "0.0.0"
+version = "0.0.3"
 dependencies = [
  "anyhow",
  "base64 0.21.7",
