@@ -68,7 +68,9 @@ impl XrayAPI {
             if !line.is_xray() {
                 continue
             }
+            println!("asdsadas: {}", line.line);
             let mut xray_model = xray::Model::from_str(&line.line.trim())?;
+            println!("end");
             xray_model.subscribe_id = Some(exec_subscribe_res.id);
             xray_models.push(xray_model)
         }

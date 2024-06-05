@@ -27,10 +27,8 @@ impl ProtocolLine {
 }
 
 pub async fn download_subcriptions(url: &str) -> anyhow::Result<Vec<ProtocolLine>> {
-    println!("download subscriptions");
     let resp = reqwest::get(url).await?;
     let resp_text = resp.text().await?;
-    println!("resp_text");
     let decode_bytes_res = general_purpose::STANDARD.decode(&resp_text);
     let decoded_text = match decode_bytes_res {
         Ok(decode_bytes) => String::from_utf8(decode_bytes).expect("Invalid UTF-8 sequence"),
@@ -51,7 +49,6 @@ pub async fn download_subcriptions(url: &str) -> anyhow::Result<Vec<ProtocolLine
                 } else {
                     protocol_str
                 };
-                println!("new_protocol_str: {}", new_protocol_str);
                 let decode_bytes = general_purpose::STANDARD.decode(new_protocol_str)?;
                 let protocol_line =String::from_utf8(decode_bytes).expect("Invalid UTF-8 sequence");
                 results.push(ProtocolLine::new(protocol_line, protocol.into()))

@@ -1084,7 +1084,8 @@ mod tests {
 
     #[test]
     fn test_add() {
-        let aa = r#"trojan://uuid@ip:60195?sni=address#aa"#;
+        // let aa = r#"trojan://uuid@ip:60195?sni=address#aa"#;
+        let aa = r#"{"v":"2","ps":"D-BROWN-1025","add":"157.245.4.170","port":"8881","id":"db5afae4-ac23-41a6-8378-f307a9a47436","aid":"0","scy":"auto","net":"tcp","type":"http","host":"mihanwebhost.com","path":"/","tls":"none","sni":"","alpn":""}"#;
         let model = Model::from_str(aa).unwrap();
         let stream_settings = serde_json::to_string(&model.stream_settings);
         println!("stream_settings: {:?}", stream_settings);
