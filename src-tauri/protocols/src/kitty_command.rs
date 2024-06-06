@@ -67,6 +67,7 @@ impl KittyCommand {
 
     pub fn check_socket_addrs(&self, socket_addrs: Vec<SocketAddr>) -> Result<()> {
         for socket_addr in socket_addrs {
+            println!("socket_addr:{:?}", socket_addr);
             let res = socket_addr_busy(socket_addr);
             if !res {
                 return Err(anyhow!(anyhow!("check_socket_addrs failed, process start failed!")));

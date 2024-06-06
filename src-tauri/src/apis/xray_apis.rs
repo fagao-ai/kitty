@@ -56,6 +56,9 @@ impl XrayAPI {
         db: &DatabaseConnection,
         url: &str,
     ) -> Result<()> {
+        if url.starts_with("http") {
+            
+        }
         let subscriptions = download_subcriptions(url).await?;
         let mut xray_models = Vec::new();
         let subscribe = subscribe::ActiveModel {
@@ -69,11 +72,12 @@ impl XrayAPI {
                 continue
             }
             println!("asdsadas: {}", line.line);
-            let mut xray_model = xray::Model::from_str(&line.line.trim())?;
-            println!("end");
-            xray_model.subscribe_id = Some(exec_subscribe_res.id);
-            xray_models.push(xray_model)
+            if let Ok(mut xray_model) = xray::Model::from_str(&line.line.trim()){
+                xray_model.subscribe_id = Some(exec_subscribe_res.id);
+                xray_models.push(xray_model);
+            }
         }
+        println!("xray_models: {}", xray_models.len());
         xray::Model::insert_many(&txn, xray_models).await?;
         txn.commit().await?;
         Ok(())

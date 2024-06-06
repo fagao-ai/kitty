@@ -78,7 +78,6 @@ impl ActiveModelBehavior for ActiveModel {}
 
 impl Model {
     generate_model_functions!();
-
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, FromJsonQueryResult)]
@@ -104,7 +103,7 @@ impl TryFrom<url::form_urlencoded::Parse<'_>> for StreamSettings {
         let query_params: HashMap<String, String> = query_pairs
             .map(|(key, value)| (key.into_owned(), value.into_owned()))
             .collect();
-
+        println!("pairs: {:?}", query_params);
         let allow_insecure = query_params
             .get("allowInsecure")
             .map(|x| x.as_str())
@@ -130,7 +129,41 @@ impl TryFrom<url::form_urlencoded::Parse<'_>> for StreamSettings {
         };
         let server_name = query_params.get(sni_key).map(|x| x.as_str()).unwrap_or("");
         let security: Security = Security::from_str(security)?;
-        let tls_settings = TLSSettings::new(allow_insecure, server_name.into());
+        let mut tls_settings = None;
+        let mut reality_settings = None;
+        match security {
+            Security::Reality => {
+                let fingerprint: String = query_params
+                    .get("fp")
+                    .map(|x| x.as_str())
+                    .unwrap_or("chrome")
+                    .into();
+                let server_name: String = server_name.into();
+                let private_key: String = query_params
+                    .get("pbk")
+                    .map(|x| x.as_str())
+                    .unwrap_or("")
+                    .into();
+                let short_id: String = "".into();
+
+                let spider_x: String = query_params
+                    .get("spx")
+                    .map(|x| x.as_str())
+                    .unwrap_or("")
+                    .into();
+                reality_settings = Some(RealitySettings::new(
+                    fingerprint,
+                    server_name,
+                    private_key,
+                    short_id,
+                    spider_x,
+                ))
+            }
+            Security::Tls => {
+                tls_settings = Some(TLSSettings::new(allow_insecure, server_name.into()));
+            }
+            Security::None => {}
+        }
         match r#type {
             "ws" => {
                 let ws_protocol: WebSocketProtocol = WebSocketProtocol::new(
@@ -138,15 +171,52 @@ impl TryFrom<url::form_urlencoded::Parse<'_>> for StreamSettings {
                     Some(security),
                     host,
                     Some(path.into()),
-                    Some(tls_settings),
+                    tls_settings,
+                    None,
                 );
                 Ok(StreamSettings::WebSocket(ws_protocol))
             }
             "tcp" => {
-                let tcp_protocol: TcpProtocol = TcpProtocol::new(r#type.into(), None, None);
+                let tcp_protocol: TcpProtocol = TcpProtocol::new(r#type.into(), Some(security),tls_settings, reality_settings);
                 Ok(StreamSettings::Tcp(tcp_protocol))
             }
+            "grpc" => {
+                let grpc_protocol: GrpcProtocol =
+                    GrpcProtocol::new(r#type.into(), Some(security), tls_settings, reality_settings);
+                Ok(StreamSettings::Grpc(grpc_protocol))
+            }
             _ => Err(anyhow!("convert stream_settings failed.")),
+        }
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub struct RealitySettings {
+    fingerprint: String,
+    #[serde(rename = "serverName")]
+    server_name: String,
+    #[serde(rename = "privateKey")]
+    private_key: String,
+    #[serde(rename = "shortId")]
+    short_id: String,
+    #[serde(rename = "spiderX")]
+    spider_x: String,
+}
+
+impl RealitySettings {
+    fn new(
+        fingerprint: String,
+        server_name: String,
+        private_key: String,
+        short_id: String,
+        spider_x: String,
+    ) -> Self {
+        Self {
+            fingerprint,
+            server_name,
+            private_key,
+            short_id,
+            spider_x,
         }
     }
 }
@@ -159,6 +229,8 @@ pub struct WebSocketProtocol {
     #[serde(rename = "tlsSettings")]
     #[serde(skip_serializing_if = "Option::is_none")]
     tls_settings: Option<TLSSettings>,
+    #[serde(rename = "realitySettings")]
+    reality_settings: Option<RealitySettings>,
     #[serde(rename = "wsSettings")]
     ws_settings: WsSettings,
 }
@@ -170,6 +242,7 @@ impl WebSocketProtocol {
         host: String,
         path: Option<String>,
         tls_settings: Option<TLSSettings>,
+        reality_settings: Option<RealitySettings>
     ) -> Self {
         let ws_settings = WsSettings::new(host, path);
         Self {
@@ -177,6 +250,7 @@ impl WebSocketProtocol {
             security,
             tls_settings,
             ws_settings,
+            reality_settings
         }
     }
 }
@@ -189,18 +263,21 @@ pub struct TcpProtocol {
     #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(rename = "tlsSettings")]
     tls_settings: Option<TLSSettings>,
+    #[serde(rename = "realitySettings")]
+    reality_settings: Option<RealitySettings>,
     #[serde(rename = "tcpSettings")]
     tcp_settings: TcpSettings,
 }
 
 impl TcpProtocol {
-    fn new(network: String, security: Option<Security>, tls_settings: Option<TLSSettings>) -> Self {
+    fn new(network: String, security: Option<Security>, tls_settings: Option<TLSSettings>, reality_settings: Option<RealitySettings>) -> Self {
         let tcp_settings = TcpSettings::default();
         Self {
             network,
             security,
             tls_settings,
             tcp_settings,
+            reality_settings,
         }
     }
 }
@@ -414,8 +491,22 @@ pub struct GrpcProtocol {
     #[serde(rename = "tlsSettings")]
     #[serde(skip_serializing_if = "Option::is_none")]
     tls_settings: Option<TLSSettings>,
+    #[serde(rename = "realitySettings")]
+    reality_settings: Option<RealitySettings>,
     #[serde(rename = "tcpSettings")]
     grpc_settings: GrpcSettings,
+}
+
+impl GrpcProtocol {
+    fn new(network: String, security: Option<Security>, tls_settings: Option<TLSSettings>, reality_settings: Option<RealitySettings>) -> Self {
+        Self {
+            network,
+            security,
+            tls_settings,
+            grpc_settings: GrpcSettings::default(),
+            reality_settings,
+        }
+    }
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -898,8 +989,11 @@ impl TryFrom<Url> for Model {
     type Error = anyhow::Error;
     fn try_from(url: Url) -> Result<Model> {
         let protocol = url.scheme();
-        let uuid = url.username();
-        let address = url.domain().unwrap();
+        let uuid = Uuid::parse_str(url.username())?;
+        println!("host: {:?}", url.host());
+        println!("host: {:?}", url.port());
+        let host_port = format!("{}:{}", url.host().unwrap(), url.port().unwrap());
+        let address = url.domain().unwrap_or(host_port.as_str());
         let port = url.port().unwrap();
         let pairs: url::form_urlencoded::Parse<'_> = url.query_pairs();
         let stream_settings = StreamSettings::try_from(pairs)?;
@@ -923,10 +1017,31 @@ impl TryFrom<ShareWithProtocol> for Model {
         let network = share.net.clone();
         let uuid = share.id;
         let address = share.add;
-        let port: u16 = share.port.parse().unwrap();
+        let port: u16 = share.port;
         let name = share.ps;
+        println!("security before");
         let security: Security = Security::from_str("tls")?;
+        // let mut tls_settings = None;
+        // let reality_settings  = None;
+        // match security {
+        //     Security::Tls => {
+        //         tls_settings = Some(TLSSettings::new(true, share.host.clone()));
+        //     }
+        //     Security::Reality => {
+        //         let fingerprint: String =
+        //         // let server_name: String
+        //         // let private_key: String
+        //         // let short_id: String
+        //         // let spider_x: String
+        //         reality_settings = Some(RealitySettings::new())
+        //     }
+        //     Security::None => {
+
+        //     }
+        // }
+        println!("tls_settings before");
         let tls_settings = TLSSettings::new(true, share.host.clone());
+        println!("tls_settings after");
         let res = match network.as_str() {
             "ws" => {
                 let ws_protocol: WebSocketProtocol = WebSocketProtocol::new(
@@ -935,12 +1050,20 @@ impl TryFrom<ShareWithProtocol> for Model {
                     share.host,
                     Some(share.path),
                     Some(tls_settings),
+                    None,
                 );
                 Ok(StreamSettings::WebSocket(ws_protocol))
             }
             "tcp" => {
-                let tcp_protocol: TcpProtocol = TcpProtocol::new(share.net, None, None);
+                println!("grpc match");
+                let tcp_protocol: TcpProtocol =
+                    TcpProtocol::new(share.net, Some(security), Some(tls_settings), None);
                 Ok(StreamSettings::Tcp(tcp_protocol))
+            }
+            "grpc" => {
+                let grpc_protocol: GrpcProtocol =
+                    GrpcProtocol::new(share.net, Some(security), Some(tls_settings), None);
+                Ok(StreamSettings::Grpc(grpc_protocol))
             }
             _ => Err(anyhow!("not support this protocol.")),
         };
@@ -964,8 +1087,10 @@ impl FromStr for Model {
         let url = Url::parse(url)?;
         let username = url.username();
         if username == "" {
+            println!("{}", url.domain().unwrap());
             let decode_bytes = general_purpose::STANDARD.decode(url.domain().unwrap())?;
             let share_json = String::from_utf8(decode_bytes).expect("Invalid UTF-8 sequence");
+            println!("share_json: {}", share_json);
             let share_struct: ShareJsonStruct = serde_json::from_str(share_json.as_str())?;
             let share = ShareWithProtocol::new(url.scheme().into(), share_struct);
             Model::try_from(share)
@@ -1085,8 +1210,11 @@ mod tests {
     #[test]
     fn test_add() {
         // let aa = r#"trojan://uuid@ip:60195?sni=address#aa"#;
-        let aa = r#"{"v":"2","ps":"D-BROWN-1025","add":"157.245.4.170","port":"8881","id":"db5afae4-ac23-41a6-8378-f307a9a47436","aid":"0","scy":"auto","net":"tcp","type":"http","host":"mihanwebhost.com","path":"/","tls":"none","sni":"","alpn":""}"#;
+        // let aa = r#"vless://80c39fa5-f23e-4ac1-96cb-ed06ea0e8f47@188.114.97.3:8080?type=ws&path=/Join--ELiV2Ray.El.V2ray.community&host=El.V2ray.Community.&security=none"#;
+        let aa = r#"vless://»»»»DIGIV2RAY««««@www.Speedtest.Net:2095?path=/DIGIV2RAY--DigiV2ray--digiv2ray--DIGIV2RAY--DigiV2ray--digiv2ray--DigiV2ray--DigiV2ray?ed=1024&security=none&encryption=none&host=www.speedtest.net.ftp.debian.org.xn--ihqvla424c49bba047b50okggl0rcfo5o3aus3a.website.&type=ws"#;
+        // let aa = r#"{"v":"2","ps":"D-BROWN-1025","add":"157.245.4.170","port":"8881","id":"db5afae4-ac23-41a6-8378-f307a9a47436","aid":"0","scy":"auto","net":"tcp","type":"http","host":"mihanwebhost.com","path":"/","tls":"none","sni":"","alpn":""}"#;
         let model = Model::from_str(aa).unwrap();
+        println!("model: {:?}", model);
         let stream_settings = serde_json::to_string(&model.stream_settings);
         println!("stream_settings: {:?}", stream_settings);
 
