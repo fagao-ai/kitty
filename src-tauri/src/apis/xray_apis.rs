@@ -56,24 +56,32 @@ impl XrayAPI {
         db: &DatabaseConnection,
         url: &str,
     ) -> Result<()> {
-        if url.starts_with("http") {
-            
-        }
-        let subscriptions = download_subcriptions(url).await?;
         let mut xray_models = Vec::new();
-        let subscribe = subscribe::ActiveModel {
-            url: Set(url.to_owned()),
-            ..Default::default()
-        };
         let txn = db.begin().await?;
-        let exec_subscribe_res = subscribe.insert(&txn).await?;
-        for line in subscriptions {
-            if !line.is_xray() {
-                continue
+        if url.starts_with("http") {
+            let subscriptions = download_subcriptions(url).await?;
+            let subscribe = subscribe::ActiveModel {
+                url: Set(url.to_owned()),
+                ..Default::default()
+            };
+            let exec_subscribe_res = subscribe.insert(&txn).await?;
+            for line in subscriptions {
+                if !line.is_xray() {
+                    continue;
+                }
+                println!("asdsadas: {}", line.line);
+                if let Ok(mut xray_model) = xray::Model::from_str(&line.line.trim()) {
+                    xray_model.subscribe_id = Some(exec_subscribe_res.id);
+                    xray_models.push(xray_model);
+                }
             }
-            println!("asdsadas: {}", line.line);
-            if let Ok(mut xray_model) = xray::Model::from_str(&line.line.trim()){
-                xray_model.subscribe_id = Some(exec_subscribe_res.id);
+        }else  {
+            let trimed_line = if let Some(pos) = url.rfind('#') {
+                &url[..pos]
+            } else {
+                url
+            };
+            if let Ok(xray_model) = xray::Model::from_str(&trimed_line.trim()) {
                 xray_models.push(xray_model);
             }
         }
@@ -103,8 +111,8 @@ impl XrayAPI {
                 let mut xray_models = Vec::new();
                 for line in subscriptions {
                     if !line.is_xray() {
-                        continue
-                    } 
+                        continue;
+                    }
                     let mut xray_model = xray::Model::from_str(&line.line.trim())?;
                     xray_model.subscribe_id = Some(subscribe_item.id);
                     xray_models.push(xray_model)

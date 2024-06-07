@@ -29,6 +29,7 @@ impl HysteriaCommandGroup {
 
 impl Drop for HysteriaCommandGroup {
     fn drop(&mut self) {
+        println!("drop hysteria command!!!");
         for (_, child) in self.kitty_commands.iter_mut() {
             if child.is_running() {
                 child.terminate_backend().ok();
