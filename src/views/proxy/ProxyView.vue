@@ -102,6 +102,12 @@ onUnmounted(() => {
   unwatchProxyStore()
   unwatchUpdateStatus()
 })
+
+async function handleUpdatedProxy(proxyType: ProxyType) {
+  handleGetAllProxyByType(proxyType)
+  showEditModal.value = false
+  message.success(t('common.updateSuccess'))
+}
 </script>
 
 <template>
@@ -170,7 +176,7 @@ onUnmounted(() => {
       :proxy-type="editProxyType"
       :form="(editingProxy as HysteriaProxy | XrayProxy)"
       @on-cancel-edit="handleCancelEdit"
-      @on-proxy-updated="handleGetAllProxyByType"
+      @on-proxy-updated="handleUpdatedProxy"
     />
   </div>
 </template>

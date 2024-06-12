@@ -65,7 +65,7 @@ export async function updateXrayProxy(xrayForm: XrayProxy) {
 }
 
 export async function updateHysteriaProxy(hysteriaForm: HysteriaProxy) {
-  await invoke('update_xray_item', { record: decamelizeKeys(hysteriaForm) })
+  await invoke('update_hysteria_item', { record: decamelizeKeys(hysteriaForm) })
 }
 
 export async function autoUpdateSubscription(subscriptionIds: number[]) {
