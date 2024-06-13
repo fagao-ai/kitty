@@ -9,6 +9,10 @@ const mobile = !!/android|ios/.exec(process.env.TAURI_ENV_PLATFORM as string)
 // https://vitejs.dev/config/
 export default defineConfig(async () => ({
   plugins: [vue()],
+  define: {
+    // eslint-disable-next-line node/prefer-global/process
+    __APP_VERSION__: JSON.stringify(process.env.npm_package_version),
+  },
 
   // Vite options tailored for Tauri development and only applied in `tauri dev` or `tauri build`
   //

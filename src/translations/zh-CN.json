@@ -8,7 +8,8 @@
     "update": "更新",
     "createSuccess": "添加成功",
     "updateSuccess": "更新成功",
-    "deleteSuccess": "删除成功"
+    "deleteSuccess": "删除成功",
+    "import": "导入"
   },
   "menubar": {
     "proxies": "代理",

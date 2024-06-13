@@ -1,7 +1,4 @@
-<script
-  setup
-  lang="ts"
->
+<script setup lang="ts">
 import { NButton, useMessage } from 'naive-ui'
 import { computed, onUnmounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
@@ -122,14 +119,14 @@ async function handleUpdatedProxy(proxyType: ProxyType) {
           size="small"
           @click="showInsertModal = true"
         >
-          add
+          {{ t('common.add') }}
         </n-button>
         <n-button
           round
           size="small"
           @click="showImportModal = true"
         >
-          import
+          {{ t('common.import') }}
         </n-button>
       </template>
     </header-bar>
@@ -181,10 +178,7 @@ async function handleUpdatedProxy(proxyType: ProxyType) {
   </div>
 </template>
 
-<style
-  lang="scss"
-  scoped
->
+<style lang="scss" scoped>
 :deep(.n-radio-button) {
   --n-button-border-radius: 12px;
 

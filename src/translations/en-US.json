@@ -8,7 +8,8 @@
     "update": "Update",
     "createSuccess": "Create Success",
     "updateSuccess": "Update Success",
-    "deleteSuccess": "Delete Success"
+    "deleteSuccess": "Delete Success",
+    "import": "Import"
   },
   "menubar": {
     "proxies": "Proxies",

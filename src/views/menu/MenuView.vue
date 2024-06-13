@@ -1,7 +1,4 @@
-<script
-  setup
-  lang="ts"
->
+<script setup lang="ts">
 import { h } from 'vue'
 import { NMenu, useMessage } from 'naive-ui'
 import type { MenuOption } from 'naive-ui'
@@ -9,6 +6,9 @@ import { RouterLink, useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n()
+
+// @ts-expect-error @ts-expect-error
+const version = __APP_VERSION__ as string
 
 const menuOptions: MenuOption[] = [
   {
@@ -97,16 +97,13 @@ window.$message = useMessage()
         {{ t('menubar.version') }}
       </div>
       <div class="text-primay text-xs">
-        0.0.3.beta
+        {{ `${version}.beta` }}
       </div>
     </div>
   </div>
 </template>
 
-<style
-  scoped
-  lang="scss"
->
+<style scoped lang="scss">
 :deep(.n-menu) {
   .n-menu-item-content {
     @apply flex justify-center items-center;

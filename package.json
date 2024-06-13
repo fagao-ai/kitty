@@ -47,7 +47,7 @@
     "eslint-staged": "^1.0.1",
     "internal-ip": "^7.0.0",
     "lint-staged": "^15.2.0",
-    "naive-ui": "^2.37.3",
+    "naive-ui": "^2.38.2",
     "pnpm": "^8.11.0",
     "sass": "^1.69.5",
     "simple-git-hooks": "^2.9.0",

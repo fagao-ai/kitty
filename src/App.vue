@@ -1,7 +1,4 @@
-<script
-  setup
-  lang="ts"
->
+<script setup lang="ts">
 import { NConfigProvider, NMessageProvider } from 'naive-ui'
 import hljs from 'highlight.js/lib/core'
 import { useTheme } from '@/utils/theme'
@@ -31,7 +28,7 @@ hljs.registerLanguage('kitty-log', () => ({
 <template>
   <n-config-provider
     :theme="theme"
-    :theme-overrides="theme === null ? lightThemeOverrides : darkThemeOverrides"
+    :theme-overrides="theme?.name === 'light' ? lightThemeOverrides : darkThemeOverrides"
     :hljs="hljs"
     class="flex flex-col w-full h-full bg-[#fdfdfd] dark:bg-[#373839]"
   >

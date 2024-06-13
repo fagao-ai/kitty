@@ -12,10 +12,12 @@ function useTheme() {
       primaryColorHover: primaryColor,
     },
     Button: {
-      textColorPrimary: primaryColor,
+      textColorPrimary: 'whitesmoke',
+      textColorHoverPrimary: 'whitesmoke',
       textColor: primaryColor,
     },
     Menu: {
+      // itemColorHover: 'red',
       itemColorActive: primaryColor,
       itemColorActiveHover: primaryColor,
       itemTextColorActive: 'whitesmoke',
@@ -33,7 +35,8 @@ function useTheme() {
       primaryColorHover: primaryColor,
     },
     Button: {
-      textColorPrimary: primaryColor,
+      textColorPrimary: 'whitesmoke',
+      textColorHoverPrimary: 'whitesmoke',
       textColor: primaryColor,
     },
     Menu: {
