@@ -103,7 +103,6 @@ impl TryFrom<url::form_urlencoded::Parse<'_>> for StreamSettings {
         let query_params: HashMap<String, String> = query_pairs
             .map(|(key, value)| (key.into_owned(), value.into_owned()))
             .collect();
-        println!("pairs: {:?}", query_params);
         let allow_insecure = query_params
             .get("allowInsecure")
             .map(|x| x.as_str())
@@ -139,7 +138,7 @@ impl TryFrom<url::form_urlencoded::Parse<'_>> for StreamSettings {
                     .unwrap_or("chrome")
                     .into();
                 let server_name: String = server_name.into();
-                let private_key: String = query_params
+                let public_key: String = query_params
                     .get("pbk")
                     .map(|x| x.as_str())
                     .unwrap_or("")
@@ -154,7 +153,7 @@ impl TryFrom<url::form_urlencoded::Parse<'_>> for StreamSettings {
                 reality_settings = Some(RealitySettings::new(
                     fingerprint,
                     server_name,
-                    private_key,
+                    public_key,
                     short_id,
                     spider_x,
                 ))
@@ -195,8 +194,8 @@ pub struct RealitySettings {
     fingerprint: String,
     #[serde(rename = "serverName")]
     server_name: String,
-    #[serde(rename = "privateKey")]
-    private_key: String,
+    #[serde(rename = "publicKey")]
+    public_key: String,
     #[serde(rename = "shortId")]
     short_id: String,
     #[serde(rename = "spiderX")]
@@ -207,14 +206,14 @@ impl RealitySettings {
     fn new(
         fingerprint: String,
         server_name: String,
-        private_key: String,
+        public_key: String,
         short_id: String,
         spider_x: String,
     ) -> Self {
         Self {
             fingerprint,
             server_name,
-            private_key,
+            public_key,
             short_id,
             spider_x,
         }
@@ -990,8 +989,6 @@ impl TryFrom<Url> for Model {
     fn try_from(url: Url) -> Result<Model> {
         let protocol = url.scheme();
         let uuid = Uuid::parse_str(url.username())?;
-        println!("host: {:?}", url.host());
-        println!("host: {:?}", url.port());
         let host_port = format!("{}:{}", url.host().unwrap(), url.port().unwrap());
         let address = url.domain().unwrap_or(host_port.as_str());
         let port = url.port().unwrap();
@@ -1019,8 +1016,7 @@ impl TryFrom<ShareWithProtocol> for Model {
         let address = share.add;
         let port: u16 = share.port;
         let name = share.ps;
-        println!("security before");
-        let security: Security = Security::from_str("tls")?;
+        let security: Security = Security::from_str(&share.tls)?;
         // let mut tls_settings = None;
         // let reality_settings  = None;
         // match security {
@@ -1039,9 +1035,11 @@ impl TryFrom<ShareWithProtocol> for Model {
 
         //     }
         // }
-        println!("tls_settings before");
-        let tls_settings = TLSSettings::new(true, share.host.clone());
-        println!("tls_settings after");
+        let tls_settings = match security {
+            Security::Tls => Some(TLSSettings::new(true, share.host.clone())),
+            _ => None
+        };
+        // let tls_settings = TLSSettings::new(true, share.host.clone());
         let res = match network.as_str() {
             "ws" => {
                 let ws_protocol: WebSocketProtocol = WebSocketProtocol::new(
@@ -1049,20 +1047,19 @@ impl TryFrom<ShareWithProtocol> for Model {
                     Some(security),
                     share.host,
                     Some(share.path),
-                    Some(tls_settings),
+                    tls_settings,
                     None,
                 );
                 Ok(StreamSettings::WebSocket(ws_protocol))
             }
             "tcp" => {
-                println!("grpc match");
                 let tcp_protocol: TcpProtocol =
-                    TcpProtocol::new(share.net, Some(security), Some(tls_settings), None);
+                    TcpProtocol::new(share.net, Some(security), tls_settings, None);
                 Ok(StreamSettings::Tcp(tcp_protocol))
             }
             "grpc" => {
                 let grpc_protocol: GrpcProtocol =
-                    GrpcProtocol::new(share.net, Some(security), Some(tls_settings), None);
+                    GrpcProtocol::new(share.net, Some(security), tls_settings, None);
                 Ok(StreamSettings::Grpc(grpc_protocol))
             }
             _ => Err(anyhow!("not support this protocol.")),
@@ -1087,7 +1084,6 @@ impl FromStr for Model {
         let url = Url::parse(url)?;
         let username = url.username();
         if username == "" {
-            println!("{}", url.domain().unwrap());
             let decode_bytes = general_purpose::STANDARD.decode(url.domain().unwrap())?;
             let share_json = String::from_utf8(decode_bytes).expect("Invalid UTF-8 sequence");
             println!("share_json: {}", share_json);
@@ -1211,18 +1207,119 @@ mod tests {
     fn test_add() {
         // let aa = r#"trojan://uuid@ip:60195?sni=address#aa"#;
         // let aa = r#"vless://80c39fa5-f23e-4ac1-96cb-ed06ea0e8f47@188.114.97.3:8080?type=ws&path=/Join--ELiV2Ray.El.V2ray.community&host=El.V2ray.Community.&security=none"#;
-        let aa = r#"vless://»»»»DIGIV2RAY««««@www.Speedtest.Net:2095?path=/DIGIV2RAY--DigiV2ray--digiv2ray--DIGIV2RAY--DigiV2ray--digiv2ray--DigiV2ray--DigiV2ray?ed=1024&security=none&encryption=none&host=www.speedtest.net.ftp.debian.org.xn--ihqvla424c49bba047b50okggl0rcfo5o3aus3a.website.&type=ws"#;
+        let aa = r#"vmess://eyJ2IjoiMiIsInBzIjoiXHU1MjY5XHU0ZjU5XHU2ZDQxXHU5MWNmXHVmZjFhMzQ0NC4xMSBHQiIsImFkZCI6ImhrMDEwNi5hbGliYWJhb2t6LmNvbSIsInBvcnQiOiI2MDEyNiIsImlkIjoiMGQzODVjNWItNjBjNi00YzJjLThhNDItMzEzZmI2N2NkNjBmIiwiYWlkIjoiMCIsIm5ldCI6InRjcCIsInR5cGUiOiJub25lIiwiaG9zdCI6IiIsInBhdGgiOiIiLCJ0bHMiOiIifQ==
+vmess://eyJ2IjoiMiIsInBzIjoiXHU1OTU3XHU5OTEwXHU1MjMwXHU2NzFmXHVmZjFhXHU5NTdmXHU2NzFmXHU2NzA5XHU2NTQ4IiwiYWRkIjoiaGswMTA2LmFsaWJhYmFva3ouY29tIiwicG9ydCI6IjYwMTI2IiwiaWQiOiIwZDM4NWM1Yi02MGM2LTRjMmMtOGE0Mi0zMTNmYjY3Y2Q2MGYiLCJhaWQiOiIwIiwibmV0IjoidGNwIiwidHlwZSI6Im5vbmUiLCJob3N0IjoiIiwicGF0aCI6IiIsInRscyI6IiJ9
+vmess://eyJ2IjoiMiIsInBzIjoiXHU5MDFhXHU3N2U1XHU5ODc1OiBva3o4Lm1lIFx1NWJhMlx1NjcwZFx1NTcyOFx1NTNmM1x1NGUwYlx1ODlkMiIsImFkZCI6ImhrMDEwNi5hbGliYWJhb2t6LmNvbSIsInBvcnQiOiI2MDEyNiIsImlkIjoiMGQzODVjNWItNjBjNi00YzJjLThhNDItMzEzZmI2N2NkNjBmIiwiYWlkIjoiMCIsIm5ldCI6InRjcCIsInR5cGUiOiJub25lIiwiaG9zdCI6IiIsInBhdGgiOiIiLCJ0bHMiOiIifQ==
+vmess://eyJ2IjoiMiIsInBzIjoiXHU1Yjk4XHU3ZjUxOiBva3psaXN0LmNvbSBcdTViYTJcdTY3MGRcdTU3MjhcdTUzZjNcdTRlMGJcdTg5ZDIiLCJhZGQiOiJoazAxMDYuYWxpYmFiYW9rei5jb20iLCJwb3J0IjoiNjAxMjYiLCJpZCI6IjBkMzg1YzViLTYwYzYtNGMyYy04YTQyLTMxM2ZiNjdjZDYwZiIsImFpZCI6IjAiLCJuZXQiOiJ0Y3AiLCJ0eXBlIjoibm9uZSIsImhvc3QiOiIiLCJwYXRoIjoiIiwidGxzIjoiIn0=
+vmess://eyJ2IjoiMiIsInBzIjoiXHU0ZTEzXHU3ZWJmMSIsImFkZCI6ImhrMDEwNi5hbGliYWJhb2t6LmNvbSIsInBvcnQiOiI2MDEyNiIsImlkIjoiMGQzODVjNWItNjBjNi00YzJjLThhNDItMzEzZmI2N2NkNjBmIiwiYWlkIjoiMCIsIm5ldCI6InRjcCIsInR5cGUiOiJub25lIiwiaG9zdCI6IiIsInBhdGgiOiIiLCJ0bHMiOiIifQ==
+vmess://eyJ2IjoiMiIsInBzIjoiXHU0ZTEzXHU3ZWJmMiIsImFkZCI6ImhrMDEyNy5hbGliYWJhb2t6LmNvbSIsInBvcnQiOiI2MDEyNiIsImlkIjoiMGQzODVjNWItNjBjNi00YzJjLThhNDItMzEzZmI2N2NkNjBmIiwiYWlkIjoiMCIsIm5ldCI6InRjcCIsInR5cGUiOiJub25lIiwiaG9zdCI6IiIsInBhdGgiOiIiLCJ0bHMiOiIifQ==
+vmess://eyJ2IjoiMiIsInBzIjoiXHU0ZTEzXHU3ZWJmMyIsImFkZCI6ImhrMDEwNy5hbGliYWJhb2t6LmNvbSIsInBvcnQiOiI2MDIzNyIsImlkIjoiMGQzODVjNWItNjBjNi00YzJjLThhNDItMzEzZmI2N2NkNjBmIiwiYWlkIjoiMCIsIm5ldCI6InRjcCIsInR5cGUiOiJub25lIiwiaG9zdCI6IiIsInBhdGgiOiIiLCJ0bHMiOiIifQ==
+vmess://eyJ2IjoiMiIsInBzIjoiXHU0ZTEzXHU3ZWJmNCIsImFkZCI6ImhrMDE5NC5hbGliYWJhb2t6LmNvbSIsInBvcnQiOiI2MDIzNyIsImlkIjoiMGQzODVjNWItNjBjNi00YzJjLThhNDItMzEzZmI2N2NkNjBmIiwiYWlkIjoiMCIsIm5ldCI6InRjcCIsInR5cGUiOiJub25lIiwiaG9zdCI6IiIsInBhdGgiOiIiLCJ0bHMiOiIifQ==
+vmess://eyJ2IjoiMiIsInBzIjoiXHU0ZTEzXHU3ZWJmNSIsImFkZCI6ImhrMDAwMi5hbGliYWJhb2t6LmNvbSIsInBvcnQiOiI2MDAwMSIsImlkIjoiMGQzODVjNWItNjBjNi00YzJjLThhNDItMzEzZmI2N2NkNjBmIiwiYWlkIjoiMCIsIm5ldCI6InRjcCIsInR5cGUiOiJub25lIiwiaG9zdCI6IiIsInBhdGgiOiIiLCJ0bHMiOiIifQ==
+vmess://eyJ2IjoiMiIsInBzIjoiXHU0ZTEzXHU3ZWJmNiIsImFkZCI6ImhrMDAwMy5hbGliYWJhb2t6LmNvbSIsInBvcnQiOiI2MDAwMSIsImlkIjoiMGQzODVjNWItNjBjNi00YzJjLThhNDItMzEzZmI2N2NkNjBmIiwiYWlkIjoiMCIsIm5ldCI6InRjcCIsInR5cGUiOiJub25lIiwiaG9zdCI6IiIsInBhdGgiOiIiLCJ0bHMiOiIifQ==
+vmess://eyJ2IjoiMiIsInBzIjoiXHU0ZTEzXHU3ZWJmNyIsImFkZCI6ImhrMDAwNC5hbGliYWJhb2t6LmNvbSIsInBvcnQiOiI2MDIzOCIsImlkIjoiMGQzODVjNWItNjBjNi00YzJjLThhNDItMzEzZmI2N2NkNjBmIiwiYWlkIjoiMCIsIm5ldCI6InRjcCIsInR5cGUiOiJub25lIiwiaG9zdCI6IiIsInBhdGgiOiIiLCJ0bHMiOiIifQ==
+vmess://eyJ2IjoiMiIsInBzIjoiXHU0ZTEzXHU3ZWJmOCIsImFkZCI6ImhrMDAwNC5hbGliYWJhb2t6LmNvbSIsInBvcnQiOiI2MDIzOCIsImlkIjoiMGQzODVjNWItNjBjNi00YzJjLThhNDItMzEzZmI2N2NkNjBmIiwiYWlkIjoiMCIsIm5ldCI6InRjcCIsInR5cGUiOiJub25lIiwiaG9zdCI6IiIsInBhdGgiOiIiLCJ0bHMiOiIifQ==
+vmess://eyJ2IjoiMiIsInBzIjoiTHYxIFx1OTk5OVx1NmUyZiIsImFkZCI6ImhrMDA3NC5hbGliYWJhb2t6LmNvbSIsInBvcnQiOiI2MDA0OSIsImlkIjoiMGQzODVjNWItNjBjNi00YzJjLThhNDItMzEzZmI2N2NkNjBmIiwiYWlkIjoiMCIsIm5ldCI6InRjcCIsInR5cGUiOiJub25lIiwiaG9zdCI6IiIsInBhdGgiOiIiLCJ0bHMiOiIifQ==
+vmess://eyJ2IjoiMiIsInBzIjoiTHYyIFx1OTk5OVx1NmUyZiIsImFkZCI6ImhrMDE3Mi5hbGliYWJhb2t6LmNvbSIsInBvcnQiOiI2MDA0OSIsImlkIjoiMGQzODVjNWItNjBjNi00YzJjLThhNDItMzEzZmI2N2NkNjBmIiwiYWlkIjoiMCIsIm5ldCI6InRjcCIsInR5cGUiOiJub25lIiwiaG9zdCI6IiIsInBhdGgiOiIiLCJ0bHMiOiIifQ==
+trojan://0d385c5b-60c6-4c2c-8a42-313fb67cd60f@hk00207.alibabaokz.com:61206?allowInsecure=1#Lv1%20%E9%A6%99%E6%B8%AF1
+trojan://0d385c5b-60c6-4c2c-8a42-313fb67cd60f@hk00208.alibabaokz.com:61206?allowInsecure=1#Lv2%20%E9%A6%99%E6%B8%AF1
+trojan://0d385c5b-60c6-4c2c-8a42-313fb67cd60f@hk00209.alibabaokz.com:61206?allowInsecure=1#Lv3%20%E9%A6%99%E6%B8%AF1
+vmess://eyJ2IjoiMiIsInBzIjoiTHYxIFx1OTk5OVx1NmUyZjIiLCJhZGQiOiJoazAwNjEuYWxpYmFiYW9rei5jb20iLCJwb3J0IjoiNjAwMjUiLCJpZCI6IjBkMzg1YzViLTYwYzYtNGMyYy04YTQyLTMxM2ZiNjdjZDYwZiIsImFpZCI6IjAiLCJuZXQiOiJ0Y3AiLCJ0eXBlIjoibm9uZSIsImhvc3QiOiIiLCJwYXRoIjoiIiwidGxzIjoiIn0=
+vmess://eyJ2IjoiMiIsInBzIjoiTHYyIFx1OTk5OVx1NmUyZjIiLCJhZGQiOiJoazAwMjcuYWxpYmFiYW9rei5jb20iLCJwb3J0IjoiNjAwMjUiLCJpZCI6IjBkMzg1YzViLTYwYzYtNGMyYy04YTQyLTMxM2ZiNjdjZDYwZiIsImFpZCI6IjAiLCJuZXQiOiJ0Y3AiLCJ0eXBlIjoibm9uZSIsImhvc3QiOiIiLCJwYXRoIjoiIiwidGxzIjoiIn0=
+vmess://eyJ2IjoiMiIsInBzIjoiTHYxIFx1OTk5OVx1NmUyZjMiLCJhZGQiOiJoazAyNDAuYWxpYmFiYW9rei5jb20iLCJwb3J0IjoiNjAyMzkiLCJpZCI6IjBkMzg1YzViLTYwYzYtNGMyYy04YTQyLTMxM2ZiNjdjZDYwZiIsImFpZCI6IjAiLCJuZXQiOiJ0Y3AiLCJ0eXBlIjoibm9uZSIsImhvc3QiOiIiLCJwYXRoIjoiIiwidGxzIjoiIn0=
+vmess://eyJ2IjoiMiIsInBzIjoiTHYyIFx1OTk5OVx1NmUyZjMiLCJhZGQiOiJoazAyNDEuYWxpYmFiYW9rei5jb20iLCJwb3J0IjoiNjAyMzkiLCJpZCI6IjBkMzg1YzViLTYwYzYtNGMyYy04YTQyLTMxM2ZiNjdjZDYwZiIsImFpZCI6IjAiLCJuZXQiOiJ0Y3AiLCJ0eXBlIjoibm9uZSIsImhvc3QiOiIiLCJwYXRoIjoiIiwidGxzIjoiIn0=
+vmess://eyJ2IjoiMiIsInBzIjoiTHYxIFx1OTk5OVx1NmUyZjQiLCJhZGQiOiJoazAwNjcuYWxpYmFiYW9rei5jb20iLCJwb3J0IjoiNjAwNjYiLCJpZCI6IjBkMzg1YzViLTYwYzYtNGMyYy04YTQyLTMxM2ZiNjdjZDYwZiIsImFpZCI6IjAiLCJuZXQiOiJ0Y3AiLCJ0eXBlIjoibm9uZSIsImhvc3QiOiIiLCJwYXRoIjoiIiwidGxzIjoiIn0=
+vmess://eyJ2IjoiMiIsInBzIjoiTHYyIFx1OTk5OVx1NmUyZjQiLCJhZGQiOiJoazAwNjkuYWxpYmFiYW9rei5jb20iLCJwb3J0IjoiNjAwNjYiLCJpZCI6IjBkMzg1YzViLTYwYzYtNGMyYy04YTQyLTMxM2ZiNjdjZDYwZiIsImFpZCI6IjAiLCJuZXQiOiJ0Y3AiLCJ0eXBlIjoibm9uZSIsImhvc3QiOiIiLCJwYXRoIjoiIiwidGxzIjoiIn0=
+vmess://eyJ2IjoiMiIsInBzIjoiTHYxIFx1OTk5OVx1NmUyZjUiLCJhZGQiOiJoazAwNDYuYWxpYmFiYW9rei5jb20iLCJwb3J0IjoiNjAwNDUiLCJpZCI6IjBkMzg1YzViLTYwYzYtNGMyYy04YTQyLTMxM2ZiNjdjZDYwZiIsImFpZCI6IjAiLCJuZXQiOiJ0Y3AiLCJ0eXBlIjoibm9uZSIsImhvc3QiOiIiLCJwYXRoIjoiIiwidGxzIjoiIn0=
+vmess://eyJ2IjoiMiIsInBzIjoiTHYyIFx1OTk5OVx1NmUyZjUiLCJhZGQiOiJoazAwOTIuYWxpYmFiYW9rei5jb20iLCJwb3J0IjoiNjAwNDUiLCJpZCI6IjBkMzg1YzViLTYwYzYtNGMyYy04YTQyLTMxM2ZiNjdjZDYwZiIsImFpZCI6IjAiLCJuZXQiOiJ0Y3AiLCJ0eXBlIjoibm9uZSIsImhvc3QiOiIiLCJwYXRoIjoiIiwidGxzIjoiIn0=
+vmess://eyJ2IjoiMiIsInBzIjoiTHYxIFx1OTk5OVx1NmUyZjYiLCJhZGQiOiJoazAyMDguYWxpYmFiYW9rei5jb20iLCJwb3J0IjoiNjAyMDciLCJpZCI6IjBkMzg1YzViLTYwYzYtNGMyYy04YTQyLTMxM2ZiNjdjZDYwZiIsImFpZCI6IjAiLCJuZXQiOiJ0Y3AiLCJ0eXBlIjoibm9uZSIsImhvc3QiOiIiLCJwYXRoIjoiIiwidGxzIjoiIn0=
+vmess://eyJ2IjoiMiIsInBzIjoiTHYyIFx1OTk5OVx1NmUyZjYiLCJhZGQiOiJoazAyMDkuYWxpYmFiYW9rei5jb20iLCJwb3J0IjoiNjAyMDciLCJpZCI6IjBkMzg1YzViLTYwYzYtNGMyYy04YTQyLTMxM2ZiNjdjZDYwZiIsImFpZCI6IjAiLCJuZXQiOiJ0Y3AiLCJ0eXBlIjoibm9uZSIsImhvc3QiOiIiLCJwYXRoIjoiIiwidGxzIjoiIn0=
+vmess://eyJ2IjoiMiIsInBzIjoiTHYxIFx1OTk5OVx1NmUyZjciLCJhZGQiOiJoazAyMDguYWxpYmFiYW9rei5jb20iLCJwb3J0IjoiNjAyNDMiLCJpZCI6IjBkMzg1YzViLTYwYzYtNGMyYy04YTQyLTMxM2ZiNjdjZDYwZiIsImFpZCI6IjAiLCJuZXQiOiJ0Y3AiLCJ0eXBlIjoibm9uZSIsImhvc3QiOiIiLCJwYXRoIjoiIiwidGxzIjoiIn0=
+vmess://eyJ2IjoiMiIsInBzIjoiTHYyIFx1OTk5OVx1NmUyZjciLCJhZGQiOiJoazAyMDkuYWxpYmFiYW9rei5jb20iLCJwb3J0IjoiNjAyNDMiLCJpZCI6IjBkMzg1YzViLTYwYzYtNGMyYy04YTQyLTMxM2ZiNjdjZDYwZiIsImFpZCI6IjAiLCJuZXQiOiJ0Y3AiLCJ0eXBlIjoibm9uZSIsImhvc3QiOiIiLCJwYXRoIjoiIiwidGxzIjoiIn0=
+vmess://eyJ2IjoiMiIsInBzIjoiTHYxIFx1NTNmMFx1NmU3ZTEiLCJhZGQiOiJ0dzAyNDguYWxpYmFiYW9rei5jb20iLCJwb3J0IjoiNjAyNDciLCJpZCI6IjBkMzg1YzViLTYwYzYtNGMyYy04YTQyLTMxM2ZiNjdjZDYwZiIsImFpZCI6IjAiLCJuZXQiOiJ0Y3AiLCJ0eXBlIjoibm9uZSIsImhvc3QiOiIiLCJwYXRoIjoiIiwidGxzIjoiIn0=
+vmess://eyJ2IjoiMiIsInBzIjoiTHYyIFx1NTNmMFx1NmU3ZTEiLCJhZGQiOiJ0dzAyNDkuYWxpYmFiYW9rei5jb20iLCJwb3J0IjoiNjAyNDciLCJpZCI6IjBkMzg1YzViLTYwYzYtNGMyYy04YTQyLTMxM2ZiNjdjZDYwZiIsImFpZCI6IjAiLCJuZXQiOiJ0Y3AiLCJ0eXBlIjoibm9uZSIsImhvc3QiOiIiLCJwYXRoIjoiIiwidGxzIjoiIn0=
+vmess://eyJ2IjoiMiIsInBzIjoiTHYxIFx1NTNmMFx1NmU3ZTIiLCJhZGQiOiJ0dzAxODIuYWxpYmFiYW9rei5jb20iLCJwb3J0IjoiNjAxODEiLCJpZCI6IjBkMzg1YzViLTYwYzYtNGMyYy04YTQyLTMxM2ZiNjdjZDYwZiIsImFpZCI6IjAiLCJuZXQiOiJ0Y3AiLCJ0eXBlIjoibm9uZSIsImhvc3QiOiIiLCJwYXRoIjoiIiwidGxzIjoiIn0=
+vmess://eyJ2IjoiMiIsInBzIjoiTHYyIFx1NTNmMFx1NmU3ZTIiLCJhZGQiOiJ0dzAxODMuYWxpYmFiYW9rei5jb20iLCJwb3J0IjoiNjAxODEiLCJpZCI6IjBkMzg1YzViLTYwYzYtNGMyYy04YTQyLTMxM2ZiNjdjZDYwZiIsImFpZCI6IjAiLCJuZXQiOiJ0Y3AiLCJ0eXBlIjoibm9uZSIsImhvc3QiOiIiLCJwYXRoIjoiIiwidGxzIjoiIn0=
+vmess://eyJ2IjoiMiIsInBzIjoiTHYxIFx1NjVlNVx1NjcyYzAiLCJhZGQiOiJqcDAwODguYWxpYmFiYW9rei5jb20iLCJwb3J0IjoiMTQzMTUiLCJpZCI6IjBkMzg1YzViLTYwYzYtNGMyYy04YTQyLTMxM2ZiNjdjZDYwZiIsImFpZCI6IjAiLCJuZXQiOiJ0Y3AiLCJ0eXBlIjoibm9uZSIsImhvc3QiOiIiLCJwYXRoIjoiIiwidGxzIjoiIn0=
+vmess://eyJ2IjoiMiIsInBzIjoiTHYyIFx1NjVlNVx1NjcyYzAiLCJhZGQiOiJqcDAwOTAuYWxpYmFiYW9rei5jb20iLCJwb3J0IjoiMTQzMTUiLCJpZCI6IjBkMzg1YzViLTYwYzYtNGMyYy04YTQyLTMxM2ZiNjdjZDYwZiIsImFpZCI6IjAiLCJuZXQiOiJ0Y3AiLCJ0eXBlIjoibm9uZSIsImhvc3QiOiIiLCJwYXRoIjoiIiwidGxzIjoiIn0=
+vmess://eyJ2IjoiMiIsInBzIjoiTHYxIFx1NjVlNVx1NjcyYzEiLCJhZGQiOiJqcDAxMDMuYWxpYmFiYW9rei5jb20iLCJwb3J0IjoiNjAwMzAiLCJpZCI6IjBkMzg1YzViLTYwYzYtNGMyYy04YTQyLTMxM2ZiNjdjZDYwZiIsImFpZCI6IjAiLCJuZXQiOiJ0Y3AiLCJ0eXBlIjoibm9uZSIsImhvc3QiOiIiLCJwYXRoIjoiIiwidGxzIjoiIn0=
+vmess://eyJ2IjoiMiIsInBzIjoiTHYyIFx1NjVlNVx1NjcyYzEiLCJhZGQiOiJqcDAxMDUuYWxpYmFiYW9rei5jb20iLCJwb3J0IjoiNjAwMzAiLCJpZCI6IjBkMzg1YzViLTYwYzYtNGMyYy04YTQyLTMxM2ZiNjdjZDYwZiIsImFpZCI6IjAiLCJuZXQiOiJ0Y3AiLCJ0eXBlIjoibm9uZSIsImhvc3QiOiIiLCJwYXRoIjoiIiwidGxzIjoiIn0=
+vmess://eyJ2IjoiMiIsInBzIjoiTHYxIFx1NjVlNVx1NjcyYzIiLCJhZGQiOiJqcDAxMTYuYWxpYmFiYW9rei5jb20iLCJwb3J0IjoiNjAxMTUiLCJpZCI6IjBkMzg1YzViLTYwYzYtNGMyYy04YTQyLTMxM2ZiNjdjZDYwZiIsImFpZCI6IjAiLCJuZXQiOiJ0Y3AiLCJ0eXBlIjoibm9uZSIsImhvc3QiOiIiLCJwYXRoIjoiIiwidGxzIjoiIn0=
+vmess://eyJ2IjoiMiIsInBzIjoiTHYyIFx1NjVlNVx1NjcyYzIiLCJhZGQiOiJqcDAxMTguYWxpYmFiYW9rei5jb20iLCJwb3J0IjoiNjAxMTUiLCJpZCI6IjBkMzg1YzViLTYwYzYtNGMyYy04YTQyLTMxM2ZiNjdjZDYwZiIsImFpZCI6IjAiLCJuZXQiOiJ0Y3AiLCJ0eXBlIjoibm9uZSIsImhvc3QiOiIiLCJwYXRoIjoiIiwidGxzIjoiIn0=
+vmess://eyJ2IjoiMiIsInBzIjoiTHYxIFx1NjVlNVx1NjcyYzMiLCJhZGQiOiJqcDAxNTkuYWxpYmFiYW9rei5jb20iLCJwb3J0IjoiNjAwMzQiLCJpZCI6IjBkMzg1YzViLTYwYzYtNGMyYy04YTQyLTMxM2ZiNjdjZDYwZiIsImFpZCI6IjAiLCJuZXQiOiJ0Y3AiLCJ0eXBlIjoibm9uZSIsImhvc3QiOiIiLCJwYXRoIjoiIiwidGxzIjoiIn0=
+vmess://eyJ2IjoiMiIsInBzIjoiTHYyIFx1NjVlNVx1NjcyYzMiLCJhZGQiOiJqcDAxNjAuYWxpYmFiYW9rei5jb20iLCJwb3J0IjoiNjAwMzQiLCJpZCI6IjBkMzg1YzViLTYwYzYtNGMyYy04YTQyLTMxM2ZiNjdjZDYwZiIsImFpZCI6IjAiLCJuZXQiOiJ0Y3AiLCJ0eXBlIjoibm9uZSIsImhvc3QiOiIiLCJwYXRoIjoiIiwidGxzIjoiIn0=
+vmess://eyJ2IjoiMiIsInBzIjoiTHYxIFx1NjVlNVx1NjcyYzUiLCJhZGQiOiJqcDAwOTUuYWxpYmFiYW9rei5jb20iLCJwb3J0IjoiNjAwMjkiLCJpZCI6IjBkMzg1YzViLTYwYzYtNGMyYy04YTQyLTMxM2ZiNjdjZDYwZiIsImFpZCI6IjAiLCJuZXQiOiJ0Y3AiLCJ0eXBlIjoibm9uZSIsImhvc3QiOiIiLCJwYXRoIjoiIiwidGxzIjoiIn0=
+vmess://eyJ2IjoiMiIsInBzIjoiTHYyIFx1NjVlNVx1NjcyYzUiLCJhZGQiOiJqcDAwNTYuYWxpYmFiYW9rei5jb20iLCJwb3J0IjoiNjAwMjkiLCJpZCI6IjBkMzg1YzViLTYwYzYtNGMyYy04YTQyLTMxM2ZiNjdjZDYwZiIsImFpZCI6IjAiLCJuZXQiOiJ0Y3AiLCJ0eXBlIjoibm9uZSIsImhvc3QiOiIiLCJwYXRoIjoiIiwidGxzIjoiIn0=
+trojan://0d385c5b-60c6-4c2c-8a42-313fb67cd60f@kr0196.alibabaokz.com:60195?allowInsecure=0&peer=kr-ora-195.okzdns.com&sni=kr-ora-195.okzdns.com#Lv1%20%E9%9F%A9%E5%9B%BD2
+trojan://0d385c5b-60c6-4c2c-8a42-313fb67cd60f@kr0200.alibabaokz.com:60195?allowInsecure=0&peer=kr-ora-195.okzdns.com&sni=kr-ora-195.okzdns.com#Lv2%20%E9%9F%A9%E5%9B%BD2
+vmess://eyJ2IjoiMiIsInBzIjoiTHYxIFx1OTdlOVx1NTZmZDQiLCJhZGQiOiJrcjAyMDQuYWxpYmFiYW9rei5jb20iLCJwb3J0IjoiNjAxOTciLCJpZCI6IjBkMzg1YzViLTYwYzYtNGMyYy04YTQyLTMxM2ZiNjdjZDYwZiIsImFpZCI6IjAiLCJuZXQiOiJ0Y3AiLCJ0eXBlIjoibm9uZSIsImhvc3QiOiIiLCJwYXRoIjoiIiwidGxzIjoiIn0=
+vmess://eyJ2IjoiMiIsInBzIjoiTHYyIFx1OTdlOVx1NTZmZDQiLCJhZGQiOiJrcjAyMDMuYWxpYmFiYW9rei5jb20iLCJwb3J0IjoiNjAxOTciLCJpZCI6IjBkMzg1YzViLTYwYzYtNGMyYy04YTQyLTMxM2ZiNjdjZDYwZiIsImFpZCI6IjAiLCJuZXQiOiJ0Y3AiLCJ0eXBlIjoibm9uZSIsImhvc3QiOiIiLCJwYXRoIjoiIiwidGxzIjoiIn0=
+vmess://eyJ2IjoiMiIsInBzIjoiTHYxIFx1OTdlOVx1NTZmZDUiLCJhZGQiOiJrcjAxOTkuYWxpYmFiYW9rei5jb20iLCJwb3J0IjoiNjAxOTgiLCJpZCI6IjBkMzg1YzViLTYwYzYtNGMyYy04YTQyLTMxM2ZiNjdjZDYwZiIsImFpZCI6IjAiLCJuZXQiOiJ0Y3AiLCJ0eXBlIjoibm9uZSIsImhvc3QiOiIiLCJwYXRoIjoiIiwidGxzIjoiIn0=
+vmess://eyJ2IjoiMiIsInBzIjoiTHYyIFx1OTdlOVx1NTZmZDUiLCJhZGQiOiJrcjAyMDUuYWxpYmFiYW9rei5jb20iLCJwb3J0IjoiNjAxOTgiLCJpZCI6IjBkMzg1YzViLTYwYzYtNGMyYy04YTQyLTMxM2ZiNjdjZDYwZiIsImFpZCI6IjAiLCJuZXQiOiJ0Y3AiLCJ0eXBlIjoibm9uZSIsImhvc3QiOiIiLCJwYXRoIjoiIiwidGxzIjoiIn0=
+vmess://eyJ2IjoiMiIsInBzIjoiTHYxIFx1NjViMFx1NTJhMFx1NTc2MTEiLCJhZGQiOiJzZzAxMTIuYWxpYmFiYW9rei5jb20iLCJwb3J0IjoiNjAwNDEiLCJpZCI6IjBkMzg1YzViLTYwYzYtNGMyYy04YTQyLTMxM2ZiNjdjZDYwZiIsImFpZCI6IjAiLCJuZXQiOiJ0Y3AiLCJ0eXBlIjoibm9uZSIsImhvc3QiOiIiLCJwYXRoIjoiIiwidGxzIjoiIn0=
+vmess://eyJ2IjoiMiIsInBzIjoiTHYyIFx1NjViMFx1NTJhMFx1NTc2MTEiLCJhZGQiOiJzZzAxMTQuYWxpYmFiYW9rei5jb20iLCJwb3J0IjoiNjAwNDEiLCJpZCI6IjBkMzg1YzViLTYwYzYtNGMyYy04YTQyLTMxM2ZiNjdjZDYwZiIsImFpZCI6IjAiLCJuZXQiOiJ0Y3AiLCJ0eXBlIjoibm9uZSIsImhvc3QiOiIiLCJwYXRoIjoiIiwidGxzIjoiIn0=
+vmess://eyJ2IjoiMiIsInBzIjoiTHYxIFx1NjViMFx1NTJhMFx1NTc2MTIiLCJhZGQiOiJzZzAxMDAuYWxpYmFiYW9rei5jb20iLCJwb3J0IjoiNjAwMzEiLCJpZCI6IjBkMzg1YzViLTYwYzYtNGMyYy04YTQyLTMxM2ZiNjdjZDYwZiIsImFpZCI6IjAiLCJuZXQiOiJ0Y3AiLCJ0eXBlIjoibm9uZSIsImhvc3QiOiIiLCJwYXRoIjoiIiwidGxzIjoiIn0=
+vmess://eyJ2IjoiMiIsInBzIjoiTHYyIFx1NjViMFx1NTJhMFx1NTc2MTIiLCJhZGQiOiJzZzAxMDIuYWxpYmFiYW9rei5jb20iLCJwb3J0IjoiNjAwMzEiLCJpZCI6IjBkMzg1YzViLTYwYzYtNGMyYy04YTQyLTMxM2ZiNjdjZDYwZiIsImFpZCI6IjAiLCJuZXQiOiJ0Y3AiLCJ0eXBlIjoibm9uZSIsImhvc3QiOiIiLCJwYXRoIjoiIiwidGxzIjoiIn0=
+vmess://eyJ2IjoiMiIsInBzIjoiTHYxIFx1NjViMFx1NTJhMFx1NTc2MTMiLCJhZGQiOiJzZzAxNjUuYWxpYmFiYW9rei5jb20iLCJwb3J0IjoiNjAwMjEiLCJpZCI6IjBkMzg1YzViLTYwYzYtNGMyYy04YTQyLTMxM2ZiNjdjZDYwZiIsImFpZCI6IjAiLCJuZXQiOiJ0Y3AiLCJ0eXBlIjoibm9uZSIsImhvc3QiOiIiLCJwYXRoIjoiIiwidGxzIjoiIn0=
+vmess://eyJ2IjoiMiIsInBzIjoiTHYyIFx1NjViMFx1NTJhMFx1NTc2MTMiLCJhZGQiOiJzZzAxNjYuYWxpYmFiYW9rei5jb20iLCJwb3J0IjoiNjAwMjEiLCJpZCI6IjBkMzg1YzViLTYwYzYtNGMyYy04YTQyLTMxM2ZiNjdjZDYwZiIsImFpZCI6IjAiLCJuZXQiOiJ0Y3AiLCJ0eXBlIjoibm9uZSIsImhvc3QiOiIiLCJwYXRoIjoiIiwidGxzIjoiIn0=
+vmess://eyJ2IjoiMiIsInBzIjoiTHYxIFx1NjViMFx1NTJhMFx1NTc2MTQiLCJhZGQiOiJzZzAxNjguYWxpYmFiYW9rei5jb20iLCJwb3J0IjoiNjAwMjIiLCJpZCI6IjBkMzg1YzViLTYwYzYtNGMyYy04YTQyLTMxM2ZiNjdjZDYwZiIsImFpZCI6IjAiLCJuZXQiOiJ0Y3AiLCJ0eXBlIjoibm9uZSIsImhvc3QiOiIiLCJwYXRoIjoiIiwidGxzIjoiIn0=
+vmess://eyJ2IjoiMiIsInBzIjoiTHYyIFx1NjViMFx1NTJhMFx1NTc2MTQiLCJhZGQiOiJzZzAxNjkuYWxpYmFiYW9rei5jb20iLCJwb3J0IjoiNjAwMjIiLCJpZCI6IjBkMzg1YzViLTYwYzYtNGMyYy04YTQyLTMxM2ZiNjdjZDYwZiIsImFpZCI6IjAiLCJuZXQiOiJ0Y3AiLCJ0eXBlIjoibm9uZSIsImhvc3QiOiIiLCJwYXRoIjoiIiwidGxzIjoiIn0=
+vmess://eyJ2IjoiMiIsInBzIjoiTHYxIFx1NjViMFx1NTJhMFx1NTc2MTYiLCJhZGQiOiJzZzAxMjAuYWxpYmFiYW9rei5jb20iLCJwb3J0IjoiNjAxMTkiLCJpZCI6IjBkMzg1YzViLTYwYzYtNGMyYy04YTQyLTMxM2ZiNjdjZDYwZiIsImFpZCI6IjAiLCJuZXQiOiJ0Y3AiLCJ0eXBlIjoibm9uZSIsImhvc3QiOiIiLCJwYXRoIjoiIiwidGxzIjoiIn0=
+vmess://eyJ2IjoiMiIsInBzIjoiTHYyIFx1NjViMFx1NTJhMFx1NTc2MTYiLCJhZGQiOiJzZzAxMjEuYWxpYmFiYW9rei5jb20iLCJwb3J0IjoiNjAxMTkiLCJpZCI6IjBkMzg1YzViLTYwYzYtNGMyYy04YTQyLTMxM2ZiNjdjZDYwZiIsImFpZCI6IjAiLCJuZXQiOiJ0Y3AiLCJ0eXBlIjoibm9uZSIsImhvc3QiOiIiLCJwYXRoIjoiIiwidGxzIjoiIn0=
+vmess://eyJ2IjoiMiIsInBzIjoiTHYxIFx1ODJmMVx1NTZmZDEiLCJhZGQiOiJldTAwOTcuYWxpYmFiYW9rei5jb20iLCJwb3J0IjoiNDY3MTkiLCJpZCI6IjBkMzg1YzViLTYwYzYtNGMyYy04YTQyLTMxM2ZiNjdjZDYwZiIsImFpZCI6IjAiLCJuZXQiOiJ0Y3AiLCJ0eXBlIjoibm9uZSIsImhvc3QiOiIiLCJwYXRoIjoiIiwidGxzIjoiIn0=
+vmess://eyJ2IjoiMiIsInBzIjoiTHYyIFx1ODJmMVx1NTZmZDEiLCJhZGQiOiJldTAwOTguYWxpYmFiYW9rei5jb20iLCJwb3J0IjoiNDY3MTkiLCJpZCI6IjBkMzg1YzViLTYwYzYtNGMyYy04YTQyLTMxM2ZiNjdjZDYwZiIsImFpZCI6IjAiLCJuZXQiOiJ0Y3AiLCJ0eXBlIjoibm9uZSIsImhvc3QiOiIiLCJwYXRoIjoiIiwidGxzIjoiIn0=
+vmess://eyJ2IjoiMiIsInBzIjoiTHYxIFx1ODJmMVx1NTZmZDIiLCJhZGQiOiJldTAxMzYuYWxpYmFiYW9rei5jb20iLCJwb3J0IjoiNjAwNDIiLCJpZCI6IjBkMzg1YzViLTYwYzYtNGMyYy04YTQyLTMxM2ZiNjdjZDYwZiIsImFpZCI6IjAiLCJuZXQiOiJ0Y3AiLCJ0eXBlIjoibm9uZSIsImhvc3QiOiIiLCJwYXRoIjoiIiwidGxzIjoiIn0=
+vmess://eyJ2IjoiMiIsInBzIjoiTHYyIFx1ODJmMVx1NTZmZDIiLCJhZGQiOiJldTAxMzcuYWxpYmFiYW9rei5jb20iLCJwb3J0IjoiNjAwNDIiLCJpZCI6IjBkMzg1YzViLTYwYzYtNGMyYy04YTQyLTMxM2ZiNjdjZDYwZiIsImFpZCI6IjAiLCJuZXQiOiJ0Y3AiLCJ0eXBlIjoibm9uZSIsImhvc3QiOiIiLCJwYXRoIjoiIiwidGxzIjoiIn0=
+vmess://eyJ2IjoiMiIsInBzIjoiTHYxIFx1N2Y4ZVx1NTZmZDEiLCJhZGQiOiJ1czAxNzUuYWxpYmFiYW9rei5jb20iLCJwb3J0IjoiNjAxNzQiLCJpZCI6IjBkMzg1YzViLTYwYzYtNGMyYy04YTQyLTMxM2ZiNjdjZDYwZiIsImFpZCI6IjAiLCJuZXQiOiJ0Y3AiLCJ0eXBlIjoibm9uZSIsImhvc3QiOiIiLCJwYXRoIjoiIiwidGxzIjoiIn0=
+vmess://eyJ2IjoiMiIsInBzIjoiTHYyIFx1N2Y4ZVx1NTZmZDEiLCJhZGQiOiJ1czAxNzYuYWxpYmFiYW9rei5jb20iLCJwb3J0IjoiNjAxNzQiLCJpZCI6IjBkMzg1YzViLTYwYzYtNGMyYy04YTQyLTMxM2ZiNjdjZDYwZiIsImFpZCI6IjAiLCJuZXQiOiJ0Y3AiLCJ0eXBlIjoibm9uZSIsImhvc3QiOiIiLCJwYXRoIjoiIiwidGxzIjoiIn0=
+vmess://eyJ2IjoiMiIsInBzIjoiTHYxIFx1N2Y4ZVx1NTZmZDMiLCJhZGQiOiJ1czAxNDEuYWxpYmFiYW9rei5jb20iLCJwb3J0IjoiNjAxNDAiLCJpZCI6IjBkMzg1YzViLTYwYzYtNGMyYy04YTQyLTMxM2ZiNjdjZDYwZiIsImFpZCI6IjAiLCJuZXQiOiJ0Y3AiLCJ0eXBlIjoibm9uZSIsImhvc3QiOiIiLCJwYXRoIjoiIiwidGxzIjoiIn0=
+vmess://eyJ2IjoiMiIsInBzIjoiTHYyIFx1N2Y4ZVx1NTZmZDMiLCJhZGQiOiJ1czAxNDIuYWxpYmFiYW9rei5jb20iLCJwb3J0IjoiNjAxNDAiLCJpZCI6IjBkMzg1YzViLTYwYzYtNGMyYy04YTQyLTMxM2ZiNjdjZDYwZiIsImFpZCI6IjAiLCJuZXQiOiJ0Y3AiLCJ0eXBlIjoibm9uZSIsImhvc3QiOiIiLCJwYXRoIjoiIiwidGxzIjoiIn0=
+vmess://eyJ2IjoiMiIsInBzIjoiTHYxIFx1N2Y4ZVx1NTZmZDQiLCJhZGQiOiJ1czAxNDcuYWxpYmFiYW9rei5jb20iLCJwb3J0IjoiNjAxNTciLCJpZCI6IjBkMzg1YzViLTYwYzYtNGMyYy04YTQyLTMxM2ZiNjdjZDYwZiIsImFpZCI6IjAiLCJuZXQiOiJ0Y3AiLCJ0eXBlIjoibm9uZSIsImhvc3QiOiIiLCJwYXRoIjoiIiwidGxzIjoiIn0=
+vmess://eyJ2IjoiMiIsInBzIjoiTHYyIFx1N2Y4ZVx1NTZmZDQiLCJhZGQiOiJ1czAxNDIuYWxpYmFiYW9rei5jb20iLCJwb3J0IjoiNjAxNTciLCJpZCI6IjBkMzg1YzViLTYwYzYtNGMyYy04YTQyLTMxM2ZiNjdjZDYwZiIsImFpZCI6IjAiLCJuZXQiOiJ0Y3AiLCJ0eXBlIjoibm9uZSIsImhvc3QiOiIiLCJwYXRoIjoiIiwidGxzIjoiIn0=
+vmess://eyJ2IjoiMiIsInBzIjoiTHYxIFx1N2Y4ZVx1NTZmZDUiLCJhZGQiOiJ1czAxNTAuYWxpYmFiYW9rei5jb20iLCJwb3J0IjoiNjAxNDUiLCJpZCI6IjBkMzg1YzViLTYwYzYtNGMyYy04YTQyLTMxM2ZiNjdjZDYwZiIsImFpZCI6IjAiLCJuZXQiOiJ0Y3AiLCJ0eXBlIjoibm9uZSIsImhvc3QiOiIiLCJwYXRoIjoiIiwidGxzIjoiIn0=
+vmess://eyJ2IjoiMiIsInBzIjoiTHYyIFx1N2Y4ZVx1NTZmZDUiLCJhZGQiOiJ1czAxNTEuYWxpYmFiYW9rei5jb20iLCJwb3J0IjoiNjAxNDUiLCJpZCI6IjBkMzg1YzViLTYwYzYtNGMyYy04YTQyLTMxM2ZiNjdjZDYwZiIsImFpZCI6IjAiLCJuZXQiOiJ0Y3AiLCJ0eXBlIjoibm9uZSIsImhvc3QiOiIiLCJwYXRoIjoiIiwidGxzIjoiIn0=
+vmess://eyJ2IjoiMiIsInBzIjoiTHYxIFx1N2Y4ZVx1NTZmZDYiLCJhZGQiOiJ1czAxNTMuYWxpYmFiYW9rei5jb20iLCJwb3J0IjoiNjAxNDYiLCJpZCI6IjBkMzg1YzViLTYwYzYtNGMyYy04YTQyLTMxM2ZiNjdjZDYwZiIsImFpZCI6IjAiLCJuZXQiOiJ0Y3AiLCJ0eXBlIjoibm9uZSIsImhvc3QiOiIiLCJwYXRoIjoiIiwidGxzIjoiIn0=
+vmess://eyJ2IjoiMiIsInBzIjoiTHYyIFx1N2Y4ZVx1NTZmZDYiLCJhZGQiOiJ1czAxNTQuYWxpYmFiYW9rei5jb20iLCJwb3J0IjoiNjAxNDYiLCJpZCI6IjBkMzg1YzViLTYwYzYtNGMyYy04YTQyLTMxM2ZiNjdjZDYwZiIsImFpZCI6IjAiLCJuZXQiOiJ0Y3AiLCJ0eXBlIjoibm9uZSIsImhvc3QiOiIiLCJwYXRoIjoiIiwidGxzIjoiIn0=
+vmess://eyJ2IjoiMiIsInBzIjoiTHYxIFx1OGZlYVx1NjJkYyIsImFkZCI6ImRiMDEwOS5hbGliYWJhb2t6LmNvbSIsInBvcnQiOiI2MDEwOCIsImlkIjoiMGQzODVjNWItNjBjNi00YzJjLThhNDItMzEzZmI2N2NkNjBmIiwiYWlkIjoiMCIsIm5ldCI6InRjcCIsInR5cGUiOiJub25lIiwiaG9zdCI6IiIsInBhdGgiOiIiLCJ0bHMiOiIifQ==
+vmess://eyJ2IjoiMiIsInBzIjoiTHYyIFx1OGZlYVx1NjJkYyIsImFkZCI6ImRiMDExMS5hbGliYWJhb2t6LmNvbSIsInBvcnQiOiI2MDEwOCIsImlkIjoiMGQzODVjNWItNjBjNi00YzJjLThhNDItMzEzZmI2N2NkNjBmIiwiYWlkIjoiMCIsIm5ldCI6InRjcCIsInR5cGUiOiJub25lIiwiaG9zdCI6IiIsInBhdGgiOiIiLCJ0bHMiOiIifQ==
+vmess://eyJ2IjoiMiIsInBzIjoiTHYxIFx1OGQ4YVx1NTM1NyIsImFkZCI6InluMDA3NS5hbGliYWJhb2t6LmNvbSIsInBvcnQiOiI2MDA0MCIsImlkIjoiMGQzODVjNWItNjBjNi00YzJjLThhNDItMzEzZmI2N2NkNjBmIiwiYWlkIjoiMCIsIm5ldCI6InRjcCIsInR5cGUiOiJub25lIiwiaG9zdCI6IiIsInBhdGgiOiIiLCJ0bHMiOiIifQ==
+vmess://eyJ2IjoiMiIsInBzIjoiTHYyIFx1OGQ4YVx1NTM1NyIsImFkZCI6InluMDA3Ni5hbGliYWJhb2t6LmNvbSIsInBvcnQiOiI2MDA0MCIsImlkIjoiMGQzODVjNWItNjBjNi00YzJjLThhNDItMzEzZmI2N2NkNjBmIiwiYWlkIjoiMCIsIm5ldCI6InRjcCIsInR5cGUiOiJub25lIiwiaG9zdCI6IiIsInBhdGgiOiIiLCJ0bHMiOiIifQ==
+vmess://eyJ2IjoiMiIsInBzIjoiTHYzIFx1OGQ4YVx1NTM1NyIsImFkZCI6InluMDA3Ny5hbGliYWJhb2t6LmNvbSIsInBvcnQiOiI2MDA0MCIsImlkIjoiMGQzODVjNWItNjBjNi00YzJjLThhNDItMzEzZmI2N2NkNjBmIiwiYWlkIjoiMCIsIm5ldCI6InRjcCIsInR5cGUiOiJub25lIiwiaG9zdCI6IiIsInBhdGgiOiIiLCJ0bHMiOiIifQ==
+vmess://eyJ2IjoiMiIsInBzIjoiTHYxIFx1ODM3N1x1NTE3MCIsImFkZCI6ImhsMDA3OC5hbGliYWJhb2t6LmNvbSIsInBvcnQiOiI2MDA0NCIsImlkIjoiMGQzODVjNWItNjBjNi00YzJjLThhNDItMzEzZmI2N2NkNjBmIiwiYWlkIjoiMCIsIm5ldCI6InRjcCIsInR5cGUiOiJub25lIiwiaG9zdCI6IiIsInBhdGgiOiIiLCJ0bHMiOiIifQ==
+vmess://eyJ2IjoiMiIsInBzIjoiTFYyIFx1ODM3N1x1NTE3MCIsImFkZCI6ImhsMDA3OS5hbGliYWJhb2t6LmNvbSIsInBvcnQiOiI2MDA0NCIsImlkIjoiMGQzODVjNWItNjBjNi00YzJjLThhNDItMzEzZmI2N2NkNjBmIiwiYWlkIjoiMCIsIm5ldCI6InRjcCIsInR5cGUiOiJub25lIiwiaG9zdCI6IiIsInBhdGgiOiIiLCJ0bHMiOiIifQ==
+vmess://eyJ2IjoiMiIsInBzIjoiTHYxIFx1ODM3N1x1NTE3MDIiLCJhZGQiOiJobDAyNTIuYWxpYmFiYW9rei5jb20iLCJwb3J0IjoiNjAyNTEiLCJpZCI6IjBkMzg1YzViLTYwYzYtNGMyYy04YTQyLTMxM2ZiNjdjZDYwZiIsImFpZCI6IjAiLCJuZXQiOiJ0Y3AiLCJ0eXBlIjoibm9uZSIsImhvc3QiOiIiLCJwYXRoIjoiIiwidGxzIjoiIn0=
+vmess://eyJ2IjoiMiIsInBzIjoiTHYyIFx1ODM3N1x1NTE3MDIiLCJhZGQiOiJobDAyNTMuYWxpYmFiYW9rei5jb20iLCJwb3J0IjoiNjAyNTEiLCJpZCI6IjBkMzg1YzViLTYwYzYtNGMyYy04YTQyLTMxM2ZiNjdjZDYwZiIsImFpZCI6IjAiLCJuZXQiOiJ0Y3AiLCJ0eXBlIjoibm9uZSIsImhvc3QiOiIiLCJwYXRoIjoiIiwidGxzIjoiIn0=
+vmess://eyJ2IjoiMiIsInBzIjoiTHYxIFx1OWE2Y1x1Njc2NVx1ODk3Zlx1NGU5YSB4NSIsImFkZCI6Im1sMDA3MC5hbGliYWJhb2t6LmNvbSIsInBvcnQiOiI2MDAyNCIsImlkIjoiMGQzODVjNWItNjBjNi00YzJjLThhNDItMzEzZmI2N2NkNjBmIiwiYWlkIjoiMCIsIm5ldCI6InRjcCIsInR5cGUiOiJub25lIiwiaG9zdCI6IiIsInBhdGgiOiIiLCJ0bHMiOiIifQ==
+vmess://eyJ2IjoiMiIsInBzIjoiTHYyIFx1OWE2Y1x1Njc2NVx1ODk3Zlx1NGU5YSB4NSIsImFkZCI6Im1sMDA3MS5hbGliYWJhb2t6LmNvbSIsInBvcnQiOiI2MDAyNCIsImlkIjoiMGQzODVjNWItNjBjNi00YzJjLThhNDItMzEzZmI2N2NkNjBmIiwiYWlkIjoiMCIsIm5ldCI6InRjcCIsInR5cGUiOiJub25lIiwiaG9zdCI6IiIsInBhdGgiOiIiLCJ0bHMiOiIifQ==
+vmess://eyJ2IjoiMiIsInBzIjoiTHYxIFx1NTM3MFx1NWMzYyIsImFkZCI6InluMDAzOC5hbGliYWJhb2t6LmNvbSIsInBvcnQiOiI2MDAzNyIsImlkIjoiMGQzODVjNWItNjBjNi00YzJjLThhNDItMzEzZmI2N2NkNjBmIiwiYWlkIjoiMCIsIm5ldCI6InRjcCIsInR5cGUiOiJub25lIiwiaG9zdCI6IiIsInBhdGgiOiIiLCJ0bHMiOiIifQ==
+vmess://eyJ2IjoiMiIsInBzIjoiTHYyIFx1NTM3MFx1NWMzYyIsImFkZCI6InluMDA1MC5hbGliYWJhb2t6LmNvbSIsInBvcnQiOiI2MDAzNyIsImlkIjoiMGQzODVjNWItNjBjNi00YzJjLThhNDItMzEzZmI2N2NkNjBmIiwiYWlkIjoiMCIsIm5ldCI6InRjcCIsInR5cGUiOiJub25lIiwiaG9zdCI6IiIsInBhdGgiOiIiLCJ0bHMiOiIifQ==
+vmess://eyJ2IjoiMiIsInBzIjoiTHYxIFx1NTcxZlx1ODAzM1x1NTE3NiBYNSIsImFkZCI6InR1MDA4Mi5hbGliYWJhb2t6LmNvbSIsInBvcnQiOiI2MDA4MSIsImlkIjoiMGQzODVjNWItNjBjNi00YzJjLThhNDItMzEzZmI2N2NkNjBmIiwiYWlkIjoiMCIsIm5ldCI6InRjcCIsInR5cGUiOiJub25lIiwiaG9zdCI6IiIsInBhdGgiOiIiLCJ0bHMiOiIifQ==
+vmess://eyJ2IjoiMiIsInBzIjoiTHYyIFx1NTcxZlx1ODAzM1x1NTE3NiBYNSIsImFkZCI6InR1MDA4My5hbGliYWJhb2t6LmNvbSIsInBvcnQiOiI2MDA4MSIsImlkIjoiMGQzODVjNWItNjBjNi00YzJjLThhNDItMzEzZmI2N2NkNjBmIiwiYWlkIjoiMCIsIm5ldCI6InRjcCIsInR5cGUiOiJub25lIiwiaG9zdCI6IiIsInBhdGgiOiIiLCJ0bHMiOiIifQ==
+vmess://eyJ2IjoiMiIsInBzIjoiTHYxIFx1NTcxZlx1ODAzM1x1NTE3NjIgXHU1MzlmXHU3NTFmIiwiYWRkIjoidHUwMTg3LmFsaWJhYmFva3ouY29tIiwicG9ydCI6IjYwMTg2IiwiaWQiOiIwZDM4NWM1Yi02MGM2LTRjMmMtOGE0Mi0zMTNmYjY3Y2Q2MGYiLCJhaWQiOiIwIiwibmV0IjoidGNwIiwidHlwZSI6Im5vbmUiLCJob3N0IjoiIiwicGF0aCI6IiIsInRscyI6IiJ9
+vmess://eyJ2IjoiMiIsInBzIjoiTHYyIFx1NTcxZlx1ODAzM1x1NTE3NjIgXHU1MzlmXHU3NTFmIiwiYWRkIjoidHUwMTg4LmFsaWJhYmFva3ouY29tIiwicG9ydCI6IjYwMTg2IiwiaWQiOiIwZDM4NWM1Yi02MGM2LTRjMmMtOGE0Mi0zMTNmYjY3Y2Q2MGYiLCJhaWQiOiIwIiwibmV0IjoidGNwIiwidHlwZSI6Im5vbmUiLCJob3N0IjoiIiwicGF0aCI6IiIsInRscyI6IiJ9
+vmess://eyJ2IjoiMiIsInBzIjoiTHYxIFx1NTM3MFx1NWVhNiIsImFkZCI6ImluMDIxMi5hbGliYWJhb2t6LmNvbSIsInBvcnQiOiI2MDIxMSIsImlkIjoiMGQzODVjNWItNjBjNi00YzJjLThhNDItMzEzZmI2N2NkNjBmIiwiYWlkIjoiMCIsIm5ldCI6InRjcCIsInR5cGUiOiJub25lIiwiaG9zdCI6IiIsInBhdGgiOiIiLCJ0bHMiOiIifQ==
+vmess://eyJ2IjoiMiIsInBzIjoiTHYyIFx1NTM3MFx1NWVhNiIsImFkZCI6ImluMDIxMy5hbGliYWJhb2t6LmNvbSIsInBvcnQiOiI2MDIxMSIsImlkIjoiMGQzODVjNWItNjBjNi00YzJjLThhNDItMzEzZmI2N2NkNjBmIiwiYWlkIjoiMCIsIm5ldCI6InRjcCIsInR5cGUiOiJub25lIiwiaG9zdCI6IiIsInBhdGgiOiIiLCJ0bHMiOiIifQ==
+vmess://eyJ2IjoiMiIsInBzIjoiTHYxIFx1OTYzZlx1NjgzOVx1NWVmNyB4MTAiLCJhZGQiOiJhZ3QwMjE3LmFsaWJhYmFva3ouY29tIiwicG9ydCI6IjYwMjE2IiwiaWQiOiIwZDM4NWM1Yi02MGM2LTRjMmMtOGE0Mi0zMTNmYjY3Y2Q2MGYiLCJhaWQiOiIwIiwibmV0IjoidGNwIiwidHlwZSI6Im5vbmUiLCJob3N0IjoiIiwicGF0aCI6IiIsInRscyI6IiJ9
+vmess://eyJ2IjoiMiIsInBzIjoiTHYyIFx1OTYzZlx1NjgzOVx1NWVmNyB4MTAiLCJhZGQiOiJhZ3QwMjE4LmFsaWJhYmFva3ouY29tIiwicG9ydCI6IjYwMjE2IiwiaWQiOiIwZDM4NWM1Yi02MGM2LTRjMmMtOGE0Mi0zMTNmYjY3Y2Q2MGYiLCJhaWQiOiIwIiwibmV0IjoidGNwIiwidHlwZSI6Im5vbmUiLCJob3N0IjoiIiwicGF0aCI6IiIsInRscyI6IiJ9
+vmess://eyJ2IjoiMiIsInBzIjoiXHU2Y2YwXHU1NzBiLVx1NjZmY1x1OGMzNyBYMTAiLCJhZGQiOiJ0ZzAyMjYuYWxpYmFiYW9rei5jb20iLCJwb3J0IjoiNjAyMjUiLCJpZCI6IjBkMzg1YzViLTYwYzYtNGMyYy04YTQyLTMxM2ZiNjdjZDYwZiIsImFpZCI6IjAiLCJuZXQiOiJ0Y3AiLCJ0eXBlIjoibm9uZSIsImhvc3QiOiIiLCJwYXRoIjoiIiwidGxzIjoiIn0=
+vmess://eyJ2IjoiMiIsInBzIjoiXHU4M2YyXHU1ZjhiXHU4Y2QzIFgxMCIsImFkZCI6ImZsYjAyMjcuYWxpYmFiYW9rei5jb20iLCJwb3J0IjoiNjAyMjciLCJpZCI6IjBkMzg1YzViLTYwYzYtNGMyYy04YTQyLTMxM2ZiNjdjZDYwZiIsImFpZCI6IjAiLCJuZXQiOiJ0Y3AiLCJ0eXBlIjoibm9uZSIsImhvc3QiOiIiLCJwYXRoIjoiIiwidGxzIjoiIn0=
+trojan://0d385c5b-60c6-4c2c-8a42-313fb67cd60f@ru0195.alibabaokz.com:60194?allowInsecure=1&peer=russia.okzdns.com&sni=russia.okzdns.com#%E4%BF%84%E7%BD%97%E6%96%AF
+"#;
+        // let aa = r#"vless://»»»»DIGIV2RAY««««@www.Speedtest.Net:2095?path=/DIGIV2RAY--DigiV2ray--digiv2ray--DIGIV2RAY--DigiV2ray--digiv2ray--DigiV2ray--DigiV2ray?ed=1024&security=none&encryption=none&host=www.speedtest.net.ftp.debian.org.xn--ihqvla424c49bba047b50okggl0rcfo5o3aus3a.website.&type=ws"#;
         // let aa = r#"{"v":"2","ps":"D-BROWN-1025","add":"157.245.4.170","port":"8881","id":"db5afae4-ac23-41a6-8378-f307a9a47436","aid":"0","scy":"auto","net":"tcp","type":"http","host":"mihanwebhost.com","path":"/","tls":"none","sni":"","alpn":""}"#;
-        let model = Model::from_str(aa).unwrap();
-        println!("model: {:?}", model);
-        let stream_settings = serde_json::to_string(&model.stream_settings);
-        println!("stream_settings: {:?}", stream_settings);
+        for line in aa.lines() {
+            let model = Model::from_str(line).unwrap();
+        }
+        
+        // println!("model: {:?}", model);
+        // let stream_settings = serde_json::to_string(&model.stream_settings);
+        // println!("stream_settings: {:?}", stream_settings);
 
-        let xrray_config = XrayConfig::new(10086, 10087, vec![model]);
-        fs::write(
-            "output.json",
-            serde_json::to_string_pretty(&xrray_config).unwrap(),
-        )
-        .unwrap();
+        // let xrray_config = XrayConfig::new(10086, 10087, vec![model]);
+        // fs::write(
+        //     "output.json",
+        //     serde_json::to_string_pretty(&xrray_config).unwrap(),
+        // )
+        // .unwrap();
     }
 }
