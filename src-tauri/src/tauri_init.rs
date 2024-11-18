@@ -3,14 +3,11 @@ use migration::{Migrator, MigratorTrait};
 use sea_orm::{ConnectOptions, Database, DatabaseConnection, DbErr};
 use simplelog::{ColorChoice, CombinedLogger, Config, TermLogger, TerminalMode};
 use std::{path::PathBuf, sync::mpsc};
+use tauri::Emitter;
 use tauri_plugin_autostart::AutoLaunchManager;
 use tokio::sync::RwLock;
 
-use crate::{
-    logger::KittyLogger,
-    state::DatabaseState,
-    tray::Tray,
-};
+use crate::{logger::KittyLogger, state::DatabaseState, tray::Tray};
 use anyhow::Result;
 use entity::base_config;
 use kitty_proxy::MatchProxy;
@@ -25,7 +22,9 @@ pub async fn init_db(app_dir: PathBuf) -> Result<DatabaseConnection, DbErr> {
     trace!("{:?}", sqlite_path);
     println!("{:?}", sqlite_path);
     let sqlite_url = format!("sqlite://{}?mode=rwc", sqlite_path.to_string_lossy());
-    let connect_options = ConnectOptions::new(sqlite_url).sqlx_logging(false).to_owned();
+    let connect_options = ConnectOptions::new(sqlite_url)
+        .sqlx_logging(false)
+        .to_owned();
     let db: DatabaseConnection = Database::connect(connect_options).await?;
     Migrator::up(&db, None).await?;
     base_config::Model::update_sysproxy_flag(&db, false).await?;

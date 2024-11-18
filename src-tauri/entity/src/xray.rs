@@ -113,7 +113,7 @@ impl TryFrom<url::form_urlencoded::Parse<'_>> for StreamSettings {
             .map(|x| x.to_string())
             .unwrap_or("".into());
         let path = query_params.get("path").map(|x| x.as_str()).unwrap_or("");
-        let security = query_params
+        let mut security = query_params
             .get("security")
             .map(|x| x.as_str())
             .unwrap_or("none");
@@ -127,6 +127,9 @@ impl TryFrom<url::form_urlencoded::Parse<'_>> for StreamSettings {
             "sni"
         };
         let server_name = query_params.get(sni_key).map(|x| x.as_str()).unwrap_or("");
+        if !server_name.is_empty() {
+            security = "tls"
+        }
         let security: Security = Security::from_str(security)?;
         let mut tls_settings = None;
         let mut reality_settings = None;
@@ -1086,7 +1089,6 @@ impl FromStr for Model {
         if username == "" {
             let decode_bytes = general_purpose::STANDARD.decode(url.domain().unwrap())?;
             let share_json = String::from_utf8(decode_bytes).expect("Invalid UTF-8 sequence");
-            println!("share_json: {}", share_json);
             let share_struct: ShareJsonStruct = serde_json::from_str(share_json.as_str())?;
             let share = ShareWithProtocol::new(url.scheme().into(), share_struct);
             Model::try_from(share)

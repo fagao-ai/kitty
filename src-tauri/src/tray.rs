@@ -3,9 +3,10 @@ use std::path::{Path, PathBuf};
 use crate::state::DatabaseState;
 use crate::tauri_event_handler::on_exit_clear_commands;
 use tauri::menu::{Menu, MenuEvent};
+use tauri::tray::TrayIconEvent;
 use tauri::{
     menu::{MenuBuilder, MenuItemBuilder},
-    tray::{ClickType, TrayIconBuilder},
+    tray::TrayIconBuilder,
 };
 
 use tauri::image::Image;
@@ -45,18 +46,27 @@ impl Tray {
             .on_menu_event(move |app, event: tauri::menu::MenuEvent| {
                 Tray::on_menu_event(app, &event)
             })
-            .on_tray_icon_event(|tray, event| {
-                if event.click_type == ClickType::Left {
+            .on_tray_icon_event(|tray, event| match event {
+                TrayIconEvent::Click {
+                    id,
+                    position,
+                    rect,
+                    button,
+                    button_state,
+                } => {
                     let app = tray.app_handle();
                     if let Some(window) = app.get_webview_window("main") {
                         let _ = window.show();
                         let _ = window.set_focus();
                     }
                 }
+                _ => {}
             })
             .build(app_handle)?;
         // app_handle.path().resource_dir()
-        let _ = tray.set_icon(Some(Image::from_bytes(include_bytes!("../icons/icon.png"))?));
+        let _ = tray.set_icon(Some(Image::from_bytes(include_bytes!(
+            "../icons/icon.png"
+        ))?));
         let _ = tray.set_icon_as_template(false);
         Ok(())
     }

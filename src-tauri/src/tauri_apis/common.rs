@@ -20,11 +20,7 @@ pub async fn copy_proxy_env<R: Runtime>(
     db: &DatabaseConnection,
 ) -> CommandResult<KittyResponse<String>> {
     let proxy_string = CommonAPI::copy_proxy_env(db).await?;
-    let clipboard_content = tauri_plugin_clipboard_manager::ClipKind::PlainText {
-        label: Some("Label".to_string()),
-        text: proxy_string,
-    };
-    app_handle.clipboard().write(clipboard_content).unwrap();
+    app_handle.clipboard().write_text(proxy_string).unwrap();
     Ok(KittyResponse::default())
 }
 
