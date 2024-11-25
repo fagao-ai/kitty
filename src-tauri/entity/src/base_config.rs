@@ -15,7 +15,7 @@ pub struct Model {
     pub socks_port: u16,
     pub delay_test_url: String,
     pub sysproxy_flag: bool,
-    pub auto_start: bool
+    pub auto_start: bool,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]

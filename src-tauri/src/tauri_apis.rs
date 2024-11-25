@@ -1,13 +1,13 @@
 use anyhow::{anyhow, Result};
 #[cfg(feature = "hysteria")]
 use entity::hysteria::{self as hysteria_entity, HysteriaConfig};
+use entity::utils::is_port_available;
 #[cfg(feature = "xray")]
 use entity::xray::{self as xray_entity, XrayConfig};
 use entity::{
     base_config,
     rules::{self},
 };
-use entity::utils::is_port_available;
 #[cfg(feature = "hysteria")]
 use protocols::HysteriaCommandGroup;
 #[cfg(feature = "xray")]
@@ -44,7 +44,6 @@ pub mod common;
 pub mod xray;
 
 pub mod utils;
-
 
 async fn init_state<'a>(
     process_state: &State<'a, ProcessManagerState>,
@@ -106,7 +105,10 @@ pub async fn start_system_proxy<'a>(
     let socks_port = record.socks_port;
     for port in vec![http_port, socks_port] {
         if !is_port_available(port) {
-            return Err(KittyCommandError::AnyHowError(anyhow!("port {} already is used.", port)));
+            return Err(KittyCommandError::AnyHowError(anyhow!(
+                "port {} already is used.",
+                port
+            )));
         }
     }
     #[cfg(feature = "hysteria")]

@@ -5,6 +5,7 @@
 import { reactive, ref, unref, watch } from 'vue'
 import { NRadioGroup, NSwitch } from 'naive-ui'
 import { decamelizeKeys } from 'humps'
+import { enable, disable } from '@tauri-apps/plugin-autostart'
 import { useI18n } from 'vue-i18n'
 import { invoke } from '@/utils/invoke'
 import { settingStore } from '@/views/setting/store'
@@ -21,6 +22,7 @@ const baseConfig = reactive<KittyBaseConfig>({
   delayTestUrl: 'https://gstatic.com/generate_204',
   sysproxyFlag: false,
   autoUpdate: 3,
+  autoStart: false,
 })
 async function handleSwitchProxy(value: boolean) {
   proxyLoading.value = true
@@ -35,6 +37,15 @@ async function handleSwitchProxy(value: boolean) {
   }
   finally {
     proxyLoading.value = false
+  }
+}
+
+async function handleSwitchAutoStart(value: boolean) {
+  if (value) {
+    await enable()
+  }
+  else {
+    await disable()
   }
 }
 
@@ -79,9 +90,9 @@ watch(() => baseConfig.autoUpdate, (val) => {
           </div>
           <div class="font-medium">
             <n-switch
-              :value="false"
-              :disabled="true"
+              v-model:value="baseConfig.autoStart"
               size="medium"
+              @update:value="handleSwitchAutoStart"
             />
           </div>
         </div>

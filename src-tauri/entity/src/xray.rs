@@ -179,12 +179,21 @@ impl TryFrom<url::form_urlencoded::Parse<'_>> for StreamSettings {
                 Ok(StreamSettings::WebSocket(ws_protocol))
             }
             "tcp" => {
-                let tcp_protocol: TcpProtocol = TcpProtocol::new(r#type.into(), Some(security),tls_settings, reality_settings);
+                let tcp_protocol: TcpProtocol = TcpProtocol::new(
+                    r#type.into(),
+                    Some(security),
+                    tls_settings,
+                    reality_settings,
+                );
                 Ok(StreamSettings::Tcp(tcp_protocol))
             }
             "grpc" => {
-                let grpc_protocol: GrpcProtocol =
-                    GrpcProtocol::new(r#type.into(), Some(security), tls_settings, reality_settings);
+                let grpc_protocol: GrpcProtocol = GrpcProtocol::new(
+                    r#type.into(),
+                    Some(security),
+                    tls_settings,
+                    reality_settings,
+                );
                 Ok(StreamSettings::Grpc(grpc_protocol))
             }
             _ => Err(anyhow!("convert stream_settings failed.")),
@@ -244,7 +253,7 @@ impl WebSocketProtocol {
         host: String,
         path: Option<String>,
         tls_settings: Option<TLSSettings>,
-        reality_settings: Option<RealitySettings>
+        reality_settings: Option<RealitySettings>,
     ) -> Self {
         let ws_settings = WsSettings::new(host, path);
         Self {
@@ -252,7 +261,7 @@ impl WebSocketProtocol {
             security,
             tls_settings,
             ws_settings,
-            reality_settings
+            reality_settings,
         }
     }
 }
@@ -272,7 +281,12 @@ pub struct TcpProtocol {
 }
 
 impl TcpProtocol {
-    fn new(network: String, security: Option<Security>, tls_settings: Option<TLSSettings>, reality_settings: Option<RealitySettings>) -> Self {
+    fn new(
+        network: String,
+        security: Option<Security>,
+        tls_settings: Option<TLSSettings>,
+        reality_settings: Option<RealitySettings>,
+    ) -> Self {
         let tcp_settings = TcpSettings::default();
         Self {
             network,
@@ -500,7 +514,12 @@ pub struct GrpcProtocol {
 }
 
 impl GrpcProtocol {
-    fn new(network: String, security: Option<Security>, tls_settings: Option<TLSSettings>, reality_settings: Option<RealitySettings>) -> Self {
+    fn new(
+        network: String,
+        security: Option<Security>,
+        tls_settings: Option<TLSSettings>,
+        reality_settings: Option<RealitySettings>,
+    ) -> Self {
         Self {
             network,
             security,
@@ -1040,7 +1059,7 @@ impl TryFrom<ShareWithProtocol> for Model {
         // }
         let tls_settings = match security {
             Security::Tls => Some(TLSSettings::new(true, share.host.clone())),
-            _ => None
+            _ => None,
         };
         // let tls_settings = TLSSettings::new(true, share.host.clone());
         let res = match network.as_str() {
@@ -1312,7 +1331,7 @@ trojan://0d385c5b-60c6-4c2c-8a42-313fb67cd60f@ru0195.alibabaokz.com:60194?allowI
         for line in aa.lines() {
             let model = Model::from_str(line).unwrap();
         }
-        
+
         // println!("model: {:?}", model);
         // let stream_settings = serde_json::to_string(&model.stream_settings);
         // println!("stream_settings: {:?}", stream_settings);

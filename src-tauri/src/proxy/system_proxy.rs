@@ -34,10 +34,7 @@ pub fn set_system_proxy(host: &str, _socks_port: u16, http_port: Option<u16>) {
             protocol: rustem_proxy::Protocol::HTTPS,
         });
     }
-
-    
 }
-
 
 #[cfg(any(target_os = "macos", target_os = "linux", target_os = "windows"))]
 pub fn clear_system_proxy() {

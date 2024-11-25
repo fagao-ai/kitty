@@ -5,6 +5,7 @@ export interface KittyBaseConfig {
   delayTestUrl: string
   sysproxyFlag: boolean
   autoUpdate: number
+  autoStart: boolean
   startAtLogin?: boolean
   language?: string
   allowLan?: boolean

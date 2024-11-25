@@ -5,7 +5,6 @@ mod m20231210_094555_create_base_config;
 mod m20231223_035153_create_xray;
 mod m20240205_054639_add_rules;
 
-
 pub struct Migrator;
 
 #[async_trait::async_trait]

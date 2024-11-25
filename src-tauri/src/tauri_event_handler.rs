@@ -1,7 +1,4 @@
-use crate::{
-    proxy::system_proxy::clear_system_proxy,
-    state::ProcessManagerState,
-};
+use crate::{proxy::system_proxy::clear_system_proxy, state::ProcessManagerState};
 use log::trace;
 use protocols::KittyCommandGroupTrait;
 use tauri::{AppHandle, Manager, State};

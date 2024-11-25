@@ -1,4 +1,5 @@
 use anyhow::{anyhow, Result};
+use log::debug;
 use serde::Serialize;
 use shared_child::SharedChild;
 use std::collections::HashMap;
@@ -12,9 +13,6 @@ use std::process::{Command, Stdio};
 use std::sync::Arc;
 use std::{thread, time};
 use uuid::Uuid;
-use log::debug;
-
-
 
 use crate::types::CheckStatusCommandPipe;
 use crate::utils::socket_addr_busy;
@@ -69,7 +67,9 @@ impl KittyCommand {
         for socket_addr in socket_addrs {
             let res = socket_addr_busy(socket_addr);
             if !res {
-                return Err(anyhow!(anyhow!("check_socket_addrs failed, process start failed!")));
+                return Err(anyhow!(anyhow!(
+                    "check_socket_addrs failed, process start failed!"
+                )));
             }
         }
         Ok(())

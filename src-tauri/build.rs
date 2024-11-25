@@ -1,10 +1,10 @@
 use anyhow::{anyhow, Result};
 use build_target::{Arch, Os, Target};
 use reqwest;
-use std::{env, io};
 use std::fs::{self, File};
 use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
+use std::{env, io};
 use zip::ZipArchive;
 
 fn set_execute_permission(binaries_path: &PathBuf) {

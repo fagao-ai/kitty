@@ -74,7 +74,7 @@ impl XrayAPI {
                     xray_models.push(xray_model);
                 }
             }
-        }else  {
+        } else {
             let trimed_line = if let Some(pos) = url.rfind('#') {
                 &url[..pos]
             } else {

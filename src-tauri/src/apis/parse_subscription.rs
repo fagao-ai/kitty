@@ -2,7 +2,6 @@ use base64::{engine::general_purpose, Engine};
 use entity::types::ProtocolLine;
 use reqwest;
 
-
 pub async fn download_subcriptions(url: &str) -> anyhow::Result<Vec<ProtocolLine>> {
     let resp = reqwest::get(url).await?;
     let resp_text = resp.text().await?;

@@ -16,6 +16,7 @@ use crate::tauri_apis::{start_system_proxy, stop_system_proxy};
 use crate::tauri_event_handler::on_exit_clear_commands;
 
 mod apis;
+mod logger;
 mod proxy;
 mod state;
 mod tauri_apis;
@@ -23,7 +24,6 @@ mod tauri_event_handler;
 mod tauri_init;
 mod tray;
 mod types;
-mod logger;
 
 // async fn on_window_exit(event: tauri::GlobalWindowEvent) {
 //     println!("on_window_exit call!!!");
@@ -81,9 +81,11 @@ mod logger;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    let builder = tauri::Builder::default().manage(DatabaseState {
-        db: Default::default(),
-    });
+    let builder = tauri::Builder::default()
+        .plugin(tauri_plugin_autostart::init())
+        .manage(DatabaseState {
+            db: Default::default(),
+        });
     let builder = builder.manage(ProcessManagerState::default());
     let builder = builder.manage(KittyLoggerState::default());
     let builder = builder

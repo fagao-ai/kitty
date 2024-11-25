@@ -11,6 +11,6 @@ mod macros;
 pub mod hysteria;
 
 #[cfg(feature = "xray")]
-pub mod xray;
-#[cfg(feature = "xray")]
 pub mod subscribe;
+#[cfg(feature = "xray")]
+pub mod xray;

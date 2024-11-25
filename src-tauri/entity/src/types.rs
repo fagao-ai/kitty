@@ -1,7 +1,7 @@
 use std::fmt;
 
-use serde::{Deserialize, Serialize};
 use serde::de::{self, Deserializer, Visitor};
+use serde::{Deserialize, Serialize};
 
 use uuid::Uuid;
 
@@ -40,7 +40,9 @@ where
         where
             E: de::Error,
         {
-            Uuid::parse_str(value).map_err(|_| E::custom(format!("invalid port: {}", value))).map(|x| x.to_string())
+            Uuid::parse_str(value)
+                .map_err(|_| E::custom(format!("invalid port: {}", value)))
+                .map(|x| x.to_string())
         }
     }
 
@@ -75,7 +77,9 @@ where
         where
             E: de::Error,
         {
-            value.parse::<u16>().map_err(|_| E::custom(format!("invalid port: {}", value)))
+            value
+                .parse::<u16>()
+                .map_err(|_| E::custom(format!("invalid port: {}", value)))
         }
     }
 

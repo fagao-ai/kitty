@@ -1,7 +1,7 @@
 mod kitty_command;
 mod traits;
-mod utils;
 mod types;
+mod utils;
 
 #[cfg(feature = "hysteria")]
 mod hysteria;
