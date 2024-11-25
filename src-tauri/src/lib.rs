@@ -82,7 +82,10 @@ mod types;
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     let builder = tauri::Builder::default()
-        .plugin(tauri_plugin_autostart::init())
+        .plugin(tauri_plugin_autostart::init(
+            MacosLauncher::LaunchAgent,
+            Some(vec![]),
+        ))
         .manage(DatabaseState {
             db: Default::default(),
         });
@@ -91,10 +94,6 @@ pub fn run() {
     let builder = builder
         .manage(KittyProxyState::default())
         // .plugin(tauri_plugin_window::init())
-        .plugin(tauri_plugin_autostart::init(
-            MacosLauncher::LaunchAgent,
-            Some(vec![]),
-        ))
         .plugin(tauri_plugin_notification::init())
         .plugin(tauri_plugin_clipboard_manager::init())
         .setup(init_setup);
