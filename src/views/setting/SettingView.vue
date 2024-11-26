@@ -3,9 +3,10 @@
   lang="ts"
 >
 import { reactive, ref, unref, watch } from 'vue'
+import { watchOnce } from '@vueuse/core'
 import { NRadioGroup, NSwitch } from 'naive-ui'
 import { decamelizeKeys } from 'humps'
-import { enable, disable } from '@tauri-apps/plugin-autostart'
+import { enable, isEnabled, disable } from '@tauri-apps/plugin-autostart'
 import { useI18n } from 'vue-i18n'
 import { invoke } from '@/utils/invoke'
 import { settingStore } from '@/views/setting/store'
@@ -71,6 +72,10 @@ watch(language, whenLanguageChanged, { immediate: true })
 watch(() => baseConfig.autoUpdate, (val) => {
   settingStore.value.autoUpdate = val
 })
+
+watchOnce(() => baseConfig.autoStart, async () => {
+  baseConfig.autoStart = await isEnabled()
+}, { immediate: true })
 </script>
 
 <template>
