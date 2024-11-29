@@ -25,11 +25,18 @@ export default defineConfig(async () => ({
     host: '0.0.0.0',
     hmr: mobile
       ? {
-          protocol: 'ws',
-          host: await internalIpV4(),
-          port: 1420,
-        }
+        protocol: 'ws',
+        host: await internalIpV4(),
+        port: 1420,
+      }
       : undefined,
+  },
+  css: {
+    preprocessorOptions: {
+      scss: {
+        api: 'modern-compiler',
+      },
+    }
   },
   resolve: {
     alias: {

@@ -16,6 +16,10 @@ pub struct Model {
     pub delay_test_url: String,
     pub sysproxy_flag: bool,
     pub auto_start: bool,
+    pub language: String,
+    pub update_interval: i32,
+    pub allow_lan: bool,
+    pub mode: String,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]

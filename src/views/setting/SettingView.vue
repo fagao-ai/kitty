@@ -1,80 +1,35 @@
-<script
-  setup
-  lang="ts"
->
-import { reactive, ref, unref, watch } from 'vue'
+<script setup lang="ts">
+// 
 import { watchOnce } from '@vueuse/core'
-import { NRadioGroup, NSwitch } from 'naive-ui'
-import { decamelizeKeys } from 'humps'
-import { enable, isEnabled, disable } from '@tauri-apps/plugin-autostart'
+import { NRadioGroup, NSwitch, NSkeleton } from 'naive-ui'
+import { isEnabled } from '@tauri-apps/plugin-autostart'
 import { useI18n } from 'vue-i18n'
-import { invoke } from '@/utils/invoke'
-import { settingStore } from '@/views/setting/store'
-import type { KittyBaseConfig } from '@/types/setting'
 import HeaderBar from '@/components/HeaderBar.vue'
+import { settingStore } from '@/views/setting/store'
+import { useConfig } from '@/views/setting/hook'
 
 const { t, locale } = useI18n()
+const { baseConfig, handleSwitchAutoStart, handleBaseConfigUpdate, loading, proxyLoading, initConfig } = useConfig()
+initConfig()
 
-const proxyLoading = ref(false)
-const baseConfig = reactive<KittyBaseConfig>({
-  id: 0,
-  httpPort: 10086,
-  socksPort: 10087,
-  delayTestUrl: 'https://gstatic.com/generate_204',
-  sysproxyFlag: false,
-  autoUpdate: 3,
-  autoStart: false,
-})
-async function handleSwitchProxy(value: boolean) {
-  proxyLoading.value = true
-  try {
-    if (value) {
-      const _res = await invoke('start_system_proxy')
-    }
-    else { await invoke('stop_system_proxy') }
-  }
-  catch (e) {
-    baseConfig.sysproxyFlag = false
-  }
-  finally {
-    proxyLoading.value = false
-  }
-}
-
-async function handleSwitchAutoStart(value: boolean) {
-  if (value) {
-    await enable()
-  }
-  else {
-    await disable()
-  }
-}
-
-async function getBaseConfig() {
-  const config = await invoke<KittyBaseConfig>('query_base_config')
-  Object.assign(baseConfig, config.data)
-}
-
-async function onBaseConfigUpdate() {
-  await invoke('update_base_config', { record: decamelizeKeys(baseConfig) })
-}
-getBaseConfig()
-
-const language = ref(unref(settingStore).language)
-
-function whenLanguageChanged(lang: string) {
-  settingStore.value.language = lang
-  // language.value = lang
+async function handleLanguageChange(lang: string) {
   locale.value = lang
+  handleBaseConfigUpdate()
 }
 
-watch(language, whenLanguageChanged, { immediate: true })
-watch(() => baseConfig.autoUpdate, (val) => {
-  settingStore.value.autoUpdate = val
-})
+async function handleAutoStart(val: boolean) {
+  await handleSwitchAutoStart(val)
+  await handleBaseConfigUpdate()
+}
+
+async function handleUpdateInterval() {
+  settingStore.value.autoUpdate = baseConfig.updateInterval
+  await handleBaseConfigUpdate()
+}
 
 watchOnce(() => baseConfig.autoStart, async () => {
   baseConfig.autoStart = await isEnabled()
+  await handleBaseConfigUpdate()
 }, { immediate: true })
 </script>
 
@@ -87,9 +42,9 @@ watchOnce(() => baseConfig.autoStart, async () => {
     </header-bar>
     <div class="flex-1 flex flex-col gap-y-6 pr-4">
       <div
-        class="dark:bg-dark grid grid-cols-2 grid-rows-2 gap-x-16 gap-y-4 p-6 bg-[#f9f7f7] shadow-lg rounded-md text-[#5b7497] dark:text-slate-300"
-      >
-        <div class="flex justify-between items-center">
+        class="dark:bg-dark grid grid-cols-2 grid-rows-2 gap-x-16 gap-y-4 p-6 bg-[#f9f7f7] shadow-lg rounded-md text-[#5b7497] dark:text-slate-300">
+        <n-skeleton v-if="loading" width="100%" :height="34" round /> 
+        <div v-else class="flex justify-between items-center">
           <div class="font-semibold">
             {{ t('setting.autoStart') }}
           </div>
@@ -97,18 +52,20 @@ watchOnce(() => baseConfig.autoStart, async () => {
             <n-switch
               v-model:value="baseConfig.autoStart"
               size="medium"
-              @update:value="handleSwitchAutoStart"
+              @update:value="handleAutoStart"
             />
           </div>
         </div>
-        <div class="flex justify-between items-center">
+        <n-skeleton v-if="loading" width="100%" :height="34" round /> 
+        <div v-else class="flex justify-between items-center">
           <div class="font-semibold">
             {{ t('setting.language') }}
           </div>
           <div class="font-medium">
             <n-radio-group
-              v-model:value="language"
+              v-model:value="baseConfig.language"
               name="langGroup"
+              @update:value="handleLanguageChange"
             >
               <n-radio-button value="zh-CN">
                 文
@@ -119,7 +76,8 @@ watchOnce(() => baseConfig.autoStart, async () => {
             </n-radio-group>
           </div>
         </div>
-        <div class="flex justify-between items-center">
+        <n-skeleton v-if="loading" width="100%" :height="34" round /> 
+        <div v-else class="flex justify-between items-center">
           <div class="font-semibold">
             {{ t('setting.systemProxy') }}
           </div>
@@ -128,11 +86,12 @@ watchOnce(() => baseConfig.autoStart, async () => {
               v-model:value="baseConfig.sysproxyFlag"
               :loading="proxyLoading"
               size="medium"
-              @update:value="handleSwitchProxy"
+              @update:value="handleBaseConfigUpdate"
             />
           </div>
         </div>
-        <div class="flex justify-between items-center">
+        <n-skeleton v-if="loading" width="100%" :height="34" round /> 
+        <div v-else class="flex justify-between items-center">
           <div class="font-semibold">
             {{ t('setting.allowLan') }}
           </div>
@@ -142,17 +101,18 @@ watchOnce(() => baseConfig.autoStart, async () => {
         </div>
       </div>
       <div
-        class="dark:bg-dark dark:text-slate-300 grid grid-cols-2 grid-rows-2 gap-x-16 gap-y-4 p-6 text-[#5b7497] bg-[#f9f7f7] shadow-lg rounded-md"
-      >
-        <div class="flex justify-between items-center">
+        class="dark:bg-dark dark:text-slate-300 grid grid-cols-2 grid-rows-2 gap-x-16 gap-y-4 p-6 text-[#5b7497] bg-[#f9f7f7] shadow-lg rounded-md">
+        <n-skeleton v-if="loading" width="100%" :height="34" round /> 
+        <div v-else class="flex justify-between items-center">
           <div class="font-semibold">
             {{ t('setting.mode') }}
           </div>
           <div class="font-medium">
-            {{ t('common.global') }}
+            {{ t('common.rules') }}
           </div>
         </div>
-        <div class="flex justify-between items-center">
+        <n-skeleton v-if="loading" width="100%" :height="34" round /> 
+        <div v-else class="flex justify-between items-center">
           <div class="font-semibold">
             {{ t('setting.socks5Port') }}
           </div>
@@ -163,11 +123,12 @@ watchOnce(() => baseConfig.autoStart, async () => {
               :show-button="false"
               :max="65535"
               :min="1"
-              @blur="onBaseConfigUpdate"
+              @blur="handleBaseConfigUpdate"
             />
           </div>
         </div>
-        <div class="flex justify-between items-center">
+        <n-skeleton v-if="loading" width="100%" :height="34" round /> 
+        <div v-else class="flex justify-between items-center">
           <div class="font-semibold">
             {{ t('setting.httpPort') }}
           </div>
@@ -178,12 +139,12 @@ watchOnce(() => baseConfig.autoStart, async () => {
               :show-button="false"
               :max="65535"
               :min="1"
-              @blur="onBaseConfigUpdate"
+              @blur="handleBaseConfigUpdate"
             />
           </div>
         </div>
-
-        <div class="flex justify-between items-center">
+        <n-skeleton v-if="loading" width="100%" :height="34" round /> 
+        <div v-else class="flex justify-between items-center">
           <div class="font-semibold">
             {{ t('setting.delayTestUrl') }}
           </div>
@@ -192,25 +153,22 @@ watchOnce(() => baseConfig.autoStart, async () => {
               v-model:value="baseConfig.delayTestUrl"
               type="text"
               :show-button="false"
-              :max="65535"
-              :min="1"
-              @blur="onBaseConfigUpdate"
+              @blur="handleBaseConfigUpdate"
             />
           </div>
         </div>
-
-        <div class="flex justify-between items-center">
+        <n-skeleton v-if="loading" width="100%" :height="34" round /> 
+        <div v-else class="flex justify-between items-center">
           <div class="font-semibold">
             {{ t('setting.subscriptionAutoUpdate') }}
           </div>
           <div class="font-medium w-20">
             <n-input-number
-              v-model:value="baseConfig.autoUpdate"
-              type="text"
+              v-model:value="baseConfig.updateInterval"
               :show-button="false"
               :max="48"
               :min="1"
-              @blur="onBaseConfigUpdate"
+              @blur="handleUpdateInterval"
             />
           </div>
         </div>
