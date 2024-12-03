@@ -9,7 +9,7 @@ import { settingStore } from '@/views/setting/store'
 import { useConfig } from '@/views/setting/hook'
 
 const { t, locale } = useI18n()
-const { baseConfig, handleSwitchAutoStart, handleBaseConfigUpdate, loading, proxyLoading, initConfig } = useConfig()
+const { baseConfig, handleSwitchAutoStart, handleBaseConfigUpdate, handleSwitchProxy, loading, proxyLoading, initConfig } = useConfig()
 initConfig()
 
 async function handleLanguageChange(lang: string) {
@@ -19,12 +19,17 @@ async function handleLanguageChange(lang: string) {
 
 async function handleAutoStart(val: boolean) {
   await handleSwitchAutoStart(val)
-  await handleBaseConfigUpdate()
+  handleBaseConfigUpdate()
 }
 
 async function handleUpdateInterval() {
   settingStore.value.autoUpdate = baseConfig.updateInterval
   await handleBaseConfigUpdate()
+}
+
+async function handleProxy(val: boolean) {
+  await handleSwitchProxy(val)
+  handleBaseConfigUpdate()
 }
 
 watchOnce(() => baseConfig.autoStart, async () => {
@@ -86,7 +91,7 @@ watchOnce(() => baseConfig.autoStart, async () => {
               v-model:value="baseConfig.sysproxyFlag"
               :loading="proxyLoading"
               size="medium"
-              @update:value="handleBaseConfigUpdate"
+              @update:value="handleProxy"
             />
           </div>
         </div>
