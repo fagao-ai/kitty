@@ -53,3 +53,14 @@ export interface ImportProxy {
 }
 
 export type Subscription = Required<ImportProxy>
+
+export interface ProxyDelay {
+  id: number
+  delay: number
+}
+
+export interface ProxyDelayInfo {
+  id: number
+  address: string
+  port: number
+}

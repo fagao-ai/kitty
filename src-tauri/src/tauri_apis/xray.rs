@@ -6,6 +6,7 @@ use protocols::XrayCommandGroup;
 use tauri::{AppHandle, Manager, State};
 
 use crate::apis::xray_apis::XrayAPI;
+use crate::proxy::delay::{kitty_proxies_delay, ProxyDelay, ProxyInfo};
 use crate::state::{DatabaseState, KittyProxyState};
 use crate::types::{CommandResult, KittyResponse};
 
@@ -132,4 +133,18 @@ pub async fn batch_get_subscriptions<'a>(
     let db = state.get_db();
     let subscriptions = XrayAPI::batch_get_subscriptions(&db).await?;
     Ok(KittyResponse::from_data(subscriptions))
+}
+
+#[tauri::command(rename_all = "snake_case")]
+pub async fn proxies_delay_test<'a>(
+    proxies: Vec<ProxyInfo>,
+) -> CommandResult<KittyResponse<Vec<ProxyDelay>>> {
+    // let db = state.get_db();
+    // let records = xray::Model::fetch_all(&db).await.unwrap();
+    // let proxies = records
+    //     .into_iter()
+    //     .map(|x| x.into())
+    //     .collect::<Vec<ProxyInfo>>();
+    let res = kitty_proxies_delay(proxies).await;
+    Ok(KittyResponse::from_data(res))
 }

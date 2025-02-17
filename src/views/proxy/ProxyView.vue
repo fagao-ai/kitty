@@ -1,13 +1,13 @@
 <script setup lang="ts">
 import { NButton, useMessage } from 'naive-ui'
-import { computed, onUnmounted, ref, watch } from 'vue'
+import { computed, onUnmounted, ref, watch, unref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { ProxyType } from '@/types/proxy'
 import AddProxy from '@/views/proxy/modal/AddProxy.vue'
 import type { ProxyCard as Card, HysteriaProxy, XrayProxy } from '@/types/proxy'
 import { proxyStore } from '@/views/proxy/store'
 import ProxyCardList from '@/components/ProxyCardList.vue'
-import { getAllHysterias, getAllXraies, getProxyByIdAndType } from '@/apis/proxy'
+import { getAllHysterias, getAllXraies, getProxyByIdAndType, xrayProxiedDelay } from '@/apis/proxy'
 import ImportProxy from '@/views/proxy/modal/ImportProxy.vue'
 import EditProxy from '@/views/proxy/modal/EditProxy.vue'
 import HeaderBar from '@/components/HeaderBar.vue'
@@ -43,16 +43,23 @@ async function initHysteria() {
 
 async function initXray() {
   const xraies = await getAllXraies()
+  const delay_map = await xrayProxiedDelay(xraies.map((item) => {
+    return { id: item.id, address: item.address, port: item.port }
+  }))
   xrayCards.value = xraies.map((item) => {
     return {
       id: item.id!,
       type: ProxyType.Xray,
       name: item.name,
       tag: item.protocol,
-      delay: 200, // TODO
+      delay: delay_map[item.id!] ?? 9999,
       protocol: item.streamSettings.network,
     }
-  })
+  }).sort((a, b) => a.delay - b.delay)
+}
+
+async function handleProxiesDelay() {
+  initXray()
 }
 
 function handleGetAllProxyByType(proxyType: ProxyType) {
@@ -65,7 +72,7 @@ function handleGetAllProxyByType(proxyType: ProxyType) {
 
 const unwatchProxyStore = watch(proxyStore, () => {
   handleGetAllProxyByType(proxyStore.value.currentProxy)
-}, { immediate: true, deep: true })
+}, { immediate: false, deep: true })
 
 // edit proxy
 const showEditModal = ref(false)
@@ -90,10 +97,14 @@ function handleCancelEdit() {
 
 const { updateStatus } = useSubscriptionAutoUpdate()
 
-const unwatchUpdateStatus = watch(updateStatus, (newStatus, oldStatus) => {
-  if (oldStatus === 'running' && newStatus === 'stop')
+const unwatchUpdateStatus = watch(updateStatus, async (newStatus, oldStatus) => {
+  if (oldStatus === void 0 && newStatus === 'running') {
     handleGetAllProxyByType(ProxyType.Xray)
-})
+  }
+  else if (oldStatus === 'running' && newStatus === 'stop') {
+    handleGetAllProxyByType(ProxyType.Xray)
+  }
+}, { immediate: true })
 
 onUnmounted(() => {
   unwatchProxyStore()
@@ -175,6 +186,29 @@ async function handleUpdatedProxy(proxyType: ProxyType) {
       @on-cancel-edit="handleCancelEdit"
       @on-proxy-updated="handleUpdatedProxy"
     />
+    <n-float-button
+      v-if="proxyStore.currentProxy === ProxyType.Xray"
+      :right="20"
+      :top="70"
+      :width="40"
+      :height="40"
+      @click="handleProxiesDelay"
+    >
+      <n-icon class="text-[#63E2B7] text-2xl">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          xmlns:xlink="http://www.w3.org/1999/xlink"
+          viewBox="0 0 20 20"
+        >
+          <g fill="none">
+            <path
+              d="M6.19 2.77c.131-.456.548-.77 1.022-.77h5.25c.725 0 1.237.71 1.007 1.398l-.002.008L12.205 7h2.564c.947 0 1.407 1.144.767 1.811l-.004.004l-8.676 8.858c-.755.782-2.06.06-1.796-.996l1.17-4.679H4.963a1.062 1.062 0 0 1-1.022-1.354l2.25-7.873zM7.213 3a.062.062 0 0 0-.06.045l-2.25 7.874c-.01.04.02.08.06.08H6.87a.5.5 0 0 1 .485.62l-1.325 5.3a.086.086 0 0 0-.003.03c0 .004.002.008.003.011c.004.008.013.02.03.03c.018.01.034.01.042.01a.03.03 0 0 0 .01-.004a.087.087 0 0 0 .024-.018l.004-.004l8.675-8.856a.056.056 0 0 0 .017-.032a.084.084 0 0 0-.007-.044a.079.079 0 0 0-.025-.034c-.005-.004-.013-.008-.03-.008H11.5a.5.5 0 0 1-.472-.666l1.493-4.254a.062.062 0 0 0-.06-.08H7.212z"
+              fill="currentColor"
+            ></path>
+          </g>
+        </svg>
+      </n-icon>
+    </n-float-button>
   </div>
 </template>
 

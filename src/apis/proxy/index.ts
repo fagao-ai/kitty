@@ -3,7 +3,7 @@ import { camelizeKeys, decamelizeKeys } from 'humps'
 import { instanceToPlain, plainToInstance } from 'class-transformer'
 import { Xray } from '@/models/xray'
 import { invoke } from '@/utils/invoke'
-import type { HysteriaProxy, ImportProxy, Subscription, XrayProxy } from '@/types/proxy'
+import type { HysteriaProxy, ImportProxy, ProxyDelay, ProxyDelayInfo, Subscription, XrayProxy } from '@/types/proxy'
 import { ProxyType } from '@/types/proxy'
 
 export async function getAllHysterias() {
@@ -74,5 +74,20 @@ export async function autoUpdateSubscription(subscriptionIds: number[]) {
 
 export async function batchGetSubscriptions(): Promise<Subscription[]> {
   const res = await invoke<Subscription[]>('batch_get_subscriptions')
+  return res.data
+}
+
+export async function xrayProxiedDelay(proxies: ProxyDelayInfo[]) {
+  const res = await invoke<ProxyDelay[]>('proxies_delay_test', { proxies })
+
+  return res.data.reduce((acc, item) => {
+    acc[item.id] = item.delay
+    return acc
+  }, {} as Record<number, number>)
+}
+
+export async function currentProxyDelay(proxy: string, targetUrl: string) {
+  const res = await invoke<number>('test_current_proxy')
+
   return res.data
 }

@@ -1,4 +1,5 @@
 use crate::apis::common_apis::CommonAPI;
+use crate::proxy::delay::kitty_current_proxy_delay;
 use crate::state::{DatabaseState, KittyProxyState};
 use crate::types::{CommandResult, KittyResponse};
 use anyhow::anyhow;
@@ -122,4 +123,13 @@ pub async fn update_rules_item<'a>(
     } else {
         Err(anyhow!("records not exists!").into())
     }
+}
+
+#[tauri::command(rename_all = "snake_case")]
+pub async fn test_current_proxy<'a>(
+    proxy: String,
+    target_url: String,
+) -> CommandResult<KittyResponse<u128>> {
+    let res = kitty_current_proxy_delay(proxy, target_url).await;
+    Ok(KittyResponse::from_data(res))
 }
