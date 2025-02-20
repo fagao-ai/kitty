@@ -130,6 +130,7 @@ pub async fn test_current_proxy<'a>(
     proxy: String,
     target_url: String,
 ) -> CommandResult<KittyResponse<u128>> {
+    println!("proxy: {}", proxy);
     let res = kitty_current_proxy_delay(proxy, target_url).await;
     Ok(KittyResponse::from_data(res))
 }

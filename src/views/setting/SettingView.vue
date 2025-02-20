@@ -1,7 +1,7 @@
 <script setup lang="ts">
-// 
+import { onBeforeUnmount, watch } from 'vue'
 import { watchOnce } from '@vueuse/core'
-import { NRadioGroup, NSwitch, NSkeleton } from 'naive-ui'
+import { NRadioGroup, NSkeleton, NSwitch } from 'naive-ui'
 import { isEnabled } from '@tauri-apps/plugin-autostart'
 import { useI18n } from 'vue-i18n'
 import HeaderBar from '@/components/HeaderBar.vue'
@@ -36,6 +36,19 @@ watchOnce(() => baseConfig.autoStart, async () => {
   baseConfig.autoStart = await isEnabled()
   await handleBaseConfigUpdate()
 }, { immediate: true })
+
+const unwatchProxyEnable = watch(() => baseConfig.sysproxyFlag, () => {
+  settingStore.value.sysproxyFlag = baseConfig.sysproxyFlag
+}, { immediate: true })
+
+const unwatchProxyPort = watch(() => baseConfig.httpPort, () => {
+  settingStore.value.port = baseConfig.httpPort
+}, { immediate: true })
+
+onBeforeUnmount(() => {
+  unwatchProxyEnable()
+  unwatchProxyPort()
+})
 </script>
 
 <template>
@@ -47,9 +60,18 @@ watchOnce(() => baseConfig.autoStart, async () => {
     </header-bar>
     <div class="flex-1 flex flex-col gap-y-6 pr-4">
       <div
-        class="dark:bg-dark grid grid-cols-2 grid-rows-2 gap-x-16 gap-y-4 p-6 bg-[#f9f7f7] shadow-lg rounded-md text-[#5b7497] dark:text-slate-300">
-        <n-skeleton v-if="loading" width="100%" :height="34" round /> 
-        <div v-else class="flex justify-between items-center">
+        class="dark:bg-dark grid grid-cols-2 grid-rows-2 gap-x-16 gap-y-4 p-6 bg-[#f9f7f7] shadow-lg rounded-md text-[#5b7497] dark:text-slate-300"
+      >
+        <n-skeleton
+          v-if="loading"
+          width="100%"
+          :height="34"
+          round
+        />
+        <div
+          v-else
+          class="flex justify-between items-center"
+        >
           <div class="font-semibold">
             {{ t('setting.autoStart') }}
           </div>
@@ -61,8 +83,16 @@ watchOnce(() => baseConfig.autoStart, async () => {
             />
           </div>
         </div>
-        <n-skeleton v-if="loading" width="100%" :height="34" round /> 
-        <div v-else class="flex justify-between items-center">
+        <n-skeleton
+          v-if="loading"
+          width="100%"
+          :height="34"
+          round
+        />
+        <div
+          v-else
+          class="flex justify-between items-center"
+        >
           <div class="font-semibold">
             {{ t('setting.language') }}
           </div>
@@ -81,8 +111,16 @@ watchOnce(() => baseConfig.autoStart, async () => {
             </n-radio-group>
           </div>
         </div>
-        <n-skeleton v-if="loading" width="100%" :height="34" round /> 
-        <div v-else class="flex justify-between items-center">
+        <n-skeleton
+          v-if="loading"
+          width="100%"
+          :height="34"
+          round
+        />
+        <div
+          v-else
+          class="flex justify-between items-center"
+        >
           <div class="font-semibold">
             {{ t('setting.systemProxy') }}
           </div>
@@ -95,8 +133,16 @@ watchOnce(() => baseConfig.autoStart, async () => {
             />
           </div>
         </div>
-        <n-skeleton v-if="loading" width="100%" :height="34" round /> 
-        <div v-else class="flex justify-between items-center">
+        <n-skeleton
+          v-if="loading"
+          width="100%"
+          :height="34"
+          round
+        />
+        <div
+          v-else
+          class="flex justify-between items-center"
+        >
           <div class="font-semibold">
             {{ t('setting.allowLan') }}
           </div>
@@ -106,9 +152,18 @@ watchOnce(() => baseConfig.autoStart, async () => {
         </div>
       </div>
       <div
-        class="dark:bg-dark dark:text-slate-300 grid grid-cols-2 grid-rows-2 gap-x-16 gap-y-4 p-6 text-[#5b7497] bg-[#f9f7f7] shadow-lg rounded-md">
-        <n-skeleton v-if="loading" width="100%" :height="34" round /> 
-        <div v-else class="flex justify-between items-center">
+        class="dark:bg-dark dark:text-slate-300 grid grid-cols-2 grid-rows-2 gap-x-16 gap-y-4 p-6 text-[#5b7497] bg-[#f9f7f7] shadow-lg rounded-md"
+      >
+        <n-skeleton
+          v-if="loading"
+          width="100%"
+          :height="34"
+          round
+        />
+        <div
+          v-else
+          class="flex justify-between items-center"
+        >
           <div class="font-semibold">
             {{ t('setting.mode') }}
           </div>
@@ -116,8 +171,16 @@ watchOnce(() => baseConfig.autoStart, async () => {
             {{ t('common.rules') }}
           </div>
         </div>
-        <n-skeleton v-if="loading" width="100%" :height="34" round /> 
-        <div v-else class="flex justify-between items-center">
+        <n-skeleton
+          v-if="loading"
+          width="100%"
+          :height="34"
+          round
+        />
+        <div
+          v-else
+          class="flex justify-between items-center"
+        >
           <div class="font-semibold">
             {{ t('setting.socks5Port') }}
           </div>
@@ -132,8 +195,16 @@ watchOnce(() => baseConfig.autoStart, async () => {
             />
           </div>
         </div>
-        <n-skeleton v-if="loading" width="100%" :height="34" round /> 
-        <div v-else class="flex justify-between items-center">
+        <n-skeleton
+          v-if="loading"
+          width="100%"
+          :height="34"
+          round
+        />
+        <div
+          v-else
+          class="flex justify-between items-center"
+        >
           <div class="font-semibold">
             {{ t('setting.httpPort') }}
           </div>
@@ -148,8 +219,16 @@ watchOnce(() => baseConfig.autoStart, async () => {
             />
           </div>
         </div>
-        <n-skeleton v-if="loading" width="100%" :height="34" round /> 
-        <div v-else class="flex justify-between items-center">
+        <n-skeleton
+          v-if="loading"
+          width="100%"
+          :height="34"
+          round
+        />
+        <div
+          v-else
+          class="flex justify-between items-center"
+        >
           <div class="font-semibold">
             {{ t('setting.delayTestUrl') }}
           </div>
@@ -162,8 +241,16 @@ watchOnce(() => baseConfig.autoStart, async () => {
             />
           </div>
         </div>
-        <n-skeleton v-if="loading" width="100%" :height="34" round /> 
-        <div v-else class="flex justify-between items-center">
+        <n-skeleton
+          v-if="loading"
+          width="100%"
+          :height="34"
+          round
+        />
+        <div
+          v-else
+          class="flex justify-between items-center"
+        >
           <div class="font-semibold">
             {{ t('setting.subscriptionAutoUpdate') }}
           </div>

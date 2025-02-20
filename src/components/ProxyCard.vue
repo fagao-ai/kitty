@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { NTag, NTooltip } from 'naive-ui'
+import { NTag } from 'naive-ui'
 import type { ProxyCard, ProxyType } from '@/types/proxy'
 
 interface Emits {
@@ -40,14 +40,15 @@ async function handleDblClick() {
       </n-tag>
     </div>
     <div class="flex-1 text-sm text-[#54759a] dark:text-slate-200">
-      <n-tooltip trigger="hover">
+      <!-- <n-tooltip trigger="hover">
         <template #trigger>
           <div class="truncate">
             {{ name }}
           </div>
         </template>
-        {{ name }}
-      </n-tooltip>
+{{ name }}
+</n-tooltip> -->
+      {{ name }}
     </div>
     <div class="h-6 flex justify-between items-center">
       <div>

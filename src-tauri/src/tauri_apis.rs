@@ -91,7 +91,10 @@ pub async fn start_system_proxy<'a>(
     process_state: State<'a, ProcessManagerState>,
     proxy_state: State<'a, KittyProxyState>,
     db_state: State<'a, DatabaseState>,
+    xray_id: Option<i32>,
 ) -> CommandResult<KittyResponse<()>> {
+    println!("asdfasf: {:?}", xray_id);
+
     let _ = init_state(&process_state, &proxy_state).await?;
     let db = db_state.get_db();
     let config_dir = app_handle.path().app_local_data_dir()?;
@@ -141,7 +144,16 @@ pub async fn start_system_proxy<'a>(
 
     #[cfg(feature = "xray")]
     {
-        let xray_records = xray_entity::Model::fetch_all(&db).await?;
+        let xray_records = if xray_id.is_none() {
+            xray_entity::Model::fetch_all(&db).await?
+        } else {
+            if let Some(item) = xray_entity::Model::get_by_id(&db, xray_id.unwrap()).await? {
+                vec![item]
+            } else {
+                xray_entity::Model::fetch_all(&db).await?
+            }
+        };
+
         if xray_records.len() > 0 {
             let node_number = xray_records.len();
             let (http_port, socks_port) = get_http_socks_ports(&mut used_ports);

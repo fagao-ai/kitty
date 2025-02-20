@@ -1,16 +1,16 @@
 import { reactive, ref, toRaw } from 'vue'
 import { decamelizeKeys } from 'humps'
-import { enable, disable } from '@tauri-apps/plugin-autostart'
+import { disable, enable } from '@tauri-apps/plugin-autostart'
 import { invoke } from '@/utils/invoke'
 import type { KittyBaseConfig } from '@/types/setting'
-
+import { setProxy } from '@/apis/proxy'
 
 export function useConfig() {
   const loading = ref(true)
   const proxyLoading = ref(false)
   const baseConfig = reactive<KittyBaseConfig>({
     id: 0,
-    localIp: "127.0.0.1",
+    localIp: '127.0.0.1',
     httpPort: 10086,
     socksPort: 10087,
     delayTestUrl: 'https://gstatic.com/generate_204',
@@ -38,12 +38,10 @@ export function useConfig() {
   async function handleSwitchProxy(value: boolean) {
     proxyLoading.value = true
     try {
-      if (value) {
-        const _res = await invoke('start_system_proxy')
-      }
-      else { await invoke('stop_system_proxy') }
+      await setProxy(value)
     }
-    catch (e) {
+    // eslint-disable-next-line unused-imports/no-unused-vars
+    catch (_) {
       baseConfig.sysproxyFlag = false
     }
     finally {

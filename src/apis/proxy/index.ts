@@ -87,7 +87,16 @@ export async function xrayProxiedDelay(proxies: ProxyDelayInfo[]) {
 }
 
 export async function currentProxyDelay(proxy: string, targetUrl: string) {
-  const res = await invoke<number>('test_current_proxy')
+  const res = await invoke<number>('test_current_proxy', { proxy, target_url: targetUrl })
 
   return res.data
+}
+
+export async function setProxy(enable: boolean, id: number | null = null) {
+  if (enable) {
+    await invoke('start_system_proxy', { xray_id: id })
+  }
+  else {
+    await invoke('stop_system_proxy')
+  }
 }
