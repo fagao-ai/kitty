@@ -1,10 +1,21 @@
 use base64::{engine::general_purpose, Engine};
 use entity::types::ProtocolLine;
 use reqwest;
+use anyhow::anyhow;
 
 pub async fn download_subcriptions(url: &str) -> anyhow::Result<Vec<ProtocolLine>> {
-    let resp = reqwest::get(url).await?;
-    let resp_text = resp.text().await?;
+    let client = reqwest::Client::builder()
+            .user_agent("OKZTWO-Mac-Client-1.5.6")
+            .build()?;
+
+    let resp = client.get(url).send().await?;
+    let mut resp_text = String::new();
+    if resp.status().is_success() {
+        resp_text = resp.text().await?;
+    }else{
+        return Err(anyhow!("download subscriptions failed.").into());
+    };
+
     let decode_bytes_res = general_purpose::STANDARD.decode(&resp_text);
     let decoded_text = match decode_bytes_res {
         Ok(decode_bytes) => String::from_utf8(decode_bytes).expect("Invalid UTF-8 sequence"),
@@ -34,6 +45,6 @@ pub async fn download_subcriptions(url: &str) -> anyhow::Result<Vec<ProtocolLine
             // }
         }
     }
-    println!("{}", results.len());
+    // println!("{:?}", results.len());
     anyhow::Ok(results)
 }

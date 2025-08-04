@@ -1,6 +1,6 @@
 {
   "productName": "kitty",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "identifier": "com.kitty.dev",
   "build": {
     "beforeDevCommand": "pnpm dev",
@@ -33,12 +33,7 @@
       "icons/icon.icns",
       "icons/icon.ico"
     ],
-    "externalBin": [
-      "binaries/hysteria",
-      "binaries/xray"
-    ],
-    "resources": [
-      "static/*"
-    ]
+    "externalBin": ["binaries/hysteria", "binaries/xray"],
+    "resources": ["static/*"]
   }
 }
