@@ -1,7 +1,26 @@
-use base64::{engine::general_purpose, Engine};
+use base64::{engine::general_purpose, DecodeError, Engine};
 use entity::types::ProtocolLine;
 use reqwest;
 use anyhow::anyhow;
+
+fn safe_decode_base64(text: &str, no_pad: bool) -> String {
+    // let trimmed_text = text.trim();
+    let bytes_data = if !no_pad {
+        general_purpose::STANDARD.decode(text)
+    } else {
+        general_purpose::STANDARD_NO_PAD.decode(text)
+    };
+
+    match bytes_data {
+        Ok(decode_bytes) => String::from_utf8(decode_bytes).expect("Invalid UTF-8 sequence"),
+        Err(_e) => {
+            match _e {
+                DecodeError::InvalidPadding => safe_decode_base64(text, true),
+                _ => text.to_string(),
+            }
+        },
+    }
+}
 
 pub async fn download_subcriptions(url: &str) -> anyhow::Result<Vec<ProtocolLine>> {
     let client = reqwest::Client::builder()
@@ -16,11 +35,7 @@ pub async fn download_subcriptions(url: &str) -> anyhow::Result<Vec<ProtocolLine
         return Err(anyhow!("download subscriptions failed.").into());
     };
 
-    let decode_bytes_res = general_purpose::STANDARD.decode(&resp_text);
-    let decoded_text = match decode_bytes_res {
-        Ok(decode_bytes) => String::from_utf8(decode_bytes).expect("Invalid UTF-8 sequence"),
-        Err(_e) => resp_text,
-    };
+    let decoded_text = safe_decode_base64(&resp_text, false);
     let mut results = Vec::new();
     for line in decoded_text.lines() {
         let line = line.trim();
