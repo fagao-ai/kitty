@@ -2,17 +2,15 @@ use std::collections::HashMap;
 
 use entity::xray::{self, XrayConfig};
 use entity::{base_config, subscribe};
-use protocols::XrayCommandGroup;
 use tauri::{AppHandle, Manager, State};
 
 use crate::apis::xray_apis::XrayAPI;
 use crate::proxy::delay::{kitty_proxies_delay, ProxyDelay, ProxyInfo};
+use crate::config_converter::ShoesConfigConverter;
 use crate::state::{DatabaseState, KittyProxyState};
 use crate::types::{CommandResult, KittyResponse};
 
-use protocols::KittyCommandGroupTrait;
-
-use super::utils::{relative_command_path, speed_delay};
+use super::utils::speed_delay;
 
 #[tauri::command(rename_all = "snake_case")]
 pub async fn get_xray_by_id<'a>(
@@ -78,41 +76,18 @@ pub async fn speed_xray_delay<'a>(
     proxy_state: State<'a, KittyProxyState>,
     record_ids: Option<Vec<i32>>,
 ) -> CommandResult<HashMap<i32, u128>> {
-    let db = state.get_db();
-    let xray_records: Vec<xray::Model> = if record_ids.is_none() {
-        xray::Model::fetch_all(&db).await?
-    } else {
-        xray::Model::fetch_by_ids(&db, record_ids.unwrap()).await?
-    };
-    let base_config_record = base_config::Model::first(&db).await.unwrap();
-    let delay_test_url = base_config_record.unwrap().delay_test_url;
-    drop(db);
-    let config_dir = app_handle.path().config_dir()?;
-    let mut used_ports = proxy_state.used_ports.lock().await;
-    let hysteria_bin_path = relative_command_path("xray".as_ref())?;
-    let mut hysteria_command_group = XrayCommandGroup::new(hysteria_bin_path, config_dir.clone());
-    let mut config_hash_map: HashMap<String, XrayConfig> = HashMap::new();
+    // TODO: Implement delay testing using shoes library
+    // For now, this is a stub that returns an error
+    // The implementation would:
+    // 1. Convert each xray record to shoes YAML config
+    // 2. Start individual shoes servers for testing
+    // 3. Run delay tests against each server
+    // 4. Return results and clean up servers
 
-    let server_key: String = xray_records
-        .iter()
-        .map(|x| x.get_server())
-        .collect::<Vec<String>>()
-        .join("_");
-    let (xray_config, port_model_dict) =
-        XrayConfig::from_models4http_delay(xray_records, &mut used_ports);
-    drop(used_ports);
-    config_hash_map.insert(server_key, xray_config);
-    let _ = hysteria_command_group.start_commands(config_hash_map, None);
-    let ports: Vec<u16> = port_model_dict.keys().map(|x| x.to_owned()).collect();
-    let total = ports.len();
-    let result: HashMap<u16, std::time::Duration> =
-        speed_delay(ports, Some(delay_test_url.as_str())).await?;
-    let mut new_result: HashMap<i32, u128> = HashMap::with_capacity(total);
-    for (k, v) in result.iter() {
-        new_result.insert(port_model_dict.get(k).unwrap().to_owned(), v.as_millis());
-    }
+    // Old implementation used XrayCommandGroup with binaries
+    // New implementation should use shoes::tcp::tcp_server::start_servers
 
-    Ok(new_result)
+    Err(anyhow::anyhow!("Delay testing not yet implemented for shoes library. Please use manual testing.").into())
 }
 
 #[tauri::command(rename_all = "snake_case")]
@@ -139,12 +114,6 @@ pub async fn batch_get_subscriptions<'a>(
 pub async fn proxies_delay_test<'a>(
     proxies: Vec<ProxyInfo>,
 ) -> CommandResult<KittyResponse<Vec<ProxyDelay>>> {
-    // let db = state.get_db();
-    // let records = xray::Model::fetch_all(&db).await.unwrap();
-    // let proxies = records
-    //     .into_iter()
-    //     .map(|x| x.into())
-    //     .collect::<Vec<ProxyInfo>>();
     let res = kitty_proxies_delay(proxies).await;
     Ok(KittyResponse::from_data(res))
 }

@@ -4,6 +4,7 @@ use tauri::RunEvent;
 use tauri::{generate_handler, ipc::Invoke};
 #[cfg(feature = "hysteria")]
 use tauri_apis::hysteria as hysteria_api;
+use tauri_apis::server as server_api;
 #[cfg(feature = "xray")]
 use tauri_apis::xray as xray_api;
 use tauri_init::init_setup;
@@ -16,6 +17,7 @@ use crate::tauri_apis::{start_system_proxy, stop_system_proxy};
 use crate::tauri_event_handler::on_exit_clear_commands;
 
 mod apis;
+mod config_converter;
 mod logger;
 mod proxy;
 mod state;
@@ -117,6 +119,10 @@ pub fn run() {
         common_api::add_rules,
         common_api::update_rules_item,
         common_api::test_current_proxy,
+        server_api::start_proxy_server,
+        server_api::stop_proxy_server,
+        server_api::is_proxy_server_running,
+        server_api::start_xray_server_by_id,
         start_system_proxy,
         stop_system_proxy,
     ];
@@ -138,6 +144,10 @@ pub fn run() {
         common_api::add_rules,
         common_api::update_rules_item,
         common_api::test_current_proxy,
+        server_api::start_proxy_server,
+        server_api::stop_proxy_server,
+        server_api::is_proxy_server_running,
+        server_api::start_xray_server_by_id,
         start_system_proxy,
         stop_system_proxy,
     ];
@@ -159,6 +169,10 @@ pub fn run() {
         common_api::add_rules,
         common_api::update_rules_item,
         common_api::test_current_proxy,
+        server_api::start_proxy_server,
+        server_api::stop_proxy_server,
+        server_api::is_proxy_server_running,
+        server_api::start_hysteria_server_by_id,
         start_system_proxy,
         stop_system_proxy,
     ];
@@ -192,6 +206,11 @@ pub fn run() {
         common_api::add_rules,
         common_api::update_rules_item,
         common_api::test_current_proxy,
+        server_api::start_proxy_server,
+        server_api::stop_proxy_server,
+        server_api::is_proxy_server_running,
+        server_api::start_xray_server_by_id,
+        server_api::start_hysteria_server_by_id,
         start_system_proxy,
         stop_system_proxy,
     ];

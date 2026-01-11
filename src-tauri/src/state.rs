@@ -1,14 +1,11 @@
 use kitty_proxy::MatchProxy;
-#[cfg(feature = "hysteria")]
-use protocols::HysteriaCommandGroup;
-#[cfg(feature = "xray")]
-use protocols::XrayCommandGroup;
 use sea_orm::DatabaseConnection;
 use std::collections::HashSet;
 use std::sync::mpsc::Receiver;
 use std::sync::Arc;
 use tokio::sync::watch::Sender;
 use tokio::sync::{Mutex, RwLock};
+use tokio::task::JoinHandle;
 
 pub struct DatabaseState {
     pub db: std::sync::Mutex<Option<DatabaseConnection>>,
@@ -22,21 +19,17 @@ impl DatabaseState {
     }
 }
 
+/// ProcessManagerState stores running shoes server handles
+/// Instead of using command groups, we directly store JoinHandles from shoes library
 pub struct ProcessManagerState {
-    #[cfg(feature = "hysteria")]
-    pub hy_process_manager: Mutex<Option<HysteriaCommandGroup>>,
-    #[cfg(feature = "xray")]
-    pub xray_process_manager: Mutex<Option<XrayCommandGroup>>,
+    /// Running shoes server handles
+    pub running_servers: Mutex<Vec<JoinHandle<()>>>,
 }
 
 impl<'a> Default for ProcessManagerState {
     fn default() -> Self {
         Self {
-            #[cfg(feature = "hysteria")]
-            hy_process_manager: Mutex::new(None),
-
-            #[cfg(feature = "xray")]
-            xray_process_manager: Mutex::new(None),
+            running_servers: Mutex::new(Vec::new()),
         }
     }
 }

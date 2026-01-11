@@ -12,24 +12,24 @@ pub struct Model {
     pub server: String,
     pub auth: String,
     #[sea_orm(column_type = "Text")]
-    tls: Tls,
+    pub tls: Tls,
     #[sea_orm(column_type = "Text")]
-    bandwidth: Bandwidth,
+    pub bandwidth: Bandwidth,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, FromJsonQueryResult)]
 pub struct Tls {
-    sni: String,
-    insecure: bool,
+    pub sni: String,
+    pub insecure: bool,
     #[serde(rename = "pinSHA256")]
-    pin_sha256: Option<String>,
-    ca: Option<String>,
+    pub pin_sha256: Option<String>,
+    pub ca: Option<String>,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, FromJsonQueryResult)]
 pub struct Bandwidth {
-    up: String,
-    down: String,
+    pub up: String,
+    pub down: String,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
