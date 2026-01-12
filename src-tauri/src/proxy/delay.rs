@@ -1,4 +1,4 @@
-use entity::xray;
+use entity::{hysteria, xray};
 use reqwest::{Client, Proxy};
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
@@ -6,11 +6,18 @@ use std::time::{Duration, Instant};
 use tokio::net::TcpStream;
 use tokio::sync::Semaphore;
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum ProxyType {
+    Xray,
+    Hysteria2,
+}
+
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct ProxyInfo {
     pub address: String,
     pub port: u16,
     pub id: u32,
+    pub proxy_type: ProxyType,
 }
 
 impl From<xray::Model> for ProxyInfo {
@@ -19,6 +26,26 @@ impl From<xray::Model> for ProxyInfo {
             id: source.id as u32,
             address: source.address,
             port: source.port,
+            proxy_type: ProxyType::Xray,
+        };
+    }
+}
+
+impl From<hysteria::Model> for ProxyInfo {
+    fn from(source: hysteria::Model) -> Self {
+        // Parse server address format: "example.com:port"
+        let parts: Vec<&str> = source.server.split(':').collect();
+        let address = parts.get(0).unwrap_or(&"").to_string();
+        let port = parts
+            .get(1)
+            .and_then(|p| p.parse::<u16>().ok())
+            .unwrap_or(443);
+
+        return ProxyInfo {
+            id: source.id as u32,
+            address,
+            port,
+            proxy_type: ProxyType::Hysteria2,
         };
     }
 }
@@ -27,6 +54,7 @@ impl From<xray::Model> for ProxyInfo {
 pub struct ProxyDelay {
     pub id: u32,
     pub delay: u128,
+    pub proxy_type: ProxyType,
 }
 
 async fn measure_tcp_latency(proxy_info: &ProxyInfo) -> ProxyDelay {
@@ -48,6 +76,7 @@ async fn measure_tcp_latency(proxy_info: &ProxyInfo) -> ProxyDelay {
             let proxy_delay = ProxyDelay {
                 id: proxy_info.id,
                 delay: round_trip_time.as_millis(),
+                proxy_type: proxy_info.proxy_type,
             };
             return proxy_delay;
         }
@@ -55,6 +84,7 @@ async fn measure_tcp_latency(proxy_info: &ProxyInfo) -> ProxyDelay {
             let proxy_delay = ProxyDelay {
                 id: proxy_info.id,
                 delay: 9999,
+                proxy_type: proxy_info.proxy_type,
             };
             return proxy_delay;
         }
@@ -86,6 +116,24 @@ pub async fn kitty_proxies_delay(proxies: Vec<ProxyInfo>) -> Vec<ProxyDelay> {
     result
 }
 
+/// Test all proxies (xray and hysteria2) and return sorted results by delay.
+pub async fn test_all_proxies_delay(
+    xray_proxies: Vec<xray::Model>,
+    hysteria_proxies: Vec<hysteria::Model>,
+) -> Vec<ProxyDelay> {
+    let mut all_proxies = Vec::new();
+
+    for xray in xray_proxies {
+        all_proxies.push(ProxyInfo::from(xray));
+    }
+
+    for hysteria in hysteria_proxies {
+        all_proxies.push(ProxyInfo::from(hysteria));
+    }
+
+    kitty_proxies_delay(all_proxies).await
+}
+
 pub async fn kitty_current_proxy_delay(proxy: String, target_url: String) -> u128 {
     let request = Client::builder()
         .proxy(Proxy::all(proxy).unwrap())
@@ -110,11 +158,13 @@ mod tests {
                 id: 1,
                 address: "xj0211.alibabaokz.com".to_string(),
                 port: 40001,
+                proxy_type: ProxyType::Xray,
             },
             ProxyInfo {
                 id: 2,
                 address: "hk0106.alibabaokz.com".to_string(),
                 port: 60126,
+                proxy_type: ProxyType::Xray,
             },
         ];
 

@@ -10,12 +10,9 @@ use tokio::sync::RwLock;
 use crate::{logger::KittyLogger, state::DatabaseState, tray::Tray};
 use anyhow::Result;
 use entity::base_config;
-use kitty_proxy::MatchProxy;
 use std::fs;
 use std::sync::Arc;
 use tauri::{Manager, State};
-
-use crate::state::KittyProxyState;
 
 pub async fn init_db(app_dir: PathBuf) -> Result<DatabaseConnection, DbErr> {
     let sqlite_path = app_dir.join("MyApp.sqlite");
@@ -55,26 +52,7 @@ fn setup_db<'a>(handle: &tauri::AppHandle) -> Result<(), Box<dyn std::error::Err
     Ok(())
 }
 
-fn setup_kitty_proxy<'a>(handle: &tauri::AppHandle) -> Result<(), Box<dyn std::error::Error>> {
-    let resource_dir = handle.path().resource_dir()?.join("static");
-    let app_state: State<KittyProxyState> = handle.state();
-    // tauri::async_runtime::spawn(task)
-    tauri::async_runtime::block_on(async move {
-        trace!(
-            "resource_dir: {:?}, exists: {}",
-            resource_dir,
-            resource_dir.exists()
-        );
-        let geoip_file = resource_dir.join("kitty_geoip.dat");
-        let geosite_file = resource_dir.join("kitty_geosite.dat");
-        let match_proxy = MatchProxy::from_geo_dat(Some(&geoip_file), Some(&geosite_file)).unwrap();
-        *app_state.match_proxy.lock().await = Some(Arc::new(RwLock::new(match_proxy)));
-    });
-
-    Ok(())
-}
-
-fn setup_auto_start<'a>(handle: &tauri::AppHandle) -> Result<(), Box<dyn std::error::Error>> {
+fn setup_system_autostart<'a>(handle: &tauri::AppHandle) -> Result<(), Box<dyn std::error::Error>> {
     let db_state: State<DatabaseState> = handle.state();
     let auto_start_state: State<AutoLaunchManager> = handle.state();
     let db = db_state.get_db();
@@ -130,6 +108,38 @@ fn setup_kitty_logger(app: &tauri::AppHandle) -> Result<(), Box<dyn std::error::
     Ok(())
 }
 
+/// Auto-measure and start the fastest proxy server on app startup.
+/// This is the default behavior - no configuration needed.
+fn setup_auto_start_fastest<'a>(handle: &tauri::AppHandle) -> Result<(), Box<dyn std::error::Error>> {
+    use crate::auto_starter::AutoStarter;
+    use crate::state::ProcessManagerState;
+    use log::info;
+
+    let db_state: State<DatabaseState> = handle.state();
+    let process_manager: State<ProcessManagerState> = handle.state();
+    let db = db_state.get_db();
+
+    // Clone ProcessManagerState for use in async task
+    let process_manager_clone = process_manager.inner().clone();
+
+    // Auto-start fastest is enabled by default
+    tauri::async_runtime::spawn(async move {
+        info!("Auto-start fastest: beginning delay measurement");
+
+        let auto_starter = AutoStarter::new(db, process_manager_clone);
+        match auto_starter.start_fastest_server().await {
+            Ok(result) => {
+                info!("Auto-start completed: {:?}", result);
+            }
+            Err(e) => {
+                log::error!("Auto-start failed: {}", e);
+            }
+        }
+    });
+
+    Ok(())
+}
+
 // fn setup_global_shortcut<'a>(handle: &tauri::AppHandle) -> Result<(), Box<dyn std::error::Error>> {
 //     use tauri_plugin_global_shortcut::{Code, GlobalShortcutExt, Modifiers, Shortcut};
 
@@ -155,8 +165,8 @@ pub fn init_setup<'a>(app: &'a mut tauri::App) -> Result<(), Box<dyn std::error:
     let _ = setup_kitty_logger(handle)?;
     let _ = setup_db(handle)?;
     let _ = setup_db(handle)?;
-    let _ = setup_auto_start(handle)?;
-    let _ = setup_kitty_proxy(handle)?;
+    let _ = setup_system_autostart(handle)?;
+    let _ = setup_auto_start_fastest(handle)?;
     let _ = Tray::init_tray(handle)?;
     // let _ = setup_global_shortcut(handle)?;
     Ok(())

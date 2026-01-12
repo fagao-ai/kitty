@@ -1,4 +1,3 @@
-use kitty_proxy::MatchProxy;
 use sea_orm::DatabaseConnection;
 use std::collections::HashSet;
 use std::sync::mpsc::Receiver;
@@ -21,37 +20,16 @@ impl DatabaseState {
 
 /// ProcessManagerState stores running shoes server handles
 /// Instead of using command groups, we directly store JoinHandles from shoes library
+#[derive(Clone)]
 pub struct ProcessManagerState {
     /// Running shoes server handles
-    pub running_servers: Mutex<Vec<JoinHandle<()>>>,
+    pub running_servers: Arc<Mutex<Vec<JoinHandle<()>>>>,
 }
 
-impl<'a> Default for ProcessManagerState {
+impl Default for ProcessManagerState {
     fn default() -> Self {
         Self {
-            running_servers: Mutex::new(Vec::new()),
-        }
-    }
-}
-
-pub struct KittyProxyState {
-    // pub http_proxy: Mutex<Option<HttpProxy>>,
-    // pub socks_proxy: Mutex<Option<SocksProxy>>,
-    pub match_proxy: Mutex<Option<Arc<RwLock<MatchProxy>>>>,
-    pub http_proxy_sx: Mutex<Option<Sender<bool>>>,
-    pub socks_proxy_sx: Mutex<Option<Sender<bool>>>,
-    pub used_ports: Mutex<HashSet<u16>>,
-}
-
-impl Default for KittyProxyState {
-    fn default() -> Self {
-        Self {
-            // http_proxy: Mutex::new(None),
-            // socks_proxy: Mutex::new(None),
-            match_proxy: Mutex::new(None),
-            http_proxy_sx: Mutex::new(None),
-            socks_proxy_sx: Mutex::new(None),
-            used_ports: Mutex::new(HashSet::new()),
+            running_servers: Arc::new(Mutex::new(Vec::new())),
         }
     }
 }

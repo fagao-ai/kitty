@@ -10,8 +10,8 @@
     "preview": "vite preview",
     "tauri": "tauri",
     "type-check": "vue-tsc --noEmit -p tsconfig.json --composite false",
-    "lint": "eslint .",
-    "lint:fix": "eslint . --fix"
+    "lint": "eslint src",
+    "lint:fix": "eslint src --fix"
   },
   "dependencies": {
     "@tauri-apps/api": "^2.0.0",
@@ -64,6 +64,6 @@
     "pre-commit": "pnpm lint-staged"
   },
   "lint-staged": {
-    "*": "eslint --fix"
+    "*.{js,jsx,ts,tsx,vue}": "eslint --fix --no-warn-ignored"
   }
 }

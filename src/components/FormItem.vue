@@ -45,6 +45,7 @@ function getNext(): FormItem | null {
           :options="formState.payload.options"
         />
       </template>
-  </n-form-item>
-  <form-item :form-state="getNext()" />
-</template></template>
+    </n-form-item>
+    <form-item :form-state="getNext()" />
+  </template>
+</template>

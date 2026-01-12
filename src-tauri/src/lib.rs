@@ -12,11 +12,11 @@ use tauri_init::init_setup;
 use tauri_apis::common as common_api;
 use tauri_plugin_autostart::MacosLauncher;
 
-use crate::state::KittyProxyState;
-use crate::tauri_apis::{start_system_proxy, stop_system_proxy};
+use crate::tauri_apis::{start_all_servers, set_system_proxy_only, stop_system_proxy};
 use crate::tauri_event_handler::on_exit_clear_commands;
 
 mod apis;
+mod auto_starter;
 mod config_converter;
 mod logger;
 mod proxy;
@@ -94,89 +94,11 @@ pub fn run() {
     let builder = builder.manage(ProcessManagerState::default());
     let builder = builder.manage(KittyLoggerState::default());
     let builder = builder
-        .manage(KittyProxyState::default())
         // .plugin(tauri_plugin_window::init())
         .plugin(tauri_plugin_notification::init())
         .plugin(tauri_plugin_clipboard_manager::init())
         .setup(init_setup);
     // .on_window_event(on_window_exit_func);
-    #[cfg(feature = "xray")]
-    #[cfg(any(target_os = "macos", target_os = "linux", target_os = "windows"))]
-    let handler: fn(Invoke) -> bool = generate_handler![
-        xray_api::add_xray_item,
-        xray_api::get_all_xrays,
-        xray_api::import_xray_subscribe,
-        xray_api::update_xray_item,
-        xray_api::delete_xray_item,
-        xray_api::speed_xray_delay,
-        xray_api::get_xray_by_id,
-        xray_api::proxies_delay_test,
-        common_api::copy_proxy_env_cmd,
-        common_api::query_base_config,
-        common_api::update_base_config,
-        common_api::query_rules,
-        common_api::delete_rules,
-        common_api::add_rules,
-        common_api::update_rules_item,
-        common_api::test_current_proxy,
-        server_api::start_proxy_server,
-        server_api::stop_proxy_server,
-        server_api::is_proxy_server_running,
-        server_api::start_xray_server_by_id,
-        start_system_proxy,
-        stop_system_proxy,
-    ];
-
-    #[cfg(feature = "xray")]
-    let handler: fn(Invoke) -> bool = generate_handler![
-        xray_api::add_xray_item,
-        xray_api::get_all_xrays,
-        xray_api::import_xray_subscribe,
-        xray_api::update_xray_item,
-        xray_api::delete_xray_item,
-        xray_api::speed_xray_delay,
-        xray_api::get_xray_by_id,
-        xray_api::proxies_delay_test,
-        common_api::query_base_config,
-        common_api::update_base_config,
-        common_api::query_rules,
-        common_api::delete_rules,
-        common_api::add_rules,
-        common_api::update_rules_item,
-        common_api::test_current_proxy,
-        server_api::start_proxy_server,
-        server_api::stop_proxy_server,
-        server_api::is_proxy_server_running,
-        server_api::start_xray_server_by_id,
-        start_system_proxy,
-        stop_system_proxy,
-    ];
-
-    #[cfg(feature = "hysteria")]
-    #[cfg(any(target_os = "macos", target_os = "linux", target_os = "windows"))]
-    let handler: fn(Invoke) -> bool = generate_handler![
-        hysteria_api::add_hysteria_item,
-        hysteria_api::get_all_hysterias,
-        hysteria_api::update_hysteria_item,
-        hysteria_api::delete_hysteria_item,
-        hysteria_api::speed_hysteria_delay,
-        hysteria_api::get_hysteria_by_id,
-        common_api::copy_proxy_env_cmd,
-        common_api::query_base_config,
-        common_api::update_base_config,
-        common_api::query_rules,
-        common_api::delete_rules,
-        common_api::add_rules,
-        common_api::update_rules_item,
-        common_api::test_current_proxy,
-        server_api::start_proxy_server,
-        server_api::stop_proxy_server,
-        server_api::is_proxy_server_running,
-        server_api::start_hysteria_server_by_id,
-        start_system_proxy,
-        stop_system_proxy,
-    ];
-
     #[cfg(all(feature = "xray", feature = "hysteria"))]
     #[cfg(any(target_os = "macos", target_os = "linux", target_os = "windows"))]
     let handler: fn(Invoke) -> bool = generate_handler![
@@ -211,7 +133,8 @@ pub fn run() {
         server_api::is_proxy_server_running,
         server_api::start_xray_server_by_id,
         server_api::start_hysteria_server_by_id,
-        start_system_proxy,
+        start_all_servers,
+        set_system_proxy_only,
         stop_system_proxy,
     ];
 

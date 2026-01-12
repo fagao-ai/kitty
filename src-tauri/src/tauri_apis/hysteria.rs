@@ -5,7 +5,7 @@ use entity::hysteria::{self, HysteriaConfig};
 use tauri::{AppHandle, Manager, State};
 
 use crate::apis::hysteria_apis::HysteriaAPI;
-use crate::state::{DatabaseState, KittyProxyState};
+use crate::state::DatabaseState;
 use crate::types::{CommandResult, KittyResponse};
 
 use super::utils::{get_http_socks_ports, speed_delay};
@@ -63,7 +63,6 @@ pub async fn update_hysteria_item<'a>(
 pub async fn speed_hysteria_delay<'a>(
     app_handle: AppHandle,
     state: State<'a, DatabaseState>,
-    proxy_state: State<'a, KittyProxyState>,
     record_ids: Option<Vec<i32>>,
 ) -> CommandResult<HashMap<i32, u128>> {
     // TODO: Implement delay testing using shoes library

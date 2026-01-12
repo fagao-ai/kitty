@@ -7,7 +7,7 @@ use tauri::{AppHandle, Manager, State};
 use crate::apis::xray_apis::XrayAPI;
 use crate::proxy::delay::{kitty_proxies_delay, ProxyDelay, ProxyInfo};
 use crate::config_converter::ShoesConfigConverter;
-use crate::state::{DatabaseState, KittyProxyState};
+use crate::state::DatabaseState;
 use crate::types::{CommandResult, KittyResponse};
 
 use super::utils::speed_delay;
@@ -73,7 +73,6 @@ pub async fn update_xray_item<'a>(
 pub async fn speed_xray_delay<'a>(
     app_handle: AppHandle,
     state: State<'a, DatabaseState>,
-    proxy_state: State<'a, KittyProxyState>,
     record_ids: Option<Vec<i32>>,
 ) -> CommandResult<HashMap<i32, u128>> {
     // TODO: Implement delay testing using shoes library

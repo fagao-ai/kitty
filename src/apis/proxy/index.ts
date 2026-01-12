@@ -92,9 +92,10 @@ export async function currentProxyDelay(proxy: string, targetUrl: string) {
   return res.data
 }
 
-export async function setProxy(enable: boolean, id: number | null = null) {
+export async function setProxy(enable: boolean, _id: number | null = null) {
   if (enable) {
-    await invoke('start_system_proxy', { xray_id: id })
+    // Server is already started by app auto-start, just set system proxy
+    await invoke('set_system_proxy_only')
   }
   else {
     await invoke('stop_system_proxy')

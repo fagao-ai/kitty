@@ -24,7 +24,7 @@ build-target = "0.4.0"
 zip = "0.5"
 
 [dependencies]
-shoes = { path = "/home/hezhaozhao/shoes", features = ["ffi"] }
+shoes = { path = "/Users/hezhaozhao/myself/shoes", features = [ "ffi" ] }
 tauri = { version = "2.0.0-rc.0", features = [
   "tray-icon",
   # "icon-ico",
@@ -51,7 +51,6 @@ anyhow = "1"
 tauri-plugin-autostart = "2.0.0-rc.0"
 tauri-plugin-notification = "2.0.0-rc.0"
 reqwest = { version = "0.11.22", features = [ "json" ] }
-kitty_proxy = { path = "/home/hezhaozhao/kitty_proxy" }
 base64 = "0.21.7"
 tauri-plugin-clipboard-manager = "2.0.0-rc.0"
 log = "0.4.20"

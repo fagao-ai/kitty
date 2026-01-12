@@ -33,7 +33,7 @@ impl KittyLogger {
 
 impl Log for KittyLogger {
     fn enabled(&self, metadata: &Metadata) -> bool {
-        metadata.level() <= log::Level::Info && metadata.target().contains("kitty_proxy::")
+        metadata.level() <= log::Level::Info
     }
 
     fn log(&self, record: &Record) {
