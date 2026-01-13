@@ -1,22 +1,33 @@
+@theme {
+  --color-primay: #5352ed;
+  --color-dark: #3e4247;
+
+  --breakpoint-xl: 1200px;
+  --breakpoint-xxl: 1400px;
+  --breakpoint-xxxl: 1500px;
+  --breakpoint-tv: 1700px;
+}
+
 body {
   margin: 0;
   min-width: 1024px;
   min-height: 680px;
-  -webkit-user-select: none !important; /* Safari */
-  -moz-user-select: none !important; /* Firefox */
-  -ms-user-select: none !important; /* IE10+/Edge */
+  -webkit-user-select: none !important;
+  /* Safari */
+  -moz-user-select: none !important;
+  /* Firefox */
+  -ms-user-select: none !important;
+  /* IE10+/Edge */
   user-select: none !important;
-  @apply overflow-y-hidden;
+  overflow-y: hidden;
 }
 
 #app {
-  @apply h-screen w-full;
+  height: 100vh;
+  width: 100%;
 }
 
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
 .flex-center {
-  @apply justify-center items-center;
+  justify-content: center;
+  align-items: center;
 }

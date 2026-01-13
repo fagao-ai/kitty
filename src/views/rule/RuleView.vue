@@ -5,7 +5,7 @@
 import { reactive } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useToast } from 'primevue/usetoast'
-import CIDR from 'ip-cidr'
+import * as IPCIDR from 'ip-cidr'
 import InputText from 'primevue/inputtext'
 import ScrollPanel from 'primevue/scrollpanel'
 import Button from 'primevue/button'
@@ -54,7 +54,7 @@ async function handleUpdateRule(rule: ProxyRule) {
   if (!rule.rule)
     return
 
-  if (rule.ruleType === 'cidr' && !CIDR.isValidCIDR(rule.rule)) {
+  if (rule.ruleType === 'cidr' && !IPCIDR.isValidCIDR(rule.rule)) {
     toast.add({ severity: 'error', summary: 'Error', detail: t('rule.invalidCIDR'), life: 5000 })
     return
   }

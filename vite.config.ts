@@ -1,5 +1,6 @@
 import { resolve } from 'node:path'
 import { defineConfig } from 'vite'
+import tailwindcss from '@tailwindcss/vite'
 import vue from '@vitejs/plugin-vue'
 import { internalIpV4 } from 'internal-ip'
 import type { UserConfig } from 'vite'
@@ -10,9 +11,9 @@ const mobile = !!/android|ios/.exec(process.env.TAURI_ENV_PLATFORM as string)
 // https://vitejs.dev/config/
 export default defineConfig(async (): Promise<UserConfig> => {
   return {
-    plugins: [vue()],
+    plugins: [vue(), tailwindcss()],
     define: {
-    // eslint-disable-next-line node/prefer-global/process
+      // eslint-disable-next-line node/prefer-global/process
       __APP_VERSION__: JSON.stringify(process.env.npm_package_version),
     },
 

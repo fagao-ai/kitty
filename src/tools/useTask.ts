@@ -12,7 +12,7 @@ function getTimeUntilNextRun(hour: number): number {
 
 export function useTask(hour: number, taskFn: (...args: any[]) => Promise<void>) {
   const taskStatus = ref<'stop' | 'running'>('stop')
-  let timeoutId: NodeJS.Timeout | undefined
+  let timeoutId: ReturnType<typeof setTimeout> | undefined
 
   async function runTask() {
     try {

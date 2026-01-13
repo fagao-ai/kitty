@@ -28,12 +28,13 @@
   "exclude": [
     "node_modules",
     "dist",
-    "postcss.config.cjs",
+    "*.d.ts",
     "*.json",
     "src-tauri/",
     ".cargo",
     ".vscode",
-    "public"
+    "public",
+    "vite.config.ts"
   ],
   // "include": [
   //   "src/**/*.ts",

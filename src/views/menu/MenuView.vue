@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useToast } from 'primevue/usetoast'
 import Menu from 'primevue/menu'
+import type { MenuItemCommandEvent } from 'primevue/menuitem'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -16,22 +17,22 @@ const menuItems = ref([
   {
     label: t('menubar.proxies'),
     icon: 'pi pi-home',
-    command: () => router.push({ name: 'proxy' }),
+    command: (_event: MenuItemCommandEvent) => router.push({ name: 'proxy' }),
   },
   {
     label: t('menubar.rules'),
     icon: 'pi pi-list',
-    command: () => router.push({ name: 'rule' }),
+    command: (_event: MenuItemCommandEvent) => router.push({ name: 'rule' }),
   },
   {
     label: t('menubar.logs'),
     icon: 'pi pi-file',
-    command: () => router.push({ name: 'log' }),
+    command: (_event: MenuItemCommandEvent) => router.push({ name: 'log' }),
   },
   {
     label: t('menubar.settings'),
     icon: 'pi pi-cog',
-    command: () => router.push({ name: 'setting' }),
+    command: (_event: MenuItemCommandEvent) => router.push({ name: 'setting' }),
   },
 ])
 
@@ -57,7 +58,7 @@ window.$message = toast
       >
         <Menu :model="menuItems" class="w-full">
           <template #item="{ item, props }">
-            <a v-ripple class="flex items-center" v-bind="props.action" @click="item.command">
+            <a v-ripple class="flex items-center" v-bind="props.action">
               <span :class="item.icon" />
               <span class="ml-2">{{ item.label }}</span>
             </a>
