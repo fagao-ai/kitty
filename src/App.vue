@@ -6,7 +6,7 @@ const { isDark } = useTheme()
 </script>
 
 <template>
-  <div :class="{ 'dark': isDark }" class="flex flex-col w-full h-full bg-[#fdfdfd] dark:bg-[#373839]">
+  <div :class="{ dark: isDark }" class="flex flex-col w-full h-full bg-[#fdfdfd] dark:bg-[#373839]">
     <div class="flex w-full h-full">
       <div
         class="w-48"

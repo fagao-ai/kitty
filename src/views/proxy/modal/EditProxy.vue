@@ -1,8 +1,7 @@
 <script setup lang="ts">
-import { reactive, watch, computed } from 'vue'
+import { ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import Dialog from 'primevue/dialog'
-import Button from 'primevue/button'
 import { useVModel } from '@vueuse/core'
 import type { HysteriaProxy, XrayProxy } from '@/types/proxy'
 import { ProxyType } from '@/types/proxy'
@@ -55,20 +54,20 @@ async function handleUpdateProxy() {
     :closable="false"
   >
     <template v-if="proxyType === ProxyType.Hysteria">
-      <hysteria-form v-model:form="(formState.value as HysteriaProxy)" />
+      <hysteria-form v-model:form="(formState as HysteriaProxy)" />
     </template>
-    <template v-if="proxyType === ProxyType.Xray && Object.keys(formState.value).length > 0">
-      <xray-form v-model:form="(formState.value as XrayProxy)" />
+    <template v-if="proxyType === ProxyType.Xray && Object.keys(formState).length > 0">
+      <xray-form v-model:form="(formState as XrayProxy)" />
     </template>
 
     <template #footer>
       <div class="w-full flex flex-center gap-8">
-        <Button
+        <button
           :label="t('common.cancel')"
           severity="secondary"
           @click="emits('onCancelEdit')"
         />
-        <Button
+        <button
           :label="t('common.update')"
           @click="handleUpdateProxy"
         />

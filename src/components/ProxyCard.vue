@@ -31,7 +31,7 @@ async function handleDblClick() {
     @dblclick="handleDblClick"
   >
     <div class="h-6">
-      <Tag
+      <tag
         :severity="tagSeverity"
         class="rounded-full text-xs"
         :value="tag"
@@ -44,7 +44,7 @@ async function handleDblClick() {
       <div>
         {{ delay }}ms
       </div>
-      <Tag
+      <tag
         severity="info"
         class="rounded-full text-xs"
         :value="protocol"

@@ -6,13 +6,19 @@ import Skeleton from 'primevue/skeleton'
 import ToggleSwitch from 'primevue/toggleswitch'
 import InputNumber from 'primevue/inputnumber'
 import InputText from 'primevue/inputtext'
+import SelectButton from 'primevue/selectbutton'
 import HeaderBar from '@/components/HeaderBar.vue'
 import { settingStore } from '@/views/setting/store'
 import { useConfig } from '@/views/setting/hook'
 
 const { t, locale } = useI18n()
-const { baseConfig, handleSwitchAutoStart, handleBaseConfigUpdate, handleSwitchProxy, loading, proxyLoading, initConfig } = useConfig()
+const { baseConfig, handleSwitchAutoStart, handleBaseConfigUpdate, handleSwitchProxy, loading, initConfig, isEnabled } = useConfig()
 initConfig()
+
+const languageOptions = [
+  { label: '文', value: 'zh-CN' },
+  { label: 'En', value: 'en-US' },
+]
 
 async function handleLanguageChange(lang: string) {
   locale.value = lang
@@ -55,11 +61,11 @@ onBeforeUnmount(() => {
 
 <template>
   <div class="w-full h-full flex flex-col gap-y-4">
-    <header-bar>
+    <HeaderBar>
       <template #title>
         {{ t('setting.title') }}
       </template>
-    </header-bar>
+    </HeaderBar>
     <div class="flex-1 flex flex-col gap-y-6 pr-4">
       <div
         class="dark:bg-dark grid grid-cols-2 grid-rows-2 gap-x-16 gap-y-4 p-6 bg-[#f9f7f7] shadow-lg rounded-md text-[#5b7497] dark:text-slate-300"
@@ -98,41 +104,13 @@ onBeforeUnmount(() => {
             {{ t('setting.language') }}
           </div>
           <div class="font-medium">
-            <div class="flex gap-2 bg-gray-100 dark:bg-gray-800 rounded-full p-1">
-              <input
-                :id="'lang-zh'"
-                v-model="baseConfig.language"
-                type="radio"
-                name="langGroup"
-                value="zh-CN"
-                class="hidden"
-                @change="handleLanguageChange('zh-CN')"
-              >
-              <label
-                for="lang-zh"
-                class="px-4 py-1 rounded-full cursor-pointer text-sm transition-all"
-                :class="{ 'bg-emerald-500 text-white': baseConfig.language === 'zh-CN', 'hover:bg-gray-200 dark:hover:bg-gray-700': baseConfig.language !== 'zh-CN' }"
-              >
-                文
-              </label>
-
-              <input
-                :id="'lang-en'"
-                v-model="baseConfig.language"
-                type="radio"
-                name="langGroup"
-                value="en-US"
-                class="hidden"
-                @change="handleLanguageChange('en-US')"
-              >
-              <label
-                for="lang-en"
-                class="px-4 py-1 rounded-full cursor-pointer text-sm transition-all"
-                :class="{ 'bg-emerald-500 text-white': baseConfig.language === 'en-US', 'hover:bg-gray-200 dark:hover:bg-gray-700': baseConfig.language !== 'en-US' }"
-              >
-                En
-              </label>
-            </div>
+            <SelectButton
+              v-model="baseConfig.language"
+              :options="languageOptions"
+              option-label="label"
+              option-value="value"
+              @update:model-value="handleLanguageChange"
+            />
           </div>
         </div>
         <Skeleton

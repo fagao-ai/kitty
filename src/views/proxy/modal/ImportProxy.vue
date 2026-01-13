@@ -1,7 +1,7 @@
 <script setup lang="ts">
+import Dialog from 'primevue/dialog'
 import { useVModel } from '@vueuse/core'
 import InputText from 'primevue/inputtext'
-import Dialog from 'primevue/dialog'
 import Tabs from 'primevue/tabs'
 import TabList from 'primevue/tablist'
 import Tab from 'primevue/tab'

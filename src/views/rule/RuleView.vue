@@ -6,13 +6,13 @@ import { reactive } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useToast } from 'primevue/usetoast'
 import CIDR from 'ip-cidr'
-import type { ProxyRule } from '@/types/rule'
-import { createRule, deleteRule, getAllRules, updateRule } from '@/apis/rule'
-import HeaderBar from '@/components/HeaderBar.vue'
-import Button from 'primevue/button'
-import Select from 'primevue/select'
 import InputText from 'primevue/inputtext'
 import ScrollPanel from 'primevue/scrollpanel'
+import Button from 'primevue/button'
+import Select from 'primevue/select'
+import HeaderBar from '@/components/HeaderBar.vue'
+import { createRule, deleteRule, getAllRules, updateRule } from '@/apis/rule'
+import type { ProxyRule } from '@/types/rule'
 
 const { t } = useI18n()
 const toast = useToast()
@@ -77,20 +77,20 @@ initRules()
 const ruleActionOptions = [
   { label: 'DIRECT', value: 'direct' },
   { label: 'PROXY', value: 'proxy' },
-  { label: 'REJECT', value: 'reject' }
+  { label: 'REJECT', value: 'reject' },
 ]
 
 const ruleTypeOptions = [
   { label: 'DOMAIN SUFFIX', value: 'domain_suffix' },
   { label: 'DOMAIN PREFFIX', value: 'domain_preffix' },
   { label: 'FULL DOMAIN', value: 'full_domain' },
-  { label: 'CIDR', value: 'cidr' }
+  { label: 'CIDR', value: 'cidr' },
 ]
 </script>
 
 <template>
   <div class="flex w-full h-full flex-col">
-    <header-bar>
+    <HeaderBar>
       <template #title>
         {{ t('menubar.rules') }}
       </template>
@@ -112,7 +112,7 @@ const ruleTypeOptions = [
           </svg>
         </Button>
       </template>
-    </header-bar>
+    </HeaderBar>
     <div class="flex-1 overflow-y-auto pr-4">
       <ScrollPanel style="max-height: 100%;">
         <div class="flex flex-col gap-4">
@@ -137,7 +137,7 @@ const ruleTypeOptions = [
               class="w-48"
               @change="handleUpdateRule(item)"
             />
-            <InputText
+            <input-text
               v-model="item.rule"
               class="flex-1"
               @blur="handleUpdateRule(item)"

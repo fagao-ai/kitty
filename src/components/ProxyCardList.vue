@@ -18,7 +18,7 @@ const emits = defineEmits<Emits>()
 
 <template>
   <div class="w-full h-full">
-    <ScrollPanel style="width: 100%; height: 100%;">
+    <scroll-panel style="width: 100%; height: 100%;">
       <template v-if="data.length !== 0">
         <div class="grid grid-cols-5 auto-rows-fr gap-4 p-4 xl:grid-cols-6 xxl:grid-cols-7 xxxl:grid-cols-8 tv:grid-cols-10">
           <template
@@ -41,6 +41,6 @@ const emits = defineEmits<Emits>()
         v-else
         description="No Proxy Found"
       />
-    </ScrollPanel>
+    </scroll-panel>
   </div>
 </template>

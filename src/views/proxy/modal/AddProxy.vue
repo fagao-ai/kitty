@@ -116,15 +116,19 @@ watch(() => props.currentTab, (tab) => {
   >
     <Tabs v-model:value="activeTab">
       <TabList>
-        <Tab value="hysteria">{{ ProxyType.Hysteria }}</Tab>
-        <Tab value="xray">{{ ProxyType.Xray }}</Tab>
+        <Tab value="hysteria">
+          {{ ProxyType.Hysteria }}
+        </Tab>
+        <Tab value="xray">
+          {{ ProxyType.Xray }}
+        </Tab>
       </TabList>
       <TabPanels>
         <TabPanel value="hysteria">
-          <hysteria-form v-model:form="hysteriaFormState.value" />
+          <hysteria-form v-model:form="hysteriaFormState" />
         </TabPanel>
         <TabPanel value="xray">
-          <xray-form v-model:form="xrayFormState.value" />
+          <xray-form v-model:form="xrayFormState" />
         </TabPanel>
       </TabPanels>
     </Tabs>
@@ -133,8 +137,8 @@ watch(() => props.currentTab, (tab) => {
       <div class="w-full flex flex-center gap-8">
         <Button
           :label="t('common.cancel')"
-          @click="onCancelInsert"
           severity="secondary"
+          @click="onCancelInsert"
         />
         <Button
           :label="t('common.add')"

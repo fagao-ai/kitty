@@ -1,6 +1,6 @@
 import { reactive, ref, toRaw } from 'vue'
 import { decamelizeKeys } from 'humps'
-import { disable, enable } from '@tauri-apps/plugin-autostart'
+import { disable, enable, isEnabled } from '@tauri-apps/plugin-autostart'
 import { invoke } from '@/utils/invoke'
 import type { KittyBaseConfig } from '@/types/setting'
 import { setProxy } from '@/apis/proxy'
@@ -40,7 +40,7 @@ export function useConfig() {
     try {
       await setProxy(value)
     }
-    // eslint-disable-next-line unused-imports/no-unused-vars
+
     catch (_) {
       baseConfig.sysproxyFlag = false
     }
@@ -50,12 +50,11 @@ export function useConfig() {
   }
 
   async function handleSwitchAutoStart(value: boolean) {
-    if (value) {
+    if (value)
       await enable()
-    }
-    else {
+
+    else
       await disable()
-    }
   }
 
   async function handleBaseConfigUpdate() {
@@ -70,5 +69,6 @@ export function useConfig() {
     handleSwitchAutoStart,
     handleBaseConfigUpdate,
     initConfig,
+    isEnabled,
   }
 }

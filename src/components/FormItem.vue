@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import InputText from 'primevue/inputtext'
-import Textarea from 'primevue/textarea'
 import Select from 'primevue/select'
+import Textarea from 'primevue/textarea'
 import { useVModel } from '@vueuse/core'
 import { FormItem } from '@/composables/useFormItem'
 

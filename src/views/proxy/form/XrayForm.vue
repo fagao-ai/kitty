@@ -2,10 +2,10 @@
 import { useI18n } from 'vue-i18n'
 import InputText from 'primevue/inputtext'
 import InputNumber from 'primevue/inputnumber'
-import Select from 'primevue/select'
 import ToggleSwitch from 'primevue/toggleswitch'
-import Button from 'primevue/button'
 import ScrollPanel from 'primevue/scrollpanel'
+import Select from 'primevue/select'
+import Button from 'primevue/button'
 import { useVModel } from '@vueuse/core'
 import type { XrayProxy } from '@/types/proxy'
 

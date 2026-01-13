@@ -5,12 +5,11 @@ function useTheme() {
 
   // 检测系统主题
   const detectTheme = () => {
-    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches)
       isDark.value = true
-    }
-    else {
+
+    else
       isDark.value = false
-    }
   }
 
   // 监听系统主题变化
@@ -22,12 +21,11 @@ function useTheme() {
 
   // 监听 isDark 变化,更新 DOM
   watch(isDark, (value) => {
-    if (value) {
+    if (value)
       document.documentElement.classList.add('dark')
-    }
-    else {
+
+    else
       document.documentElement.classList.remove('dark')
-    }
   }, { immediate: true })
 
   return {

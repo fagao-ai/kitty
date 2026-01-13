@@ -1,17 +1,11 @@
 <script setup lang="ts">
-import { computed, h, onUnmounted, ref, watch } from 'vue'
+import { computed, onUnmounted, ref, ref as vueRef, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { useToast } from 'primevue/usetoast'
 import Button from 'primevue/button'
-import type { Component, VNode } from 'vue'
-import {
-  LogoDocker,
-  LogoGithub,
-  LogoGoogle,
-  LogoTwitch,
-  LogoTwitter,
-  LogoYoutube,
-} from '@vicons/ionicons5'
+import SelectButton from 'primevue/selectbutton'
+import Menu from 'primevue/menu'
+import { useToast } from 'primevue/usetoast'
+
 import { ProxyType } from '@/types/proxy'
 import AddProxy from '@/views/proxy/modal/AddProxy.vue'
 import type { ProxyCard as Card, HysteriaProxy, XrayProxy } from '@/types/proxy'
@@ -23,11 +17,14 @@ import EditProxy from '@/views/proxy/modal/EditProxy.vue'
 import HeaderBar from '@/components/HeaderBar.vue'
 import { useSubscriptionAutoUpdate } from '@/tools/autoUpdateHook'
 import { settingStore } from '@/views/setting/store'
-import Menu from 'primevue/menu'
-import { ref as vueRef } from 'vue'
 
 const { t } = useI18n()
 const toast = useToast()
+
+const proxyTypeOptions = [
+  { label: ProxyType.Hysteria, value: ProxyType.Hysteria },
+  { label: ProxyType.Xray, value: ProxyType.Xray },
+]
 
 const showInsertModal = ref(false)
 const showImportModal = ref(false)
@@ -76,10 +73,6 @@ async function initXray() {
   }
 }
 
-async function handleProxiesDelay() {
-  initXray()
-}
-
 function handleGetAllProxyByType(proxyType: ProxyType) {
   if (proxyType === ProxyType.Hysteria) {
     initHysteria()
@@ -116,12 +109,11 @@ function handleCancelEdit() {
 const { updateStatus } = useSubscriptionAutoUpdate()
 
 const unwatchUpdateStatus = watch(updateStatus, async (newStatus, oldStatus) => {
-  if (oldStatus === void 0 && newStatus === 'running') {
+  if (oldStatus === void 0 && newStatus === 'running')
     handleGetAllProxyByType(ProxyType.Xray)
-  }
-  else if (oldStatus === 'running' && newStatus === 'stop') {
+
+  else if (oldStatus === 'running' && newStatus === 'stop')
     handleGetAllProxyByType(ProxyType.Xray)
-  }
 }, { immediate: true })
 
 onUnmounted(() => {
@@ -139,7 +131,6 @@ interface SpeedItem {
   label: string
   key: string
   url: string
-  icon?: () => VNode
   delay?: number
   command?: () => void
 }
@@ -197,7 +188,7 @@ function toggleSpeedMenu(event: Event) {
 
 <template>
   <div class="flex flex-col w-full h-full gap-y-4">
-    <header-bar>
+    <HeaderBar>
       <template #title>
         {{ t('menubar.proxies') }}
       </template>
@@ -219,58 +210,34 @@ function toggleSpeedMenu(event: Event) {
           {{ t('common.import') }}
         </Button>
       </template>
-    </header-bar>
+    </HeaderBar>
     <div class="h-8 flex justify-center items-center gap-2">
-      <div class="flex gap-2 bg-gray-100 dark:bg-gray-800 rounded-full p-1">
-        <input
-          v-model="proxyStore.currentProxy"
-          type="radio"
-          name="proxyGroup"
-          :value="ProxyType.Hysteria"
-          class="peer/hysteria hidden"
-        >
-        <label
-          for="hysteria"
-          class="px-6 py-1 rounded-full cursor-pointer text-sm transition-all peer-checked/hysteria:bg-emerald-500 peer-checked/hysteria:text-white"
-          :class="{ 'bg-emerald-500 text-white': proxyStore.currentProxy === ProxyType.Hysteria, 'hover:bg-gray-200 dark:hover:bg-gray-700': proxyStore.currentProxy !== ProxyType.Hysteria }"
-        >
-          {{ ProxyType.Hysteria }}
-        </label>
-
-        <input
-          v-model="proxyStore.currentProxy"
-          type="radio"
-          name="proxyGroup"
-          :value="ProxyType.Xray"
-          class="peer/xray hidden"
-        >
-        <label
-          class="px-6 py-1 rounded-full cursor-pointer text-sm transition-all"
-          :class="{ 'bg-emerald-500 text-white': proxyStore.currentProxy === ProxyType.Xray, 'hover:bg-gray-200 dark:hover:bg-gray-700': proxyStore.currentProxy !== ProxyType.Xray }"
-        >
-          {{ ProxyType.Xray }}
-        </label>
-      </div>
+      <SelectButton
+        v-model="proxyStore.currentProxy"
+        :options="proxyTypeOptions"
+        option-label="label"
+        option-value="value"
+      />
     </div>
     <div class="flex-1 w-full overflow-y-hidden">
-      <proxy-card-list
+      <ProxyCardList
         :data="cards"
         @dblclick="handleCardDblClick"
       />
     </div>
-    <add-proxy
+    <AddProxy
       v-model:show-modal="showInsertModal"
       :current-tab="proxyStore.currentProxy"
       @insert-submit="handleGetAllProxyByType"
     />
 
-    <import-proxy
+    <ImportProxy
       v-model:show-modal="showImportModal"
       :current-tab="ProxyType.Xray"
       :disabled-tab="ProxyType.Hysteria"
       @on-import="handleGetAllProxyByType"
     />
-    <edit-proxy
+    <EditProxy
       v-model:show-modal="showEditModal"
       :proxy-type="editProxyType"
       :form="(editingProxy as HysteriaProxy | XrayProxy)"
