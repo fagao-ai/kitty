@@ -75,20 +75,22 @@ function highlightLog(line: string): string {
     </HeaderBar>
     <div
       ref="logContainer"
-      class="flex-1 overflow-y-auto max-w-full h-full text-slate-600 dark:text-slate-300 bg-white dark:bg-gray-900 p-4 font-mono text-sm"
+      class="flex-1 overflow-y-auto max-w-full h-full text-slate-600 dark:text-slate-300 p-4 font-mono text-sm"
     >
-      <VirtualScroller
-        :items="logQueue"
-        :item-size="[40, 40]"
-        class="w-full h-full"
-      >
-        <template #item="{ item }">
-          <div
-            class="whitespace-nowrap overflow-x-auto border-b border-gray-100 dark:border-gray-800"
-            v-html="highlightLog(item)"
-          />
-        </template>
-      </VirtualScroller>
+      <div class="glass-panel h-full rounded-xl p-4">
+        <VirtualScroller
+          :items="logQueue"
+          :item-size="[40, 40]"
+          class="w-full h-full"
+        >
+          <template #item="{ item }">
+            <div
+              class="whitespace-nowrap overflow-x-auto border-b border-gray-100 dark:border-gray-800"
+              v-html="highlightLog(item)"
+            />
+          </template>
+        </VirtualScroller>
+      </div>
     </div>
   </div>
 </template>

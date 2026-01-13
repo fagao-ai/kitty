@@ -1,0 +1,132 @@
+/* ============================================
+   Glassmorphism UI Gradients
+   ============================================ */
+
+/* Primary Purple Gradient */
+.purple-gradient {
+  background: linear-gradient(135deg, #8B5CF6 0%, #6366F1 100%);
+}
+
+/* Subtle Purple Gradient */
+.purple-gradient-subtle {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(99, 102, 241, 0.05) 100%);
+}
+
+/* Purple Gradient with Opacity */
+.purple-gradient-medium {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.3) 0%, rgba(99, 102, 241, 0.2) 100%);
+}
+
+/* Pink-Purple Gradient */
+.pink-purple-gradient {
+  background: linear-gradient(135deg, #EC4899 0%, #8B5CF6 100%);
+}
+
+/* Blue-Purple Gradient */
+.blue-purple-gradient {
+  background: linear-gradient(135deg, #3B82F6 0%, #8B5CF6 100%);
+}
+
+/* Multi-color Gradient */
+.rainbow-gradient {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+}
+
+/* Text Gradient Classes */
+.text-gradient-purple {
+  background: linear-gradient(135deg, #8B5CF6 0%, #EC4899 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.text-gradient-blue {
+  background: linear-gradient(135deg, #3B82F6 0%, #8B5CF6 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Border Gradient */
+.border-gradient-purple {
+  border: 2px solid transparent;
+  background-image: linear-gradient(rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.1)),
+    linear-gradient(135deg, #8B5CF6, #EC4899);
+  background-origin: border-box;
+  background-clip: padding-box, border-box;
+}
+
+/* Status Color Gradients */
+.status-excellent-gradient {
+  background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+}
+
+.status-good-gradient {
+  background: linear-gradient(135deg, #eab308 0%, #ca8a04 100%);
+}
+
+.status-poor-gradient {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+}
+
+/* Animated Gradient Border */
+@keyframes gradient-border-rotate {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.gradient-border-animated {
+  position: relative;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+  border-radius: 0.75rem;
+}
+
+.gradient-border-animated::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: inherit;
+  background: linear-gradient(-45deg, #667eea, #764ba2, #f093fb, #8B5CF6);
+  background-size: 400% 400%;
+  animation: gradient-border-rotate 8s ease infinite;
+  z-index: -1;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.gradient-border-animated:hover::before {
+  opacity: 1;
+}
+
+/* Glass Shimmer Effect */
+.glass-shimmer {
+  position: relative;
+  overflow: hidden;
+}
+
+.glass-shimmer::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  animation: shimmer-move 3s infinite;
+}
+
+@keyframes shimmer-move {
+  0% {
+    left: -100%;
+  }
+  100% {
+    left: 200%;
+  }
+}

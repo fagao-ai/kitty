@@ -1,0 +1,161 @@
+/* ============================================
+   Glassmorphism UI Effect Styles
+   ============================================ */
+
+/* Core Glass Effect */
+.glass {
+  background: rgba(255, 255, 255, 0.25);
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.125);
+  border-radius: 1rem;
+}
+
+.dark .glass {
+  background: rgba(30, 30, 40, 0.40);
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* Glass Card - Main card style with blur and shadow */
+.glass-card {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.08) 100%);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+  border-radius: 0.75rem;
+  transition: all 0.3s ease;
+}
+
+.dark .glass-card {
+  background: linear-gradient(135deg, rgba(60, 60, 80, 0.35) 0%, rgba(40, 40, 60, 0.25) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+}
+
+/* Glass Sidebar - For navigation panel */
+.glass-sidebar {
+  background: linear-gradient(180deg, rgba(139, 92, 246, 0.12) 0%, rgba(99, 102, 241, 0.06) 100%);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-right: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.dark .glass-sidebar {
+  background: linear-gradient(180deg, rgba(139, 92, 246, 0.15) 0%, rgba(99, 102, 241, 0.08) 100%);
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* Glass Panel - For content areas */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 1rem;
+}
+
+.dark .glass-panel {
+  background: rgba(30, 30, 40, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* Glass Input - For form inputs */
+.glass-input {
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 0.5rem;
+}
+
+.dark .glass-input {
+  background: rgba(30, 30, 40, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Glass Button - For buttons */
+.glass-btn {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.3) 0%, rgba(99, 102, 241, 0.2) 100%);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 0.5rem;
+  transition: all 0.3s ease;
+}
+
+.glass-btn:hover {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.5) 0%, rgba(99, 102, 241, 0.4) 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 20px rgba(139, 92, 246, 0.3);
+}
+
+/* Glass Tag - For small labels */
+.glass-tag {
+  background: rgba(139, 92, 246, 0.2);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  border: 1px solid rgba(139, 92, 246, 0.3);
+}
+
+/* Glass Modal - For modal overlays */
+.glass-modal {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 1rem;
+}
+
+.dark .glass-modal {
+  background: rgba(30, 30, 40, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Performance optimized variants */
+.glass-fast {
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.glass-medium {
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.glass-heavy {
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+/* Hover glow effect */
+.glass-glow:hover {
+  box-shadow: 0 0 30px rgba(139, 92, 246, 0.3);
+}
+
+/* Gradient border on hover */
+.glass-border-hover {
+  position: relative;
+  overflow: hidden;
+}
+
+.glass-border-hover::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 2px;
+  background: linear-gradient(135deg, #8B5CF6, #EC4899, #8B5CF6);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.glass-border-hover:hover::before {
+  opacity: 1;
+}

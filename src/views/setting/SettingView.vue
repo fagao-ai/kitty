@@ -66,9 +66,9 @@ onBeforeUnmount(() => {
         {{ t('setting.title') }}
       </template>
     </HeaderBar>
-    <div class="flex-1 flex flex-col gap-y-6 pr-4">
+    <div class="flex-1 flex flex-col gap-y-6 px-4">
       <div
-        class="dark:bg-dark grid grid-cols-2 grid-rows-2 gap-x-16 gap-y-4 p-6 bg-[#f9f7f7] shadow-lg rounded-md text-[#5b7497] dark:text-slate-300"
+        class="glass-panel grid grid-cols-2 grid-rows-2 gap-x-16 gap-y-4 p-6 text-gray-700 dark:text-gray-200"
       >
         <Skeleton
           v-if="loading"
@@ -152,7 +152,7 @@ onBeforeUnmount(() => {
         </div>
       </div>
       <div
-        class="dark:bg-dark dark:text-slate-300 grid grid-cols-2 grid-rows-2 gap-x-16 gap-y-4 p-6 text-[#5b7497] bg-[#f9f7f7] shadow-lg rounded-md"
+        class="glass-panel grid grid-cols-2 grid-rows-2 gap-x-16 gap-y-4 p-6 text-gray-700 dark:text-gray-200"
       >
         <Skeleton
           v-if="loading"

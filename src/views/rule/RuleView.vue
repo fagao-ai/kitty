@@ -97,7 +97,7 @@ const ruleTypeOptions = [
       <template #default>
         <Button
           text
-          class="text-4xl !p-0"
+          class="text-4xl !p-0 glass-btn"
           @click="handleAddRule"
         >
           <svg
@@ -113,13 +113,13 @@ const ruleTypeOptions = [
         </Button>
       </template>
     </HeaderBar>
-    <div class="flex-1 overflow-y-auto pr-4">
-      <ScrollPanel style="max-height: 100%;">
-        <div class="flex flex-col gap-4">
+    <div class="flex-1 overflow-y-auto px-4">
+      <ScrollPanel style="max-height: 100%;" class="glass-panel">
+        <div class="flex flex-col gap-4 p-4">
           <div
             v-for="(item, index) in rulesForm.rules"
             :key="index"
-            class="flex gap-4 w-full items-center"
+            class="glass-card flex gap-4 w-full items-center p-3 rounded-xl"
           >
             <Select
               v-model="item.ruleAction"
@@ -139,7 +139,7 @@ const ruleTypeOptions = [
             />
             <input-text
               v-model="item.rule"
-              class="flex-1"
+              class="flex-1 glass-input"
               @blur="handleUpdateRule(item)"
             />
             <Button

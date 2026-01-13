@@ -197,6 +197,7 @@ function toggleSpeedMenu(event: Event) {
           rounded
           size="small"
           severity="secondary"
+          class="glass-btn"
           @click="showInsertModal = true"
         >
           {{ t('common.add') }}
@@ -205,21 +206,23 @@ function toggleSpeedMenu(event: Event) {
           rounded
           size="small"
           severity="secondary"
+          class="glass-btn"
           @click="showImportModal = true"
         >
           {{ t('common.import') }}
         </Button>
       </template>
     </HeaderBar>
-    <div class="h-8 flex justify-center items-center gap-2">
+    <div class="h-8 flex justify-center items-center gap-2 px-4">
       <SelectButton
         v-model="proxyStore.currentProxy"
         :options="proxyTypeOptions"
         option-label="label"
         option-value="value"
+        class="glass-panel"
       />
     </div>
-    <div class="flex-1 w-full overflow-y-hidden">
+    <div class="flex-1 w-full overflow-y-hidden px-4">
       <ProxyCardList
         :data="cards"
         @dblclick="handleCardDblClick"
@@ -246,19 +249,20 @@ function toggleSpeedMenu(event: Event) {
     />
     <Button
       v-if="proxyStore.currentProxy === ProxyType.Xray"
-      class="!fixed !right-5 !top-[70px] !w-10 !h-10 !rounded-full !p-0 z-50"
+      class="!fixed !right-5 !top-[70px] !w-10 !h-10 !rounded-full !p-0 z-50 glass-btn"
       severity="help"
       @click="toggleSpeedMenu"
     >
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 20 20"
-        class="w-5 h-5 text-[#63E2B7]"
+        class="w-5 h-5"
       >
         <g fill="none">
           <path
             d="M6.19 2.77c.131-.456.548-.77 1.022-.77h5.25c.725 0 1.237.71 1.007 1.398l-.002.008L12.205 7h2.564c.947 0 1.407 1.144.767 1.811l-.004.004l-8.676 8.858c-.755.782-2.06.06-1.796-.996l1.17-4.679H4.963a1.062 1.062 0 0 1-1.022-1.354l2.25-7.873zM7.213 3a.062.062 0 0 0-.06.045l-2.25 7.874c-.01.04.02.08.06.08H6.87a.5.5 0 0 1 .485.62l-1.325 5.3a.086.086 0 0 0-.003.03c0 .004.002.008.003.011c.004.008.013.02.03.03c.018.01.034.01.042.01a.03.03 0 0 0 .01-.004a.087.087 0 0 0 .024-.018l.004-.004l8.675-8.856a.056.056 0 0 0 .017-.032a.084.084 0 0 0-.007-.044a.079.079 0 0 0-.025-.034c-.005-.004-.013-.008-.03-.008H11.5a.5.5 0 0 1-.472-.666l1.493-4.254a.062.062 0 0 0-.06-.08H7.212z"
             fill="currentColor"
+            class="text-purple-400"
           />
         </g>
       </svg>

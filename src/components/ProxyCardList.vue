@@ -18,7 +18,7 @@ const emits = defineEmits<Emits>()
 
 <template>
   <div class="w-full h-full">
-    <scroll-panel style="width: 100%; height: 100%;">
+    <scroll-panel class="glass-panel" style="width: 100%; height: 100%; border-radius: 0; background: transparent;">
       <template v-if="data.length !== 0">
         <div class="grid grid-cols-5 auto-rows-fr gap-4 p-4 xl:grid-cols-6 xxl:grid-cols-7 xxxl:grid-cols-8 tv:grid-cols-10">
           <template
