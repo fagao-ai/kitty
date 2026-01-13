@@ -21,6 +21,6 @@ const tailwindConfig: Config = {
       },
     },
   },
-  plugins: [],
+  plugins: [require('tailwindcss-primeui')],
 }
 export default tailwindConfig

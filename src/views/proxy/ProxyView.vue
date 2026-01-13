@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { NButton, NIcon, useMessage } from 'naive-ui'
 import { computed, h, onUnmounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useToast } from 'primevue/usetoast'
+import Button from 'primevue/button'
 import type { Component, VNode } from 'vue'
 import {
   LogoDocker,
@@ -22,9 +23,11 @@ import EditProxy from '@/views/proxy/modal/EditProxy.vue'
 import HeaderBar from '@/components/HeaderBar.vue'
 import { useSubscriptionAutoUpdate } from '@/tools/autoUpdateHook'
 import { settingStore } from '@/views/setting/store'
+import Menu from 'primevue/menu'
+import { ref as vueRef } from 'vue'
 
 const { t } = useI18n()
-const message = useMessage()
+const toast = useToast()
 
 const showInsertModal = ref(false)
 const showImportModal = ref(false)
@@ -97,7 +100,7 @@ const editProxyType = ref<ProxyType>(ProxyType.Hysteria)
 async function handleCardDblClick(id: number, proxyType: ProxyType) {
   const res = await getProxyByIdAndType(id, proxyType)
   if (!res) {
-    message.error('Invalid proxy, please check')
+    toast.add({ severity: 'error', summary: 'Error', detail: 'Invalid proxy, please check', life: 3000 })
     return
   }
   editingProxy.value = res
@@ -129,53 +132,52 @@ onUnmounted(() => {
 async function handleUpdatedProxy(proxyType: ProxyType) {
   handleGetAllProxyByType(proxyType)
   showEditModal.value = false
-  message.success(t('common.updateSuccess'))
+  toast.add({ severity: 'success', summary: 'Success', detail: t('common.updateSuccess'), life: 3000 })
 }
-function renderIcon(icon: Component) {
-  return () => {
-    return h(NIcon, null, {
-      default: () => h(icon),
-    })
-  }
+
+interface SpeedItem {
+  label: string
+  key: string
+  url: string
+  icon?: () => VNode
+  delay?: number
+  command?: () => void
 }
-const speeds = ref<{ label: string, key: string, url: string, icon: () => VNode, delay?: number }[]>([
+
+const speeds = ref<SpeedItem[]>([
   {
     label: 'Google',
     key: 'Google',
     url: 'https://www.google.com',
-    icon: renderIcon(LogoGoogle),
   },
   {
     label: 'Github',
     key: 'Github',
     url: 'https://www.github.com',
-    icon: renderIcon(LogoGithub),
   },
   {
     label: 'Docker',
     key: 'Docker',
     url: 'https://registry-1.docker.io/v2/',
-    icon: renderIcon(LogoDocker),
   },
   {
     label: 'Youtube',
     key: 'Youtube',
     url: 'https://www.youtube.com',
-    icon: renderIcon(LogoYoutube),
   },
   {
     label: 'X',
     key: 'X',
     url: 'https://www.x.com',
-    icon: renderIcon(LogoTwitter),
   },
   {
     label: 'Twitch',
     key: 'Twitch',
     url: 'https://www.twitch.tv',
-    icon: renderIcon(LogoTwitch),
   },
 ])
+
+const speedMenu = vueRef()
 
 async function onShowSpeed() {
   const proxyUrl = `http://127.0.0.1:${settingStore.value.port}`
@@ -186,6 +188,11 @@ async function onShowSpeed() {
     })
   })
 }
+
+function toggleSpeedMenu(event: Event) {
+  onShowSpeed()
+  speedMenu.value.toggle(event)
+}
 </script>
 
 <template>
@@ -195,41 +202,55 @@ async function onShowSpeed() {
         {{ t('menubar.proxies') }}
       </template>
       <template #default>
-        <n-button
-          round
+        <Button
+          rounded
           size="small"
+          severity="secondary"
           @click="showInsertModal = true"
         >
           {{ t('common.add') }}
-        </n-button>
-        <n-button
-          round
+        </Button>
+        <Button
+          rounded
           size="small"
+          severity="secondary"
           @click="showImportModal = true"
         >
           {{ t('common.import') }}
-        </n-button>
+        </Button>
       </template>
     </header-bar>
-    <div class="h-8 flex justify-center items-center">
-      <n-radio-group
-        v-model:value="proxyStore.currentProxy"
-        name="proxyGroup"
-        :on-update-value="() => { }"
-      >
-        <n-radio-button
-          class="w-20"
+    <div class="h-8 flex justify-center items-center gap-2">
+      <div class="flex gap-2 bg-gray-100 dark:bg-gray-800 rounded-full p-1">
+        <input
+          v-model="proxyStore.currentProxy"
+          type="radio"
+          name="proxyGroup"
           :value="ProxyType.Hysteria"
+          class="peer/hysteria hidden"
+        >
+        <label
+          for="hysteria"
+          class="px-6 py-1 rounded-full cursor-pointer text-sm transition-all peer-checked/hysteria:bg-emerald-500 peer-checked/hysteria:text-white"
+          :class="{ 'bg-emerald-500 text-white': proxyStore.currentProxy === ProxyType.Hysteria, 'hover:bg-gray-200 dark:hover:bg-gray-700': proxyStore.currentProxy !== ProxyType.Hysteria }"
         >
           {{ ProxyType.Hysteria }}
-        </n-radio-button>
-        <n-radio-button
-          class="w-20"
+        </label>
+
+        <input
+          v-model="proxyStore.currentProxy"
+          type="radio"
+          name="proxyGroup"
           :value="ProxyType.Xray"
+          class="peer/xray hidden"
+        >
+        <label
+          class="px-6 py-1 rounded-full cursor-pointer text-sm transition-all"
+          :class="{ 'bg-emerald-500 text-white': proxyStore.currentProxy === ProxyType.Xray, 'hover:bg-gray-200 dark:hover:bg-gray-700': proxyStore.currentProxy !== ProxyType.Xray }"
         >
           {{ ProxyType.Xray }}
-        </n-radio-button>
-      </n-radio-group>
+        </label>
+      </div>
     </div>
     <div class="flex-1 w-full overflow-y-hidden">
       <proxy-card-list
@@ -256,44 +277,32 @@ async function onShowSpeed() {
       @on-cancel-edit="handleCancelEdit"
       @on-proxy-updated="handleUpdatedProxy"
     />
-    <n-float-button
+    <Button
       v-if="proxyStore.currentProxy === ProxyType.Xray"
-      :right="20"
-      :top="70"
-      :width="40"
-      :height="40"
-      @click="handleProxiesDelay"
+      class="!fixed !right-5 !top-[70px] !w-10 !h-10 !rounded-full !p-0 z-50"
+      severity="help"
+      @click="toggleSpeedMenu"
     >
-      <n-dropdown
-        trigger="hover"
-        :options="speeds"
-        @show="onShowSpeed"
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 20 20"
+        class="w-5 h-5 text-[#63E2B7]"
       >
-        <n-icon class="text-[#63E2B7] text-2xl">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            xmlns:xlink="http://www.w3.org/1999/xlink"
-            viewBox="0 0 20 20"
-          >
-            <g fill="none">
-              <path
-                d="M6.19 2.77c.131-.456.548-.77 1.022-.77h5.25c.725 0 1.237.71 1.007 1.398l-.002.008L12.205 7h2.564c.947 0 1.407 1.144.767 1.811l-.004.004l-8.676 8.858c-.755.782-2.06.06-1.796-.996l1.17-4.679H4.963a1.062 1.062 0 0 1-1.022-1.354l2.25-7.873zM7.213 3a.062.062 0 0 0-.06.045l-2.25 7.874c-.01.04.02.08.06.08H6.87a.5.5 0 0 1 .485.62l-1.325 5.3a.086.086 0 0 0-.003.03c0 .004.002.008.003.011c.004.008.013.02.03.03c.018.01.034.01.042.01a.03.03 0 0 0 .01-.004a.087.087 0 0 0 .024-.018l.004-.004l8.675-8.856a.056.056 0 0 0 .017-.032a.084.084 0 0 0-.007-.044a.079.079 0 0 0-.025-.034c-.005-.004-.013-.008-.03-.008H11.5a.5.5 0 0 1-.472-.666l1.493-4.254a.062.062 0 0 0-.06-.08H7.212z"
-                fill="currentColor"
-              />
-            </g>
-          </svg>
-        </n-icon>
-      </n-dropdown>
-    </n-float-button>
+        <g fill="none">
+          <path
+            d="M6.19 2.77c.131-.456.548-.77 1.022-.77h5.25c.725 0 1.237.71 1.007 1.398l-.002.008L12.205 7h2.564c.947 0 1.407 1.144.767 1.811l-.004.004l-8.676 8.858c-.755.782-2.06.06-1.796-.996l1.17-4.679H4.963a1.062 1.062 0 0 1-1.022-1.354l2.25-7.873zM7.213 3a.062.062 0 0 0-.06.045l-2.25 7.874c-.01.04.02.08.06.08H6.87a.5.5 0 0 1 .485.62l-1.325 5.3a.086.086 0 0 0-.003.03c0 .004.002.008.003.011c.004.008.013.02.03.03c.018.01.034.01.042.01a.03.03 0 0 0 .01-.004a.087.087 0 0 0 .024-.018l.004-.004l8.675-8.856a.056.056 0 0 0 .017-.032a.084.084 0 0 0-.007-.044a.079.079 0 0 0-.025-.034c-.005-.004-.013-.008-.03-.008H11.5a.5.5 0 0 1-.472-.666l1.493-4.254a.062.062 0 0 0-.06-.08H7.212z"
+            fill="currentColor"
+          />
+        </g>
+      </svg>
+    </Button>
+    <Menu
+      ref="speedMenu"
+      :model="speeds"
+      popup
+    />
   </div>
 </template>
 
 <style lang="scss" scoped>
-:deep(.n-radio-button) {
-  --n-button-border-radius: 12px;
-
-  .n-radio__label {
-    @apply flex items-center justify-center;
-  }
-}
 </style>

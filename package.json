@@ -25,9 +25,14 @@
     "humps": "^2.0.1",
     "ip-cidr": "^4.0.0",
     "reflect-metadata": "^0.2.1",
-    "vue": "^3.3.4",
+    "vue": "^3.5.13",
     "vue-i18n": "9",
-    "vue-router": "^4.2.5"
+    "vue-router": "^4.2.5",
+    "primevue": "^4.2.1",
+    "primeicons": "^7.0.0",
+    "@primevue/themes": "^4.2.1",
+    "@primevue/forms": "^4.5.4",
+    "zod": "^3.24.1"
   },
   "devDependencies": {
     "@antfu/eslint-config": "^2.4.2",
@@ -49,14 +54,13 @@
     "eslint-staged": "^1.0.1",
     "internal-ip": "^7.0.0",
     "lint-staged": "^15.2.0",
-    "naive-ui": "^2.38.2",
+    "tailwindcss-primeui": "^0.4.0",
     "pnpm": "^8.11.0",
     "sass": "^1.69.5",
     "simple-git-hooks": "^2.9.0",
     "tailwindcss": "^3.4.3",
     "ts-node": "^10.9.2",
     "typescript": "^5.3.2",
-    "vfonts": "^0.0.3",
     "vite": "^6.0.1",
     "vue-tsc": "^1.8.5"
   },

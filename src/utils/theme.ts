@@ -1,72 +1,37 @@
 import { ref, watch } from 'vue'
-import { type GlobalThemeOverrides, darkTheme, lightTheme, useOsTheme } from 'naive-ui'
-import type { BuiltInGlobalTheme } from 'naive-ui/es/themes/interface'
 
 function useTheme() {
-  const osThemeRef = useOsTheme()
-  const theme = ref<BuiltInGlobalTheme | null>(null)
-  const primaryColor = '#5352ed'
-  const lightThemeOverrides: GlobalThemeOverrides = {
-    common: {
-      primaryColor,
-      primaryColorHover: primaryColor,
-    },
-    Button: {
-      textColorPrimary: 'whitesmoke',
-      textColorHoverPrimary: 'whitesmoke',
-      textColor: primaryColor,
-    },
-    Menu: {
-      // itemColorHover: 'red',
-      itemColorActive: primaryColor,
-      itemColorActiveHover: primaryColor,
-      itemTextColorActive: 'whitesmoke',
-      itemTextColorActiveHover: 'white',
-      borderRadius: '999px',
-    },
-    Switch: {
-      railColorActive: primaryColor,
-    },
-  }
+  const isDark = ref(false)
 
-  const darkThemeOverrides: GlobalThemeOverrides = {
-    common: {
-      primaryColor,
-      primaryColorHover: primaryColor,
-    },
-    Button: {
-      textColorPrimary: 'whitesmoke',
-      textColorHoverPrimary: 'whitesmoke',
-      textColor: primaryColor,
-    },
-    Menu: {
-      itemColorActive: primaryColor,
-      itemColorActiveHover: primaryColor,
-      itemColorHover: '#3b3c55',
-      itemTextColor: '#5b7497',
-      itemTextColorActive: 'whitesmoke',
-      itemTextColorActiveHover: 'white',
-      borderRadius: '999px',
-    },
-    Switch: {
-      railColorActive: primaryColor,
-    },
-  }
-
-  watch(osThemeRef, (value) => {
-    if (value === 'dark') {
-      document.documentElement.classList.add('dark')
-      theme.value = darkTheme
-      return
+  // 检测系统主题
+  const detectTheme = () => {
+    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+      isDark.value = true
     }
-    document.documentElement.classList.remove('dark')
-    theme.value = lightTheme
+    else {
+      isDark.value = false
+    }
+  }
+
+  // 监听系统主题变化
+  const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
+  mediaQuery.addEventListener('change', detectTheme)
+
+  // 初始检测
+  detectTheme()
+
+  // 监听 isDark 变化,更新 DOM
+  watch(isDark, (value) => {
+    if (value) {
+      document.documentElement.classList.add('dark')
+    }
+    else {
+      document.documentElement.classList.remove('dark')
+    }
   }, { immediate: true })
 
   return {
-    theme,
-    lightThemeOverrides,
-    darkThemeOverrides,
+    isDark,
   }
 }
 

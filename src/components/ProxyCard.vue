@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { NTag } from 'naive-ui'
+import Tag from 'primevue/tag'
 import type { ProxyCard, ProxyType } from '@/types/proxy'
 
 interface Emits {
@@ -10,14 +10,14 @@ const props = defineProps<ProxyCard>()
 
 const emits = defineEmits<Emits>()
 
-const tagType = computed(() => {
+const tagSeverity = computed(() => {
   if (props.delay <= 500)
     return 'success'
 
   if (props.delay <= 1000)
     return 'warning'
 
-  return 'error'
+  return 'danger'
 })
 
 async function handleDblClick() {
@@ -31,35 +31,24 @@ async function handleDblClick() {
     @dblclick="handleDblClick"
   >
     <div class="h-6">
-      <n-tag
-        :type="tagType"
-        size="small"
-        round
-      >
-        {{ tag }}
-      </n-tag>
+      <Tag
+        :severity="tagSeverity"
+        class="rounded-full text-xs"
+        :value="tag"
+      />
     </div>
     <div class="flex-1 text-sm text-[#54759a] dark:text-slate-200">
-      <!-- <n-tooltip trigger="hover">
-        <template #trigger>
-          <div class="truncate">
-            {{ name }}
-          </div>
-        </template>
-{{ name }}
-</n-tooltip> -->
       {{ name }}
     </div>
     <div class="h-6 flex justify-between items-center">
       <div>
         {{ delay }}ms
       </div>
-      <n-tag
-        round
-        size="small"
-      >
-        {{ protocol }}
-      </n-tag>
+      <Tag
+        severity="info"
+        class="rounded-full text-xs"
+        :value="protocol"
+      />
     </div>
   </div>
 </template>

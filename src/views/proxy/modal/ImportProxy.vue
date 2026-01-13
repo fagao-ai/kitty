@@ -1,6 +1,13 @@
 <script setup lang="ts">
 import { useVModel } from '@vueuse/core'
-import { NButton, NForm, NFormItem, NInput, NTabPane, NTabs } from 'naive-ui'
+import InputText from 'primevue/inputtext'
+import Dialog from 'primevue/dialog'
+import Tabs from 'primevue/tabs'
+import TabList from 'primevue/tablist'
+import Tab from 'primevue/tab'
+import TabPanels from 'primevue/tabpanels'
+import TabPanel from 'primevue/tabpanel'
+import Button from 'primevue/button'
 import { reactive, ref, watch } from 'vue'
 import { createImportProxy } from '@/apis/proxy'
 import type { ImportProxy } from '@/types/proxy'
@@ -49,81 +56,50 @@ watch(() => props.currentTab, (tab) => {
 </script>
 
 <template>
-  <n-modal
-    v-model:show="showImportModal"
-    class="w-1/2 h-1/2"
-    :mask-closable="false"
-    transform-origin="center"
-    preset="card"
-    title="导入代理"
-    size="huge"
-    :bordered="false"
-    :segmented="true"
+  <Dialog
+    v-model:visible="showImportModal"
+    modal
+    header="导入代理"
+    :style="{ width: '50vw', height: '50vh' }"
+    :closable="false"
   >
-    <n-tabs
-      v-model:value="activeTab"
-      type="line"
-      animated
-    >
-      <n-tab-pane
-        name="hysteria"
-        :tab="ProxyType.Hysteria"
-        :disabled="disabledTab === ProxyType.Hysteria"
-      />
-      <n-tab-pane
-        name="xray"
-        :tab="ProxyType.Xray"
-        :disabled="disabledTab === ProxyType.Xray"
-      >
-        <n-form
-          :model="importProxyFormState"
-          size="medium"
-          label-placement="left"
-          label-width="auto"
-        >
-          <n-form-item
-            label="订阅地址"
-            path="url"
-          >
-            <n-input
-              v-model:value="importProxyFormState.url"
+    <Tabs v-model:value="activeTab">
+      <TabList>
+        <Tab value="hysteria" :disabled="disabledTab === ProxyType.Hysteria">
+          {{ ProxyType.Hysteria }}
+        </Tab>
+        <Tab value="xray" :disabled="disabledTab === ProxyType.Xray">
+          {{ ProxyType.Xray }}
+        </Tab>
+      </TabList>
+      <TabPanels>
+        <TabPanel value="hysteria">
+          <!-- Hysteria 不支持导入 -->
+        </TabPanel>
+        <TabPanel value="xray">
+          <div class="flex flex-col gap-2">
+            <label class="font-semibold text-sm">订阅地址</label>
+            <InputText
+              v-model="importProxyFormState.url"
               placeholder="https://example.com"
             />
-          </n-form-item>
-        </n-form>
-      </n-tab-pane>
-    </n-tabs>
+          </div>
+        </TabPanel>
+      </TabPanels>
+    </Tabs>
 
     <template #footer>
-      <div class="w-full flex flex-center gap-16">
-        <n-button
-          round
+      <div class="w-full flex flex-center gap-8">
+        <Button
+          label="取消"
+          severity="secondary"
           @click="handleCancelImport"
-        >
-          取消
-        </n-button>
-        <n-button
-          round
-          type="primary"
+        />
+        <Button
+          label="导入"
           @click="handleImport"
-        >
-          导入
-        </n-button>
+        />
       </div>
     </template>
-  </n-modal>
+  </Dialog>
 </template>
-
-<style>
-.n-card-header {
-  padding: 12px 24px !important;
-}
-
-.n-card__content {
-  padding: 0 24px !important;
-}
-
-.n-card__footer {
-  padding: 12px 24px !important;
-}
-</style>

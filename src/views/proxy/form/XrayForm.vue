@@ -1,6 +1,11 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
-import { NButton, NForm, NFormItem, NInput, NInputNumber, NScrollbar } from 'naive-ui'
+import InputText from 'primevue/inputtext'
+import InputNumber from 'primevue/inputnumber'
+import Select from 'primevue/select'
+import ToggleSwitch from 'primevue/toggleswitch'
+import Button from 'primevue/button'
+import ScrollPanel from 'primevue/scrollpanel'
 import { useVModel } from '@vueuse/core'
 import type { XrayProxy } from '@/types/proxy'
 
@@ -13,7 +18,13 @@ interface Props {
 }
 const formState = useVModel(props, 'form')
 
-const streamSettingOptions = [{ label: 'WebSocket', value: 'ws' }, { label: 'Tcp', value: 'tcp' }, { label: 'http2', value: 'http2' }, { label: 'grpc', value: 'grpc' }, { label: 'kcp', value: 'kcp' }]
+const streamSettingOptions = [
+  { label: 'WebSocket', value: 'ws' },
+  { label: 'Tcp', value: 'tcp' },
+  { label: 'http2', value: 'http2' },
+  { label: 'grpc', value: 'grpc' },
+  { label: 'kcp', value: 'kcp' },
+]
 
 function handleRemoveHttp2Host(index: number) {
   if (formState.value.streamSettings.network !== 'http2')
@@ -29,134 +40,123 @@ function handleAddHttp2Host() {
 </script>
 
 <template>
-  <n-scrollbar style="height: 100%;">
-    <n-form
-      :model="formState"
-      size="medium"
-      label-placement="left"
-      label-width="auto"
-    >
-      <n-form-item
-        :label="t('proxy.xray.proxyName')"
-        path="name"
-      >
-        <n-input v-model:value="formState.name" />
-      </n-form-item>
-      <n-form-item
-        :label="t('proxy.xray.protocol')"
-        path="protocol"
-      >
-        <n-select
-          v-model:value="formState.protocol"
-          :options="[{ label: 'vless', value: 'vless' }, { label: 'vmess', value: 'vmess' }, { label: 'trojan', value: 'trojan' }]"
+  <ScrollPanel style="height: 100%;">
+    <div class="flex flex-col gap-4">
+      <div class="flex flex-col gap-2">
+        <label class="font-semibold text-sm">{{ t('proxy.xray.proxyName') }}</label>
+        <InputText v-model="formState.name" />
+      </div>
+
+      <div class="flex flex-col gap-2">
+        <label class="font-semibold text-sm">{{ t('proxy.xray.protocol') }}</label>
+        <Select
+          v-model="formState.protocol"
+          :options="[
+            { label: 'vless', value: 'vless' },
+            { label: 'vmess', value: 'vmess' },
+            { label: 'trojan', value: 'trojan' },
+          ]"
         />
-      </n-form-item>
-      <n-form-item
-        label="uuid"
-        path="uuid"
-      >
-        <n-input
-          v-model:value="formState.uuid"
+      </div>
+
+      <div class="flex flex-col gap-2">
+        <label class="font-semibold text-sm">uuid</label>
+        <InputText
+          v-model="formState.uuid"
           placeholder="xxxx-xxxx-xxxx-xxxx"
         />
-      </n-form-item>
-      <n-form-item
-        :label="t('proxy.xray.address')"
-        path="address"
-      >
-        <n-input
-          v-model:value="formState.address"
+      </div>
+
+      <div class="flex flex-col gap-2">
+        <label class="font-semibold text-sm">{{ t('proxy.xray.address') }}</label>
+        <InputText
+          v-model="formState.address"
           placeholder="www.example.com"
         />
-      </n-form-item>
-      <n-form-item
-        :label="t('proxy.xray.port')"
-        path="port"
-      >
-        <n-input-number
-          v-model:value="formState.port"
-          type="text"
-          :show-button="false"
+      </div>
+
+      <div class="flex flex-col gap-2">
+        <label class="font-semibold text-sm">{{ t('proxy.xray.port') }}</label>
+        <InputNumber
+          v-model="formState.port"
           :max="65535"
           :min="1"
+          class="w-full"
+          :show-buttons="false"
         />
-      </n-form-item>
-      <n-form-item :label="t('proxy.xray.network')">
-        <n-select
-          v-model:value="formState.streamSettings.network"
+      </div>
+
+      <div class="flex flex-col gap-2">
+        <label class="font-semibold text-sm">{{ t('proxy.xray.network') }}</label>
+        <Select
+          v-model="formState.streamSettings.network"
           :options="streamSettingOptions"
         />
-      </n-form-item>
-      <n-form-item
-        :label="t('proxy.xray.streamSetting.security')"
-        path="streamSetting.security"
-      >
-        <n-select
-          v-model:value="formState.streamSettings.security"
-          :options="[{ label: 'none', value: 'none' }, { label: 'tls', value: 'tls' }, { label: 'reality', value: 'reality' }]"
+      </div>
+
+      <div class="flex flex-col gap-2">
+        <label class="font-semibold text-sm">{{ t('proxy.xray.streamSetting.security') }}</label>
+        <Select
+          v-model="formState.streamSettings.security"
+          :options="[
+            { label: 'none', value: 'none' },
+            { label: 'tls', value: 'tls' },
+            { label: 'reality', value: 'reality' },
+          ]"
         />
-      </n-form-item>
-      <n-form-item
-        :label="t('proxy.xray.streamSetting.tlsSettings.allowInsecure')"
-        path="streamSetting.tlsSettings.allowInsecure"
-      >
-        <n-switch
-          v-model:value="formState.streamSettings.tlsSettings!.allowInsecure"
-          size="medium"
-        />
-      </n-form-item>
-      <n-form-item
-        :label="t('proxy.xray.streamSetting.tlsSettings.serverName')"
-        path="streamSetting.tlsSettings.serverName"
-      >
-        <n-input
-          v-model:value="formState.streamSettings.tlsSettings!.serverName"
+      </div>
+
+      <div class="flex items-center gap-2">
+        <ToggleSwitch v-model="formState.streamSettings.tlsSettings!.allowInsecure" />
+        <label class="font-semibold text-sm cursor-pointer">{{ t('proxy.xray.streamSetting.tlsSettings.allowInsecure') }}</label>
+      </div>
+
+      <div class="flex flex-col gap-2">
+        <label class="font-semibold text-sm">{{ t('proxy.xray.streamSetting.tlsSettings.serverName') }}</label>
+        <InputText
+          v-model="formState.streamSettings.tlsSettings!.serverName"
           placeholder="www.example.com"
         />
-      </n-form-item>
+      </div>
+
       <template v-if="formState.streamSettings.network === 'ws'">
-        <n-form-item
-          :label="t('proxy.streamSetting.wsSettings.path')"
-          path="streamSetting.wsSettings.path"
-        >
-          <n-input v-model:value="formState.streamSettings.wsSettings.path" />
-        </n-form-item>
-        <n-form-item
-          :label="t('proxy.streamSetting.wsSettings.host')"
-          path="streamSetting.wsSettings.headers.host"
-        >
-          <n-input v-model:value="formState.streamSettings.wsSettings.headers.host" />
-        </n-form-item>
+        <div class="flex flex-col gap-2">
+          <label class="font-semibold text-sm">{{ t('proxy.streamSetting.wsSettings.path') }}</label>
+          <InputText v-model="formState.streamSettings.wsSettings.path" />
+        </div>
+
+        <div class="flex flex-col gap-2">
+          <label class="font-semibold text-sm">{{ t('proxy.streamSetting.wsSettings.host') }}</label>
+          <InputText v-model="formState.streamSettings.wsSettings.headers.host" />
+        </div>
       </template>
 
       <template v-if="formState.streamSettings.network === 'http2'">
-        <n-form-item
-          :label="t('proxy.streamSetting.http2Settings.path')"
-          path="streamSetting.http2Settings.path"
-        >
-          <n-input v-model:value="formState.streamSettings.http2Settings.path" />
-        </n-form-item>
-        <n-form-item
+        <div class="flex flex-col gap-2">
+          <label class="font-semibold text-sm">{{ t('proxy.streamSetting.http2Settings.path') }}</label>
+          <InputText v-model="formState.streamSettings.http2Settings.path" />
+        </div>
+
+        <div
           v-for="(item, index) in formState.streamSettings.http2Settings.host"
           :key="index"
-          :label="`${t('proxy.xray.streamSetting.http2Settings.headers.host')}${index + 1}`"
-          :path="`streamSetting.http2Settings.headers.host[${index}]`"
+          class="flex flex-col gap-2"
         >
-          <n-input v-model:value="formState.streamSettings.http2Settings.host[index]" />
-          <n-button
-            class="pl-3"
-            @click="handleAddHttp2Host()"
-          >
-            +
-          </n-button>
-          <n-button
-            class="pl-3"
-            @click="handleRemoveHttp2Host(index)"
-          >
-            -
-          </n-button>
-        </n-form-item>
+          <label class="font-semibold text-sm">{{ `${t('proxy.xray.streamSetting.http2Settings.headers.host')}${index + 1}` }}</label>
+          <div class="flex gap-2">
+            <InputText v-model="formState.streamSettings.http2Settings.host[index]" class="flex-1" />
+            <Button
+              icon="pi pi-plus"
+              @click="handleAddHttp2Host()"
+            />
+            <Button
+              icon="pi pi-minus"
+              severity="danger"
+              @click="handleRemoveHttp2Host(index)"
+            />
+          </div>
+        </div>
       </template>
-    </n-form>
-  </n-scrollbar>
+    </div>
+  </ScrollPanel>
 </template>

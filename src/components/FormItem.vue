@@ -1,5 +1,7 @@
 <script setup lang="ts">
-import { NFormItem, NInput, NSelect } from 'naive-ui'
+import InputText from 'primevue/inputtext'
+import Textarea from 'primevue/textarea'
+import Select from 'primevue/select'
 import { useVModel } from '@vueuse/core'
 import { FormItem } from '@/composables/useFormItem'
 
@@ -29,23 +31,29 @@ function getNext(): FormItem | null {
 
 <template>
   <template v-if="formState">
-    <n-form-item :label="formState.payload.label">
-      <template v-if="formState.payload.type === 'input'">
-        <n-input v-model:value="formState.payload.value" />
-      </template>
-      <template v-else-if="formState.payload.type === 'textarea'">
-        <n-input
-          v-model:value="formState.payload.value"
-          type="textarea"
-        />
-      </template>
-      <template v-else-if="formState.payload.type === 'select'">
-        <n-select
-          v-model:value="formState.payload.value"
-          :options="formState.payload.options"
-        />
-      </template>
-    </n-form-item>
-    <form-item :form-state="getNext()" />
+    <div class="flex flex-col gap-1 mb-3">
+      <label class="font-semibold text-sm">{{ formState.payload.label }}</label>
+
+      <InputText
+        v-if="formState.payload.type === 'input'"
+        v-model="formState.payload.value"
+        class="w-full"
+      />
+
+      <Textarea
+        v-else-if="formState.payload.type === 'textarea'"
+        v-model="formState.payload.value"
+        class="w-full"
+        rows="3"
+      />
+
+      <Select
+        v-else-if="formState.payload.type === 'select'"
+        v-model="formState.payload.value"
+        :options="formState.payload.options"
+        class="w-full"
+      />
+    </div>
+    <form-item :form="getNext()" />
   </template>
 </template>

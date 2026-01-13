@@ -1,72 +1,42 @@
 <script setup lang="ts">
-import { h } from 'vue'
-import { NMenu, useMessage } from 'naive-ui'
-import type { MenuOption } from 'naive-ui'
-import { RouterLink, useRoute } from 'vue-router'
+import { ref } from 'vue'
+import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
+import { useToast } from 'primevue/usetoast'
+import Menu from 'primevue/menu'
 
 const { t } = useI18n()
+const router = useRouter()
+const toast = useToast()
 
 // @ts-expect-error @ts-expect-error
 const version = __APP_VERSION__ as string
 
-const menuOptions: MenuOption[] = [
+const menuItems = ref([
   {
-    label: () =>
-      h(
-        RouterLink,
-        {
-          to: {
-            name: 'proxy',
-          },
-        },
-        { default: () => t('menubar.proxies') },
-      ),
-    key: 'proxy',
+    label: t('menubar.proxies'),
+    icon: 'pi pi-home',
+    command: () => router.push({ name: 'proxy' }),
   },
   {
-    label: () =>
-      h(
-        RouterLink,
-        {
-          to: {
-            name: 'rule',
-          },
-        },
-        { default: () => t('menubar.rules') },
-      ),
-    key: 'rule',
+    label: t('menubar.rules'),
+    icon: 'pi pi-list',
+    command: () => router.push({ name: 'rule' }),
   },
   {
-    label: () =>
-      h(
-        RouterLink,
-        {
-          to: {
-            name: 'log',
-          },
-        },
-        { default: () => t('menubar.logs') },
-      ),
-    key: 'log',
+    label: t('menubar.logs'),
+    icon: 'pi pi-file',
+    command: () => router.push({ name: 'log' }),
   },
   {
-    label: () =>
-      h(
-        RouterLink,
-        {
-          to: {
-            name: 'setting',
-          },
-        },
-        { default: () => t('menubar.settings') },
-      ),
-    key: 'setting',
+    label: t('menubar.settings'),
+    icon: 'pi pi-cog',
+    command: () => router.push({ name: 'setting' }),
   },
-]
+])
 
-const route = useRoute()
-window.$message = useMessage()
+// 全局消息服务
+window.$message = toast
 </script>
 
 <template>
@@ -85,11 +55,14 @@ window.$message = useMessage()
         class="flex-1 text-white text-lg"
         data-tauri-drag-region
       >
-        <n-menu
-          :value="route.name as string ?? 'proxy'"
-          :default-value="route.name as string ?? 'proxy'"
-          :options="menuOptions"
-        />
+        <Menu :model="menuItems" class="w-full">
+          <template #item="{ item, props }">
+            <a v-ripple class="flex items-center" v-bind="props.action" @click="item.command">
+              <span :class="item.icon" />
+              <span class="ml-2">{{ item.label }}</span>
+            </a>
+          </template>
+        </Menu>
       </div>
     </div>
     <div class="h-1/8 flex flex-center flex-col">
@@ -104,17 +77,14 @@ window.$message = useMessage()
 </template>
 
 <style scoped lang="scss">
-:deep(.n-menu) {
-  .n-menu-item-content {
+:deep(.p-menu) {
+  .p-menuitem-link {
     @apply flex justify-center items-center;
     padding-left: 0 !important;
     padding-right: 0 !important;
 
-    .n-menu-item-content-header {
-
-      .router-link-active {
-        font-size: 18px;
-      }
+    .router-link-active {
+      font-size: 18px;
     }
   }
 }

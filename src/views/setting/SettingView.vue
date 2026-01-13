@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import { onBeforeUnmount, watch } from 'vue'
 import { watchOnce } from '@vueuse/core'
-import { NRadioGroup, NSkeleton, NSwitch } from 'naive-ui'
-import { isEnabled } from '@tauri-apps/plugin-autostart'
 import { useI18n } from 'vue-i18n'
+import Skeleton from 'primevue/skeleton'
+import ToggleSwitch from 'primevue/toggleswitch'
+import InputNumber from 'primevue/inputnumber'
+import InputText from 'primevue/inputtext'
 import HeaderBar from '@/components/HeaderBar.vue'
 import { settingStore } from '@/views/setting/store'
 import { useConfig } from '@/views/setting/hook'
@@ -62,11 +64,11 @@ onBeforeUnmount(() => {
       <div
         class="dark:bg-dark grid grid-cols-2 grid-rows-2 gap-x-16 gap-y-4 p-6 bg-[#f9f7f7] shadow-lg rounded-md text-[#5b7497] dark:text-slate-300"
       >
-        <n-skeleton
+        <Skeleton
           v-if="loading"
           width="100%"
-          :height="34"
-          round
+          height="2.5rem"
+          border-radius="12px"
         />
         <div
           v-else
@@ -76,18 +78,17 @@ onBeforeUnmount(() => {
             {{ t('setting.autoStart') }}
           </div>
           <div class="font-medium">
-            <n-switch
-              v-model:value="baseConfig.autoStart"
-              size="medium"
-              @update:value="handleAutoStart"
+            <ToggleSwitch
+              v-model="baseConfig.autoStart"
+              @update:model-value="handleAutoStart"
             />
           </div>
         </div>
-        <n-skeleton
+        <Skeleton
           v-if="loading"
           width="100%"
-          :height="34"
-          round
+          height="2.5rem"
+          border-radius="12px"
         />
         <div
           v-else
@@ -97,25 +98,48 @@ onBeforeUnmount(() => {
             {{ t('setting.language') }}
           </div>
           <div class="font-medium">
-            <n-radio-group
-              v-model:value="baseConfig.language"
-              name="langGroup"
-              @update:value="handleLanguageChange"
-            >
-              <n-radio-button value="zh-CN">
+            <div class="flex gap-2 bg-gray-100 dark:bg-gray-800 rounded-full p-1">
+              <input
+                :id="'lang-zh'"
+                v-model="baseConfig.language"
+                type="radio"
+                name="langGroup"
+                value="zh-CN"
+                class="hidden"
+                @change="handleLanguageChange('zh-CN')"
+              >
+              <label
+                for="lang-zh"
+                class="px-4 py-1 rounded-full cursor-pointer text-sm transition-all"
+                :class="{ 'bg-emerald-500 text-white': baseConfig.language === 'zh-CN', 'hover:bg-gray-200 dark:hover:bg-gray-700': baseConfig.language !== 'zh-CN' }"
+              >
                 文
-              </n-radio-button>
-              <n-radio-button value="en-US">
+              </label>
+
+              <input
+                :id="'lang-en'"
+                v-model="baseConfig.language"
+                type="radio"
+                name="langGroup"
+                value="en-US"
+                class="hidden"
+                @change="handleLanguageChange('en-US')"
+              >
+              <label
+                for="lang-en"
+                class="px-4 py-1 rounded-full cursor-pointer text-sm transition-all"
+                :class="{ 'bg-emerald-500 text-white': baseConfig.language === 'en-US', 'hover:bg-gray-200 dark:hover:bg-gray-700': baseConfig.language !== 'en-US' }"
+              >
                 En
-              </n-radio-button>
-            </n-radio-group>
+              </label>
+            </div>
           </div>
         </div>
-        <n-skeleton
+        <Skeleton
           v-if="loading"
           width="100%"
-          :height="34"
-          round
+          height="2.5rem"
+          border-radius="12px"
         />
         <div
           v-else
@@ -125,19 +149,17 @@ onBeforeUnmount(() => {
             {{ t('setting.systemProxy') }}
           </div>
           <div class="font-medium">
-            <n-switch
-              v-model:value="baseConfig.sysproxyFlag"
-              :loading="proxyLoading"
-              size="medium"
-              @update:value="handleProxy"
+            <ToggleSwitch
+              v-model="baseConfig.sysproxyFlag"
+              @update:model-value="handleProxy"
             />
           </div>
         </div>
-        <n-skeleton
+        <Skeleton
           v-if="loading"
           width="100%"
-          :height="34"
-          round
+          height="2.5rem"
+          border-radius="12px"
         />
         <div
           v-else
@@ -154,11 +176,11 @@ onBeforeUnmount(() => {
       <div
         class="dark:bg-dark dark:text-slate-300 grid grid-cols-2 grid-rows-2 gap-x-16 gap-y-4 p-6 text-[#5b7497] bg-[#f9f7f7] shadow-lg rounded-md"
       >
-        <n-skeleton
+        <Skeleton
           v-if="loading"
           width="100%"
-          :height="34"
-          round
+          height="2.5rem"
+          border-radius="12px"
         />
         <div
           v-else
@@ -171,11 +193,11 @@ onBeforeUnmount(() => {
             {{ t('common.rules') }}
           </div>
         </div>
-        <n-skeleton
+        <Skeleton
           v-if="loading"
           width="100%"
-          :height="34"
-          round
+          height="2.5rem"
+          border-radius="12px"
         />
         <div
           v-else
@@ -184,22 +206,22 @@ onBeforeUnmount(() => {
           <div class="font-semibold">
             {{ t('setting.socks5Port') }}
           </div>
-          <div class="font-medium w-20">
-            <n-input-number
-              v-model:value="baseConfig.socksPort"
-              type="text"
-              :show-button="false"
+          <div class="font-medium w-24">
+            <InputNumber
+              v-model="baseConfig.socksPort"
               :max="65535"
               :min="1"
+              show-buttons
+              :use-grouping="false"
               @blur="handleBaseConfigUpdate"
             />
           </div>
         </div>
-        <n-skeleton
+        <Skeleton
           v-if="loading"
           width="100%"
-          :height="34"
-          round
+          height="2.5rem"
+          border-radius="12px"
         />
         <div
           v-else
@@ -208,22 +230,22 @@ onBeforeUnmount(() => {
           <div class="font-semibold">
             {{ t('setting.httpPort') }}
           </div>
-          <div class="font-medium w-20">
-            <n-input-number
-              v-model:value="baseConfig.httpPort"
-              type="text"
-              :show-button="false"
+          <div class="font-medium w-24">
+            <InputNumber
+              v-model="baseConfig.httpPort"
               :max="65535"
               :min="1"
+              show-buttons
+              :use-grouping="false"
               @blur="handleBaseConfigUpdate"
             />
           </div>
         </div>
-        <n-skeleton
+        <Skeleton
           v-if="loading"
           width="100%"
-          :height="34"
-          round
+          height="2.5rem"
+          border-radius="12px"
         />
         <div
           v-else
@@ -233,19 +255,19 @@ onBeforeUnmount(() => {
             {{ t('setting.delayTestUrl') }}
           </div>
           <div class="font-medium w-60">
-            <n-input
-              v-model:value="baseConfig.delayTestUrl"
+            <InputText
+              v-model="baseConfig.delayTestUrl"
               type="text"
-              :show-button="false"
+              class="w-full"
               @blur="handleBaseConfigUpdate"
             />
           </div>
         </div>
-        <n-skeleton
+        <Skeleton
           v-if="loading"
           width="100%"
-          :height="34"
-          round
+          height="2.5rem"
+          border-radius="12px"
         />
         <div
           v-else
@@ -254,12 +276,13 @@ onBeforeUnmount(() => {
           <div class="font-semibold">
             {{ t('setting.subscriptionAutoUpdate') }}
           </div>
-          <div class="font-medium w-20">
-            <n-input-number
-              v-model:value="baseConfig.updateInterval"
-              :show-button="false"
+          <div class="font-medium w-24">
+            <InputNumber
+              v-model="baseConfig.updateInterval"
               :max="48"
               :min="1"
+              show-buttons
+              :use-grouping="false"
               @blur="handleUpdateInterval"
             />
           </div>

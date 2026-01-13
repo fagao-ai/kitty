@@ -1,7 +1,13 @@
 <script setup lang="ts">
-import { reactive, ref, watch } from 'vue'
+import { ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { NButton, NTabPane, NTabs } from 'naive-ui'
+import Dialog from 'primevue/dialog'
+import Tabs from 'primevue/tabs'
+import TabList from 'primevue/tablist'
+import Tab from 'primevue/tab'
+import TabPanels from 'primevue/tabpanels'
+import TabPanel from 'primevue/tabpanel'
+import Button from 'primevue/button'
 import { useVModel } from '@vueuse/core'
 import { ProxyType } from '@/types/proxy'
 import type { HysteriaProxy, XrayProxy } from '@/types/proxy'
@@ -43,7 +49,7 @@ const defaultHysteriaForm: HysteriaProxy = {
   },
 }
 
-const hysteriaFormState = reactive<HysteriaProxy>({ ...defaultHysteriaForm })
+const hysteriaFormState = ref<HysteriaProxy>({ ...defaultHysteriaForm })
 
 const defaultXrayForm: XrayProxy = {
   id: 0,
@@ -75,16 +81,16 @@ const defaultXrayForm: XrayProxy = {
   },
 }
 
-const xrayFormState = reactive<XrayProxy>({ ...defaultXrayForm })
+const xrayFormState = ref<XrayProxy>({ ...defaultXrayForm })
 
 async function onInsertSubmit() {
   if (activeTab.value === 'hysteria') {
-    await createHysteriaProxy(hysteriaFormState)
-    Object.assign(hysteriaFormState, defaultHysteriaForm)
+    await createHysteriaProxy(hysteriaFormState.value)
+    hysteriaFormState.value = { ...defaultHysteriaForm }
   }
   else {
-    await createXrayProxy(xrayFormState)
-    Object.assign(xrayFormState, defaultXrayForm)
+    await createXrayProxy(xrayFormState.value)
+    xrayFormState.value = { ...defaultXrayForm }
   }
 
   emits('insertSubmit', activeTab.value)
@@ -101,66 +107,40 @@ watch(() => props.currentTab, (tab) => {
 </script>
 
 <template>
-  <n-modal
-    v-model:show="showInsertModal"
-    class="w-1/2 h-1/2"
-    :mask-closable="false"
-    transform-origin="center"
-    preset="card"
-    :title="t('proxy.addProxy.title')"
-    size="huge"
-    :bordered="false"
-    :segmented="true"
+  <Dialog
+    v-model:visible="showInsertModal"
+    modal
+    :header="t('proxy.addProxy.title')"
+    :style="{ width: '50vw', height: '50vh' }"
+    :closable="false"
   >
-    <n-tabs
-      v-model:value="activeTab"
-      type="line"
-      animated
-    >
-      <n-tab-pane
-        name="hysteria"
-        :tab="ProxyType.Hysteria"
-      >
-        <hysteria-form v-model:form="hysteriaFormState" />
-      </n-tab-pane>
-      <n-tab-pane
-        name="xray"
-        :tab="ProxyType.Xray"
-      >
-        <xray-form v-model:form="xrayFormState" />
-      </n-tab-pane>
-    </n-tabs>
+    <Tabs v-model:value="activeTab">
+      <TabList>
+        <Tab value="hysteria">{{ ProxyType.Hysteria }}</Tab>
+        <Tab value="xray">{{ ProxyType.Xray }}</Tab>
+      </TabList>
+      <TabPanels>
+        <TabPanel value="hysteria">
+          <hysteria-form v-model:form="hysteriaFormState.value" />
+        </TabPanel>
+        <TabPanel value="xray">
+          <xray-form v-model:form="xrayFormState.value" />
+        </TabPanel>
+      </TabPanels>
+    </Tabs>
 
     <template #footer>
-      <div class="w-full flex flex-center gap-16">
-        <n-button
-          round
+      <div class="w-full flex flex-center gap-8">
+        <Button
+          :label="t('common.cancel')"
           @click="onCancelInsert"
-        >
-          {{ t('common.cancel') }}
-        </n-button>
-        <n-button
-          round
-          type="primary"
+          severity="secondary"
+        />
+        <Button
+          :label="t('common.add')"
           @click="onInsertSubmit"
-        >
-          {{ t('common.add') }}
-        </n-button>
+        />
       </div>
     </template>
-  </n-modal>
+  </Dialog>
 </template>
-
-<style>
-.n-card-header {
-  padding: 12px 24px !important;
-}
-
-.n-card__content {
-  padding: 0 24px !important;
-}
-
-.n-card__footer {
-  padding: 12px 24px !important;
-}
-</style>
