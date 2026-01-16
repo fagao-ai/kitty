@@ -7,6 +7,7 @@ import TabList from 'primevue/tablist'
 import Tab from 'primevue/tab'
 import TabPanels from 'primevue/tabpanels'
 import TabPanel from 'primevue/tabpanel'
+import ScrollPanel from 'primevue/scrollpanel'
 import Button from 'primevue/button'
 import { useVModel } from '@vueuse/core'
 import { ProxyType } from '@/types/proxy'
@@ -112,6 +113,7 @@ watch(() => props.currentTab, (tab) => {
     modal
     :header="t('proxy.addProxy.title')"
     :style="{ width: '50vw', height: '50vh' }"
+    :content-style="{ overflow: 'hidden' }"
     :closable="false"
   >
     <Tabs v-model:value="activeTab">
@@ -125,10 +127,14 @@ watch(() => props.currentTab, (tab) => {
       </TabList>
       <TabPanels>
         <TabPanel value="hysteria">
-          <hysteria-form v-model:form="hysteriaFormState" />
+          <ScrollPanel style="max-height: 40vh">
+            <hysteria-form v-model:form="hysteriaFormState" />
+          </ScrollPanel>
         </TabPanel>
         <TabPanel value="xray">
-          <xray-form v-model:form="xrayFormState" />
+          <ScrollPanel style="max-height: 40vh">
+            <xray-form v-model:form="xrayFormState" />
+          </ScrollPanel>
         </TabPanel>
       </TabPanels>
     </Tabs>

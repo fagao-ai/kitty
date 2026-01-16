@@ -42,7 +42,7 @@ window.$message = toast
 
 <template>
   <div
-    class="glass-sidebar flex flex-col h-full px-4 pb-4"
+    class="glass-sidebar flex flex-col h-full py-4"
     data-tauri-drag-region
   >
     <div class="flex-1 flex flex-col">
@@ -57,15 +57,11 @@ window.$message = toast
       </div>
 
       <!-- Menu Items -->
-      <div class="flex-1">
-        <Menu :model="menuItems" class="w-full">
-          <template #item="{ item, props }">
-            <a v-ripple class="glass-menu-item flex items-center px-4 py-3 rounded-xl my-1 transition-all duration-300 hover:bg-white/10 dark:hover:bg-white/5" v-bind="props.action">
-              <span :class="item.icon" class="text-purple-400 dark:text-purple-300" />
-              <span class="ml-3 text-gray-700 dark:text-gray-100">{{ item.label }}</span>
-            </a>
-          </template>
-        </Menu>
+      <div class="flex-1 w-full">
+        <Menu
+          class="min-w-48! h-full"
+          :model="menuItems"
+        />
       </div>
     </div>
 
@@ -92,35 +88,5 @@ window.$message = toast
 .dark .glass-sidebar {
   background: linear-gradient(180deg, rgba(139, 92, 246, 0.15) 0%, rgba(99, 102, 241, 0.08) 100%);
   border-right: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-:deep(.p-menu) {
-  background: transparent;
-  border: none;
-  padding: 0;
-
-  .p-menuitem-link {
-    @apply flex justify-center items-center;
-    padding-left: 0 !important;
-    padding-right: 0 !important;
-  }
-
-  .router-link-active {
-    background: rgba(139, 92, 246, 0.15);
-  }
-
-  .router-link-active span {
-    color: #8B5CF6;
-  }
-}
-
-.glass-menu-item {
-  &:hover {
-    background: rgba(139, 92, 246, 0.1);
-  }
-
-  &.router-link-active {
-    background: rgba(139, 92, 246, 0.2);
-  }
 }
 </style>

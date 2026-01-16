@@ -249,7 +249,7 @@ function toggleSpeedMenu(event: Event) {
     />
     <Button
       v-if="proxyStore.currentProxy === ProxyType.Xray"
-      class="!fixed !right-5 !top-[70px] !w-10 !h-10 !rounded-full !p-0 z-50 glass-btn"
+      class="!fixed !right-5 top-17.5! w-10! !h-10 !rounded-full !p-0 z-50 glass-btn"
       severity="help"
       @click="toggleSpeedMenu"
     >

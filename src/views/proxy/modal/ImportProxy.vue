@@ -7,6 +7,7 @@ import TabList from 'primevue/tablist'
 import Tab from 'primevue/tab'
 import TabPanels from 'primevue/tabpanels'
 import TabPanel from 'primevue/tabpanel'
+import ScrollPanel from 'primevue/scrollpanel'
 import Button from 'primevue/button'
 import { reactive, ref, watch } from 'vue'
 import { createImportProxy } from '@/apis/proxy'
@@ -61,6 +62,7 @@ watch(() => props.currentTab, (tab) => {
     modal
     header="导入代理"
     :style="{ width: '50vw', height: '50vh' }"
+    :content-style="{ overflow: 'hidden' }"
     :closable="false"
   >
     <Tabs v-model:value="activeTab">
@@ -74,16 +76,20 @@ watch(() => props.currentTab, (tab) => {
       </TabList>
       <TabPanels>
         <TabPanel value="hysteria">
-          <!-- Hysteria 不支持导入 -->
+          <ScrollPanel style="max-height: 40vh">
+            <!-- Hysteria 不支持导入 -->
+          </ScrollPanel>
         </TabPanel>
         <TabPanel value="xray">
-          <div class="flex flex-col gap-2">
-            <label class="font-semibold text-sm">订阅地址</label>
-            <InputText
-              v-model="importProxyFormState.url"
-              placeholder="https://example.com"
-            />
-          </div>
+          <ScrollPanel style="max-height: 40vh">
+            <div class="flex flex-col gap-2">
+              <label class="font-semibold text-sm">订阅地址</label>
+              <InputText
+                v-model="importProxyFormState.url"
+                placeholder="https://example.com"
+              />
+            </div>
+          </ScrollPanel>
         </TabPanel>
       </TabPanels>
     </Tabs>

@@ -1,6 +1,7 @@
 @import "./styles/glassmorphism.css";
 @import "./styles/animations.css";
 @import "./styles/gradients.css";
+@import "./styles/primevue-overrides.css";
 
 @theme {
   /* Purple Theme Colors */
@@ -40,8 +41,13 @@
   --breakpoint-tv: 1700px;
 }
 
-body {
+html, body {
+  height: 100%;
   margin: 0;
+  padding: 0;
+}
+
+body {
   min-width: 1024px;
   min-height: 680px;
   -webkit-user-select: none !important;
@@ -51,7 +57,7 @@ body {
   -ms-user-select: none !important;
   /* IE10+/Edge */
   user-select: none !important;
-  overflow-y: hidden;
+  overflow: hidden;
 }
 
 #app {
