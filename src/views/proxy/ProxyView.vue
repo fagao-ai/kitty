@@ -53,19 +53,16 @@ async function initHysteria() {
 
 async function initXray() {
   const xraies = await getAllXraies()
-  const delay_map = await xrayProxiedDelay(xraies.map((item) => {
-    return { id: item.id, address: item.address, port: item.port }
-  }))
   xrayCards.value = xraies.map((item) => {
     return {
       id: item.id!,
       type: ProxyType.Xray,
       name: item.name,
       tag: item.protocol,
-      delay: delay_map[item.id!] ?? 9999,
+      delay: 0,
       protocol: item.streamSettings.network,
     }
-  }).sort((a, b) => a.delay - b.delay)
+  })
 
   if (settingStore.value.sysproxyFlag && xraies.length > 0) {
     await setProxy(false)

@@ -24,7 +24,8 @@ build-target = "0.4.0"
 zip = "0.5"
 
 [dependencies]
-shoes = { path = "/Users/hezhaozhao/myself/shoes", features = [ "ffi" ] }
+#shoes = { path = "/Users/hezhaozhao/myself/shoes", features = [ "ffi" ] }
+shoes = { path = "/home/hezhaozhao/shoes", features = [ "ffi" ] }
 tauri = { version = "2.0.0-rc.0", features = [
   "tray-icon",
   # "icon-ico",

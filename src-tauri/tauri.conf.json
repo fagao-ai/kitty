@@ -33,7 +33,6 @@
       "icons/icon.icns",
       "icons/icon.ico"
     ],
-    "externalBin": ["binaries/hysteria", "binaries/xray"],
     "resources": ["static/*"]
   }
 }

@@ -78,6 +78,11 @@ impl ActiveModelBehavior for ActiveModel {}
 
 impl Model {
     generate_model_functions!();
+
+    /// Get the stream settings for this xray configuration.
+    pub fn stream_settings(&self) -> &StreamSettings {
+        &self.stream_settings
+    }
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, FromJsonQueryResult)]
@@ -95,6 +100,78 @@ pub enum StreamSettings {
     Kcp(KcpProtocol),
     #[serde(untagged)]
     Trojan(TrojanProtocol),
+}
+
+impl StreamSettings {
+    /// Get the network type (ws, tcp, grpc, http2, kcp)
+    pub fn network(&self) -> &str {
+        match self {
+            StreamSettings::WebSocket(p) => &p.network,
+            StreamSettings::Tcp(p) => &p.network,
+            StreamSettings::Http2(p) => &p.network,
+            StreamSettings::Grpc(p) => &p.network,
+            StreamSettings::Kcp(p) => &p.network,
+            StreamSettings::Trojan(p) => &p.network,
+        }
+    }
+
+    /// Get the security setting if present
+    pub fn security(&self) -> Option<&Security> {
+        match self {
+            StreamSettings::WebSocket(p) => p.security.as_ref(),
+            StreamSettings::Tcp(p) => p.security.as_ref(),
+            StreamSettings::Http2(p) => p.security.as_ref(),
+            StreamSettings::Grpc(p) => p.security.as_ref(),
+            StreamSettings::Kcp(p) => p.security.as_ref(),
+            StreamSettings::Trojan(p) => p.security.as_ref(),
+        }
+    }
+
+    /// Get TLS settings if present
+    pub fn tls_settings(&self) -> Option<&TLSSettings> {
+        match self {
+            StreamSettings::WebSocket(p) => p.tls_settings.as_ref(),
+            StreamSettings::Tcp(p) => p.tls_settings.as_ref(),
+            StreamSettings::Http2(p) => p.tls_settings.as_ref(),
+            StreamSettings::Grpc(p) => p.tls_settings.as_ref(),
+            StreamSettings::Kcp(p) => p.tls_settings.as_ref(),
+            StreamSettings::Trojan(p) => p.tls_settings.as_ref(),
+        }
+    }
+
+    /// Get Reality settings if present
+    pub fn reality_settings(&self) -> Option<&RealitySettings> {
+        match self {
+            StreamSettings::WebSocket(p) => p.reality_settings.as_ref(),
+            StreamSettings::Tcp(p) => p.reality_settings.as_ref(),
+            StreamSettings::Grpc(p) => p.reality_settings.as_ref(),
+            StreamSettings::Kcp(_) | StreamSettings::Http2(_) | StreamSettings::Trojan(_) => None,
+        }
+    }
+
+    /// Get WebSocket path if this is a WebSocket config
+    pub fn ws_path(&self) -> Option<&str> {
+        match self {
+            StreamSettings::WebSocket(p) => Some(p.ws_settings.path.as_str()),
+            _ => None,
+        }
+    }
+
+    /// Get WebSocket host if this is a WebSocket config
+    pub fn ws_host(&self) -> Option<&str> {
+        match self {
+            StreamSettings::WebSocket(p) => Some(p.ws_settings.headers.host.as_str()),
+            _ => None,
+        }
+    }
+
+    /// Get gRPC service name if this is a gRPC config
+    pub fn grpc_service_name(&self) -> Option<&str> {
+        match self {
+            StreamSettings::Grpc(p) => Some(p.grpc_settings.service_name.as_str()),
+            _ => None,
+        }
+    }
 }
 
 impl TryFrom<url::form_urlencoded::Parse<'_>> for StreamSettings {
@@ -230,6 +307,21 @@ impl RealitySettings {
             spider_x,
         }
     }
+
+    /// Get the server name (SNI)
+    pub fn server_name(&self) -> &str {
+        &self.server_name
+    }
+
+    /// Get the public key
+    pub fn public_key(&self) -> &str {
+        &self.public_key
+    }
+
+    /// Get the short ID
+    pub fn short_id(&self) -> &str {
+        &self.short_id
+    }
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -333,6 +425,16 @@ impl TLSSettings {
             allow_insecure,
             server_name,
         }
+    }
+
+    /// Get the allow_insecure setting
+    pub fn allow_insecure(&self) -> bool {
+        self.allow_insecure
+    }
+
+    /// Get the server name (SNI)
+    pub fn server_name(&self) -> &str {
+        &self.server_name
     }
 }
 

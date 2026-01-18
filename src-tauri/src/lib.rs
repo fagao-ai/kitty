@@ -115,7 +115,7 @@ pub fn run() {
         xray_api::import_xray_subscribe,
         xray_api::update_xray_item,
         xray_api::delete_xray_item,
-        xray_api::speed_xray_delay,
+        // xray_api::speed_xray_delay, // TODO: not yet implemented for shoes
         xray_api::get_xray_by_id,
         xray_api::proxies_delay_test,
         common_api::query_base_config,
