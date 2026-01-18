@@ -15,32 +15,23 @@ export function useTask(hour: number, taskFn: (...args: any[]) => Promise<void>)
   let timeoutId: NodeJS.Timeout | undefined
 
   async function runTask() {
+    taskStatus.value = 'running'
     try {
       await taskFn()
     }
     catch {
-      clearTimeout(timeoutId)
       taskStatus.value = 'stop'
       return
     }
 
+    // Task completed, set status to stop and schedule next run
+    taskStatus.value = 'stop'
     timeoutId = setTimeout(runTask, getTimeUntilNextRun(hour))
   }
 
   async function startTask() {
     clearTimeout(timeoutId)
-    taskStatus.value = 'running'
-
-    try {
-      await taskFn()
-    }
-    catch {
-      clearTimeout(timeoutId)
-      taskStatus.value = 'stop'
-      return
-    }
-
-    timeoutId = setTimeout(runTask, getTimeUntilNextRun(hour))
+    await runTask()
   }
 
   function stopTask() {

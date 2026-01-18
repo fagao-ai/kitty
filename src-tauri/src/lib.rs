@@ -136,6 +136,8 @@ pub fn run() {
         start_all_servers,
         set_system_proxy_only,
         stop_system_proxy,
+        tauri_apis::get_active_proxy,
+        tauri_apis::switch_to_proxy,
     ];
 
     let builder = builder.invoke_handler(handler);

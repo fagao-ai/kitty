@@ -11,6 +11,7 @@ use entity::{
     rules::{self},
     xray::{self as xray_entity},
 };
+use serde::Serialize;
 
 use std::{
     collections::HashMap,
@@ -20,6 +21,7 @@ use tauri::{AppHandle, Manager, State};
 
 use crate::{
     config_converter::ShoesConfigConverter,
+    proxy::delay::ProxyType,
     proxy::system_proxy::{clear_system_proxy, set_system_proxy},
     state::{DatabaseState, ProcessManagerState},
     types::{CommandResult, KittyCommandError, KittyResponse},
@@ -196,3 +198,95 @@ pub use server::{
     start_proxy_server, start_servers_from_db, start_xray_server_by_id, stop_all_servers,
     stop_proxy_server,
 };
+
+// ============================================================================
+// Active Proxy Management Commands
+// ============================================================================
+
+/// Information about the currently active proxy.
+#[derive(Serialize)]
+pub struct ActiveProxyInfo {
+    id: u32,
+    proxy_type: String,
+}
+
+/// Get the currently active proxy information.
+#[tauri::command(rename_all = "snake_case")]
+pub async fn get_active_proxy<'a>(
+    process_manager: State<'a, ProcessManagerState>,
+) -> CommandResult<KittyResponse<Option<ActiveProxyInfo>>> {
+    let id = *process_manager.active_proxy_id.lock().await;
+    let proxy_type = process_manager.active_proxy_type.lock().await.clone();
+
+    let info = match (id, proxy_type) {
+        (Some(id), Some(pt)) => Some(ActiveProxyInfo { id, proxy_type: pt }),
+        _ => None,
+    };
+
+    Ok(KittyResponse::from_data(info))
+}
+
+/// Switch to a specific proxy server.
+///
+/// This command:
+/// 1. Stops all currently running servers
+/// 2. Starts the specified proxy server
+/// 3. Updates the active proxy state
+#[tauri::command(rename_all = "snake_case")]
+pub async fn switch_to_proxy<'a>(
+    db_state: State<'a, DatabaseState>,
+    process_manager: State<'a, ProcessManagerState>,
+    proxy_id: u32,
+    proxy_type: String,
+) -> CommandResult<KittyResponse<()>> {
+    println!("switch_to_proxy called: proxy_id={}, proxy_type={}", proxy_id, proxy_type);
+    let db = db_state.get_db();
+
+    // Stop all running servers
+    let mut servers = process_manager.running_servers.lock().await;
+    for handle in servers.drain(..) {
+        handle.abort();
+    }
+    drop(servers);
+
+    // Get ports from base config
+    let record = base_config::Model::first(&db).await?
+        .ok_or_else(|| anyhow!("Base config not found"))?;
+    let http_port = record.http_port;
+    let socks_port = record.socks_port;
+
+    let yaml_config = if proxy_type == "hysteria" {
+        println!("Querying hysteria record with id={}", proxy_id);
+        let hysteria_record = hysteria_entity::Model::get_by_id(&db, proxy_id as i32).await?
+            .ok_or_else(|| anyhow!("Hysteria record {} not found", proxy_id))?;
+
+        ShoesConfigConverter::hysteria_to_socks_http_yaml(
+            &hysteria_record,
+            http_port,
+            socks_port,
+        )?
+    } else {
+        println!("Querying xray record with id={}", proxy_id);
+        let xray_record = xray_entity::Model::get_by_id(&db, proxy_id as i32).await?
+            .ok_or_else(|| anyhow!("Xray record {} not found", proxy_id))?;
+
+        ShoesConfigConverter::xray_to_socks_http_yaml(
+            &xray_record,
+            http_port,
+            socks_port,
+        )?
+    };
+
+    // Start the new server
+    let handles = start_shoes_servers(&yaml_config).await?;
+    let mut servers = process_manager.running_servers.lock().await;
+    servers.extend(handles);
+
+    // Update active proxy state
+    *process_manager.active_proxy_id.lock().await = Some(proxy_id);
+    *process_manager.active_proxy_type.lock().await = Some(proxy_type.clone());
+
+    println!("Switched to proxy: ID={}, type={}", proxy_id, proxy_type);
+
+    Ok(KittyResponse::default())
+}

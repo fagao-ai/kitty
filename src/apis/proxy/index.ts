@@ -101,3 +101,12 @@ export async function setProxy(enable: boolean, _id: number | null = null) {
     await invoke('stop_system_proxy')
   }
 }
+
+export async function getActiveProxy() {
+  const res = await invoke<{ id: number, proxyType: string } | null>('get_active_proxy')
+  return res.data
+}
+
+export async function switchToProxy(proxyId: number, proxyType: ProxyType) {
+  await invoke('switch_to_proxy', { proxy_id: proxyId, proxy_type: proxyType })
+}

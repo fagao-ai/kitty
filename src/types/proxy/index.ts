@@ -45,6 +45,8 @@ export interface ProxyCard {
   name: string
   delay: number
   protocol: string
+  protocolShortName?: string  // Protocol short name (HY, VL, VM, TR)
+  isActive?: boolean          // Whether this proxy is currently active
 }
 
 export interface ImportProxy {

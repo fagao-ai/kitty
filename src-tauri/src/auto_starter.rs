@@ -170,6 +170,10 @@ impl AutoStarter {
         let mut running_servers = self.process_manager.running_servers.lock().await;
         running_servers.extend(all_handles);
 
+        // Record active proxy info
+        *self.process_manager.active_proxy_id.lock().await = Some(id);
+        *self.process_manager.active_proxy_type.lock().await = Some(proxy_type.to_string());
+
         info!(
             "Successfully started server: ID={:?}, type={:?}",
             id, proxy_type
@@ -204,6 +208,13 @@ impl AutoStarter {
         }
 
         Ok(AutoStartResult::NoProxies)
+    }
+
+    /// Set active proxy info (for manual switching).
+    pub async fn set_active_proxy(&self, id: u32, proxy_type: ProxyType) {
+        *self.process_manager.active_proxy_id.lock().await = Some(id);
+        *self.process_manager.active_proxy_type.lock().await = Some(proxy_type.to_string());
+        info!("Set active proxy: ID={:?}, type={:?}", id, proxy_type);
     }
 }
 

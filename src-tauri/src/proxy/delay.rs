@@ -1,6 +1,7 @@
 use entity::{hysteria, xray};
 use reqwest::{Client, Proxy};
 use serde::{Deserialize, Serialize};
+use std::fmt;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 use tokio::net::TcpStream;
@@ -10,6 +11,15 @@ use tokio::sync::Semaphore;
 pub enum ProxyType {
     Xray,
     Hysteria2,
+}
+
+impl fmt::Display for ProxyType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            ProxyType::Xray => write!(f, "xray"),
+            ProxyType::Hysteria2 => write!(f, "hysteria"),
+        }
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]

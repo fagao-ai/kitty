@@ -12,6 +12,7 @@ interface Props {
 
 interface Emits {
   (e: 'dblclick', id: number, type: ProxyType): void
+  (e: 'click', id: number, type: ProxyType): void
 }
 
 defineProps<Props>()
@@ -34,7 +35,10 @@ const emits = defineEmits<Emits>()
               :delay="card.delay"
               :tag="card.tag"
               :protocol="card.protocol"
+              :protocol-short-name="card.protocolShortName"
+              :is-active="card.isActive"
               @dblclick="emits('dblclick', card.id, card.type)"
+              @click="emits('click', card.id, card.type)"
             />
           </template>
         </div>

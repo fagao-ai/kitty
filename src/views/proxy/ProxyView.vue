@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { NButton, NIcon, useMessage } from 'naive-ui'
-import { computed, h, onUnmounted, ref, watch } from 'vue'
+import { computed, h, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { Component, VNode } from 'vue'
 import {
@@ -16,10 +16,18 @@ import AddProxy from '@/views/proxy/modal/AddProxy.vue'
 import type { ProxyCard as Card, HysteriaProxy, XrayProxy } from '@/types/proxy'
 import { proxyStore } from '@/views/proxy/store'
 import ProxyCardList from '@/components/ProxyCardList.vue'
-import { currentProxyDelay, getAllHysterias, getAllXraies, getProxyByIdAndType, setProxy, xrayProxiedDelay } from '@/apis/proxy'
+import {
+  getAllHysterias,
+  getAllXraies,
+  getProxyByIdAndType,
+  getActiveProxy,
+  switchToProxy,
+  currentProxyDelay,
+} from '@/apis/proxy'
 import ImportProxy from '@/views/proxy/modal/ImportProxy.vue'
 import EditProxy from '@/views/proxy/modal/EditProxy.vue'
 import HeaderBar from '@/components/HeaderBar.vue'
+import { getProtocolShortName } from '@/utils/proxy'
 import { useSubscriptionAutoUpdate } from '@/tools/autoUpdateHook'
 import { settingStore } from '@/views/setting/store'
 
@@ -29,64 +37,72 @@ const message = useMessage()
 const showInsertModal = ref(false)
 const showImportModal = ref(false)
 
-const hysteriaCards = ref<Card[]>([])
-const xrayCards = ref<Card[]>([])
+// Unified card list (merged hysteria and xray)
+const allCards = ref<Card[]>([])
+
+// Computed: add protocol short name and active state
 const cards = computed(() => {
-  return proxyStore.value.currentProxy === ProxyType.Hysteria
-    ? hysteriaCards.value
-    : xrayCards.value
+  return allCards.value.map(card => ({
+    ...card,
+    protocolShortName: getProtocolShortName(card.tag, card.type),
+    isActive: card.id === proxyStore.value.activeProxyId &&
+              card.type === proxyStore.value.activeProxyType,
+  }))
 })
 
-async function initHysteria() {
-  const hysteriaProxies = await getAllHysterias()
-  hysteriaCards.value = hysteriaProxies.map((item) => {
-    return {
-      id: item.id!,
-      type: ProxyType.Hysteria,
-      name: item.name,
-      tag: 'hysteria',
-      delay: 200, // TODO
-      protocol: 'TCP',
-    }
-  })
+// Initialize all proxies (merge hysteria and xray)
+async function initAllProxies() {
+  const [hysteriaProxies, xrayProxies] = await Promise.all([
+    getAllHysterias(),
+    getAllXraies(),
+  ])
+
+  const hysteriaCards: Card[] = hysteriaProxies.map(item => ({
+    id: item.id!,
+    type: ProxyType.Hysteria,
+    name: item.name,
+    tag: 'hysteria',
+    delay: 200,
+    protocol: 'TCP',
+  }))
+
+  const xrayCards: Card[] = xrayProxies.map(item => ({
+    id: item.id!,
+    type: ProxyType.Xray,
+    name: item.name,
+    tag: item.protocol,
+    delay: 0,
+    protocol: item.streamSettings.network,
+  }))
+
+  allCards.value = [...hysteriaCards, ...xrayCards]
 }
 
-async function initXray() {
-  const xraies = await getAllXraies()
-  xrayCards.value = xraies.map((item) => {
-    return {
-      id: item.id!,
-      type: ProxyType.Xray,
-      name: item.name,
-      tag: item.protocol,
-      delay: 0,
-      protocol: item.streamSettings.network,
-    }
-  })
-
-  if (settingStore.value.sysproxyFlag && xraies.length > 0) {
-    await setProxy(false)
-    await setProxy(true, xrayCards.value[0].id)
+// Get currently active proxy
+async function fetchActiveProxy() {
+  const activeProxy = await getActiveProxy()
+  if (activeProxy) {
+    proxyStore.value.activeProxyId = activeProxy.id
+    proxyStore.value.activeProxyType = activeProxy.proxyType as ProxyType
   }
 }
 
-async function handleProxiesDelay() {
-  initXray()
-}
-
-function handleGetAllProxyByType(proxyType: ProxyType) {
-  if (proxyType === ProxyType.Hysteria) {
-    initHysteria()
-    return
+// Single click to switch proxy
+async function handleCardClick(id: number, proxyType: ProxyType) {
+  try {
+    await switchToProxy(id, proxyType)
+    proxyStore.value.activeProxyId = id
+    proxyStore.value.activeProxyType = proxyType
+    message.success('Switched successfully')
+  } catch (e: any) {
+    // If switching failed, refresh the proxy list as it might be stale
+    await initAllProxies()
+    await fetchActiveProxy()
+    message.error(`Switch failed: ${e?.message || 'Unknown error'}. Proxy list refreshed.`)
   }
-  initXray()
 }
 
-const unwatchProxyStore = watch(proxyStore, () => {
-  handleGetAllProxyByType(proxyStore.value.currentProxy)
-}, { immediate: false, deep: true })
-
-// edit proxy
+// Double click to edit
 const showEditModal = ref(false)
 const editingProxy = ref<Partial<HysteriaProxy | XrayProxy>>({})
 const editProxyType = ref<ProxyType>(ProxyType.Hysteria)
@@ -107,27 +123,13 @@ function handleCancelEdit() {
   editingProxy.value = {}
 }
 
-const { updateStatus } = useSubscriptionAutoUpdate()
-
-const unwatchUpdateStatus = watch(updateStatus, async (newStatus, oldStatus) => {
-  if (oldStatus === void 0 && newStatus === 'running') {
-    handleGetAllProxyByType(ProxyType.Xray)
-  }
-  else if (oldStatus === 'running' && newStatus === 'stop') {
-    handleGetAllProxyByType(ProxyType.Xray)
-  }
-}, { immediate: true })
-
-onUnmounted(() => {
-  unwatchProxyStore()
-  unwatchUpdateStatus()
-})
-
 async function handleUpdatedProxy(proxyType: ProxyType) {
-  handleGetAllProxyByType(proxyType)
+  await initAllProxies()
   showEditModal.value = false
   message.success(t('common.updateSuccess'))
 }
+
+// Speed test
 function renderIcon(icon: Component) {
   return () => {
     return h(NIcon, null, {
@@ -183,6 +185,23 @@ async function onShowSpeed() {
     })
   })
 }
+
+// Subscription update logic
+const { updateStatus } = useSubscriptionAutoUpdate()
+
+watch(updateStatus, async (newStatus, oldStatus) => {
+  if (oldStatus === void 0 && newStatus === 'running') {
+    await initAllProxies()
+  } else if (oldStatus === 'running' && newStatus === 'stop') {
+    await initAllProxies()
+  }
+}, { immediate: true })
+
+// Initialize on mount
+onMounted(async () => {
+  await initAllProxies()
+  await fetchActiveProxy()
+})
 </script>
 
 <template>
@@ -208,44 +227,30 @@ async function onShowSpeed() {
         </n-button>
       </template>
     </header-bar>
-    <div class="h-8 flex justify-center items-center">
-      <n-radio-group
-        v-model:value="proxyStore.currentProxy"
-        name="proxyGroup"
-        :on-update-value="() => { }"
-      >
-        <n-radio-button
-          class="w-20"
-          :value="ProxyType.Hysteria"
-        >
-          {{ ProxyType.Hysteria }}
-        </n-radio-button>
-        <n-radio-button
-          class="w-20"
-          :value="ProxyType.Xray"
-        >
-          {{ ProxyType.Xray }}
-        </n-radio-button>
-      </n-radio-group>
-    </div>
+
+    <!-- Removed protocol toggle radio buttons -->
+
     <div class="flex-1 w-full overflow-y-hidden">
       <proxy-card-list
         :data="cards"
         @dblclick="handleCardDblClick"
+        @click="handleCardClick"
       />
     </div>
+
     <add-proxy
       v-model:show-modal="showInsertModal"
-      :current-tab="proxyStore.currentProxy"
-      @insert-submit="handleGetAllProxyByType"
+      :current-tab="ProxyType.Xray"
+      @insert-submit="initAllProxies"
     />
 
     <import-proxy
       v-model:show-modal="showImportModal"
       :current-tab="ProxyType.Xray"
       :disabled-tab="ProxyType.Hysteria"
-      @on-import="handleGetAllProxyByType"
+      @on-import="initAllProxies"
     />
+
     <edit-proxy
       v-model:show-modal="showEditModal"
       :proxy-type="editProxyType"
@@ -253,13 +258,13 @@ async function onShowSpeed() {
       @on-cancel-edit="handleCancelEdit"
       @on-proxy-updated="handleUpdatedProxy"
     />
+
+    <!-- Removed v-if condition from float button since we no longer need to distinguish protocols -->
     <n-float-button
-      v-if="proxyStore.currentProxy === ProxyType.Xray"
       :right="20"
       :top="70"
       :width="40"
       :height="40"
-      @click="handleProxiesDelay"
     >
       <n-dropdown
         trigger="hover"
@@ -286,11 +291,5 @@ async function onShowSpeed() {
 </template>
 
 <style lang="scss" scoped>
-:deep(.n-radio-button) {
-  --n-button-border-radius: 12px;
-
-  .n-radio__label {
-    @apply flex items-center justify-center;
-  }
-}
+/* Removed radio button styles */
 </style>
