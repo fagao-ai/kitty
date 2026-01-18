@@ -13,7 +13,7 @@ import {
 } from '@vicons/ionicons5'
 import { ProxyType } from '@/types/proxy'
 import AddProxy from '@/views/proxy/modal/AddProxy.vue'
-import type { ProxyCard as Card, HysteriaProxy, XrayProxy } from '@/types/proxy'
+import type { ProxyCard as Card, HysteriaProxy, XrayProxy, ProxyDelayInfo } from '@/types/proxy'
 import { proxyStore } from '@/views/proxy/store'
 import ProxyCardList from '@/components/ProxyCardList.vue'
 import {
@@ -23,11 +23,11 @@ import {
   getActiveProxy,
   switchToProxy,
   currentProxyDelay,
+  xrayProxiedDelay,
 } from '@/apis/proxy'
 import ImportProxy from '@/views/proxy/modal/ImportProxy.vue'
 import EditProxy from '@/views/proxy/modal/EditProxy.vue'
 import HeaderBar from '@/components/HeaderBar.vue'
-import { getProtocolShortName } from '@/utils/proxy'
 import { useSubscriptionAutoUpdate } from '@/tools/autoUpdateHook'
 import { settingStore } from '@/views/setting/store'
 
@@ -37,14 +37,20 @@ const message = useMessage()
 const showInsertModal = ref(false)
 const showImportModal = ref(false)
 
+// Speed test state
+const isTestingSpeed = ref(false)
+
+// Save original proxy data for speed test
+const hysteriaProxiesData = ref<HysteriaProxy[]>([])
+const xrayProxiesData = ref<XrayProxy[]>([])
+
 // Unified card list (merged hysteria and xray)
 const allCards = ref<Card[]>([])
 
-// Computed: add protocol short name and active state
+// Computed: add active state
 const cards = computed(() => {
   return allCards.value.map(card => ({
     ...card,
-    protocolShortName: getProtocolShortName(card.tag, card.type),
     isActive: card.id === proxyStore.value.activeProxyId &&
               card.type === proxyStore.value.activeProxyType,
   }))
@@ -57,6 +63,10 @@ async function initAllProxies() {
     getAllXraies(),
   ])
 
+  // Save original data for speed test
+  hysteriaProxiesData.value = hysteriaProxies
+  xrayProxiesData.value = xrayProxies
+
   const hysteriaCards: Card[] = hysteriaProxies.map(item => ({
     id: item.id!,
     type: ProxyType.Hysteria,
@@ -64,6 +74,7 @@ async function initAllProxies() {
     tag: 'hysteria',
     delay: 200,
     protocol: 'TCP',
+    source: 'manual',
   }))
 
   const xrayCards: Card[] = xrayProxies.map(item => ({
@@ -73,6 +84,7 @@ async function initAllProxies() {
     tag: item.protocol,
     delay: 0,
     protocol: item.streamSettings.network,
+    source: item.subscribeId ? 'subscription' : 'manual',
   }))
 
   allCards.value = [...hysteriaCards, ...xrayCards]
@@ -129,6 +141,68 @@ async function handleUpdatedProxy(proxyType: ProxyType) {
   message.success(t('common.updateSuccess'))
 }
 
+// Parse Hysteria server field (format "example.com:port")
+function parseHysteriaServer(server: string): { address: string; port: number } {
+  const parts = server.split(':')
+  return {
+    address: parts[0] || '',
+    port: parts[1] ? parseInt(parts[1], 10) : 443,
+  }
+}
+
+// Batch test all proxies speed
+async function testAllProxiesSpeed() {
+  isTestingSpeed.value = true
+  try {
+    const delayInfos: ProxyDelayInfo[] = []
+
+    console.log('开始测速，总卡片数:', allCards.value.length)
+    console.log('xray 数据:', xrayProxiesData.value.length)
+    console.log('hysteria 数据:', hysteriaProxiesData.value.length)
+
+    for (const card of allCards.value) {
+      if (card.type === ProxyType.Xray) {
+        const xray = xrayProxiesData.value.find(p => p.id === card.id)
+        if (xray) {
+          delayInfos.push({
+            id: card.id,
+            address: xray.address,
+            port: xray.port,
+            proxy_type: 'Xray',
+          })
+        }
+      } else {
+        const hysteria = hysteriaProxiesData.value.find(p => p.id === card.id)
+        if (hysteria) {
+          const { address, port } = parseHysteriaServer(hysteria.server)
+          delayInfos.push({
+            id: card.id,
+            address,
+            port,
+            proxy_type: 'Hysteria2',
+          })
+        }
+      }
+    }
+
+    console.log('准备测速的节点:', delayInfos)
+
+    const delayResults = await xrayProxiedDelay(delayInfos)
+    console.log('测速结果:', delayResults)
+
+    allCards.value = allCards.value.map(card => {
+      const delay = delayResults[card.id] ?? delayResults[String(card.id)] ?? 9999
+      return { ...card, delay }
+    })
+
+    message.success(`测速完成，测试了 ${delayInfos.length} 个节点`)
+  } catch (e: any) {
+    message.error(`测速失败: ${e?.message || '未知错误'}`)
+  } finally {
+    isTestingSpeed.value = false
+  }
+}
+
 // Speed test
 function renderIcon(icon: Component) {
   return () => {
@@ -137,7 +211,11 @@ function renderIcon(icon: Component) {
     })
   }
 }
-const speeds = ref<{ label: string, key: string, url: string, icon: () => VNode, delay?: number }[]>([
+const speeds = ref<{ label: string, key: string, url?: string, icon?: () => VNode, delay?: number }[]>([
+  {
+    label: '测速所有节点',
+    key: 'testAll',
+  },
   {
     label: 'Google',
     key: 'Google',
@@ -159,7 +237,7 @@ const speeds = ref<{ label: string, key: string, url: string, icon: () => VNode,
   {
     label: 'Youtube',
     key: 'Youtube',
-    url: 'https://www.youtube.com',
+    url: 'https://www.youtube',
     icon: renderIcon(LogoYoutube),
   },
   {
@@ -179,10 +257,12 @@ const speeds = ref<{ label: string, key: string, url: string, icon: () => VNode,
 async function onShowSpeed() {
   const proxyUrl = `http://127.0.0.1:${settingStore.value.port}`
   speeds.value.forEach((item) => {
-    currentProxyDelay(proxyUrl, item.url).then((delay) => {
-      item.delay = delay
-      item.label = `${delay}ms`
-    })
+    if (item.url) {
+      currentProxyDelay(proxyUrl, item.url).then((delay) => {
+        item.delay = delay
+        item.label = `${delay}ms`
+      })
+    }
   })
 }
 
@@ -259,33 +339,28 @@ onMounted(async () => {
       @on-proxy-updated="handleUpdatedProxy"
     />
 
-    <!-- Removed v-if condition from float button since we no longer need to distinguish protocols -->
+    <!-- Float button for speed test -->
     <n-float-button
       :right="20"
       :top="70"
       :width="40"
       :height="40"
+      @click="testAllProxiesSpeed"
     >
-      <n-dropdown
-        trigger="hover"
-        :options="speeds"
-        @show="onShowSpeed"
-      >
-        <n-icon class="text-[#63E2B7] text-2xl">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            xmlns:xlink="http://www.w3.org/1999/xlink"
-            viewBox="0 0 20 20"
-          >
-            <g fill="none">
-              <path
-                d="M6.19 2.77c.131-.456.548-.77 1.022-.77h5.25c.725 0 1.237.71 1.007 1.398l-.002.008L12.205 7h2.564c.947 0 1.407 1.144.767 1.811l-.004.004l-8.676 8.858c-.755.782-2.06.06-1.796-.996l1.17-4.679H4.963a1.062 1.062 0 0 1-1.022-1.354l2.25-7.873zM7.213 3a.062.062 0 0 0-.06.045l-2.25 7.874c-.01.04.02.08.06.08H6.87a.5.5 0 0 1 .485.62l-1.325 5.3a.086.086 0 0 0-.003.03c0 .004.002.008.003.011c.004.008.013.02.03.03c.018.01.034.01.042.01a.03.03 0 0 0 .01-.004a.087.087 0 0 0 .024-.018l.004-.004l8.675-8.856a.056.056 0 0 0 .017-.032a.084.084 0 0 0-.007-.044a.079.079 0 0 0-.025-.034c-.005-.004-.013-.008-.03-.008H11.5a.5.5 0 0 1-.472-.666l1.493-4.254a.062.062 0 0 0-.06-.08H7.212z"
-                fill="currentColor"
-              />
-            </g>
-          </svg>
-        </n-icon>
-      </n-dropdown>
+      <n-icon class="text-[#63E2B7] text-2xl">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          xmlns:xlink="http://www.w3.org/1999/xlink"
+          viewBox="0 0 20 20"
+        >
+          <g fill="none">
+            <path
+              d="M6.19 2.77c.131-.456.548-.77 1.022-.77h5.25c.725 0 1.237.71 1.007 1.398l-.002.008L12.205 7h2.564c.947 0 1.407 1.144.767 1.811l-.004.004l-8.676 8.858c-.755.782-2.06.06-1.796-.996l1.17-4.679H4.963a1.062 1.062 0 0 1-1.022-1.354l2.25-7.873zM7.213 3a.062.062 0 0 0-.06.045l-2.25 7.874c-.01.04.02.08.06.08H6.87a.5.5 0 0 1 .485.62l-1.325 5.3a.086.086 0 0 0-.003.03c0 .004.002.008.003.011c.004.008.013.02.03.03c.018.01.034.01.042.01a.03.03 0 0 0 .01-.004a.087.087 0 0 0 .024-.018l.004-.004l8.675-8.856a.056.056 0 0 0 .017-.032a.084.084 0 0 0-.007-.044a.079.079 0 0 0-.025-.034c-.005-.004-.013-.008-.03-.008H11.5a.5.5 0 0 1-.472-.666l1.493-4.254a.062.062 0 0 0-.06-.08H7.212z"
+              fill="currentColor"
+            />
+          </g>
+        </svg>
+      </n-icon>
     </n-float-button>
   </div>
 </template>

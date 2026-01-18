@@ -45,7 +45,7 @@ export interface ProxyCard {
   name: string
   delay: number
   protocol: string
-  protocolShortName?: string  // Protocol short name (HY, VL, VM, TR)
+  source: 'subscription' | 'manual'  // Node source: subscription or manual
   isActive?: boolean          // Whether this proxy is currently active
 }
 
@@ -65,4 +65,5 @@ export interface ProxyDelayInfo {
   id: number
   address: string
   port: number
+  proxy_type: 'Xray' | 'Hysteria2'  // Must match Rust enum variants
 }

@@ -79,6 +79,9 @@ export class Xray {
   @Expose()
   port!: number
 
+  @Expose({ name: 'subscribe_id' })
+  subscribeId?: number
+
   @Type(() => StreamSettings)
   @Expose({ name: 'stream_settings', toPlainOnly: true })
   streamSettings!: StreamSettings

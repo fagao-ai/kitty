@@ -37,10 +37,14 @@ function handleClick() {
     @click="handleClick"
     @dblclick="handleDblClick"
   >
-    <!-- Protocol short name tag (top right) -->
-    <div class="absolute top-2 right-2">
-      <n-tag size="small" type="info" :bordered="false">
-        {{ protocolShortName }}
+    <!-- Subscription tag (top right) - only show for subscription nodes -->
+    <div v-if="source === 'subscription'" class="absolute top-2 right-2">
+      <n-tag
+        size="small"
+        type="warning"
+        :bordered="false"
+      >
+        SUB
       </n-tag>
     </div>
 
