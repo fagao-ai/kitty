@@ -43,7 +43,7 @@ onUnmounted(() => {
         {{ t('menubar.logs') }}
       </template>
     </header-bar>
-    <div class="flex-1 overflow-y-auto max-w-full h-full text-slate-600 dark:text-slate-300">
+    <div class="flex-1 overflow-y-auto max-w-full h-full text-text-secondary dark:text-text-secondary">
       <n-log
         ref="logInstRef"
         class="w-full h-full"

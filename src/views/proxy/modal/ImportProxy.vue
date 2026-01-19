@@ -51,7 +51,7 @@ watch(() => props.currentTab, (tab) => {
 <template>
   <n-modal
     v-model:show="showImportModal"
-    class="w-1/2 h-1/2"
+    class="w-full h-full sm:w-[90%] sm:h-auto md:w-3/4 lg:w-1/2"
     :mask-closable="false"
     transform-origin="center"
     preset="card"
@@ -95,15 +95,13 @@ watch(() => props.currentTab, (tab) => {
     </n-tabs>
 
     <template #footer>
-      <div class="w-full flex flex-center gap-16">
+      <div class="w-full flex flex-center gap-3">
         <n-button
-          round
           @click="handleCancelImport"
         >
           取消
         </n-button>
         <n-button
-          round
           type="primary"
           @click="handleImport"
         >
@@ -115,15 +113,21 @@ watch(() => props.currentTab, (tab) => {
 </template>
 
 <style>
+.n-modal {
+  border-radius: 12px;
+}
+
 .n-card-header {
-  padding: 12px 24px !important;
+  padding: 20px 24px !important;
+  border-bottom: 1px solid var(--n-border-color);
 }
 
 .n-card__content {
-  padding: 0 24px !important;
+  padding: 24px !important;
 }
 
 .n-card__footer {
-  padding: 12px 24px !important;
+  padding: 16px 24px !important;
+  border-top: 1px solid var(--n-border-color);
 }
 </style>

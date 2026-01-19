@@ -34,11 +34,16 @@ function handleClick() {
   <div
     class="card-wrapper"
     :class="{ 'active-card': isActive }"
+    role="button"
+    :aria-label="`${name} - ${protocol} - ${delay}ms`"
+    :aria-pressed="isActive"
+    tabindex="0"
     @click="handleClick"
     @dblclick="handleDblClick"
+    @keydown.enter="handleClick"
   >
     <!-- Subscription tag (top right) - only show for subscription nodes -->
-    <div v-if="source === 'subscription'" class="absolute top-2 right-2">
+    <div v-if="source === 'subscription'" class="absolute top-2 right-2 z-10">
       <n-tag
         size="small"
         type="warning"
@@ -48,7 +53,7 @@ function handleClick() {
       </n-tag>
     </div>
 
-    <!-- Original tag (top left, kept for delay status) -->
+    <!-- Delay status tag (top left) -->
     <div class="h-6">
       <n-tag
         :type="tagType"
@@ -60,18 +65,18 @@ function handleClick() {
     </div>
 
     <!-- Node name -->
-    <div class="flex-1 text-sm text-[#54759a] dark:text-slate-200">
+    <div class="flex-1 text-sm font-medium truncate text-text-primary dark:text-text-primary">
       {{ name }}
     </div>
 
     <!-- Delay and transport protocol -->
-    <div class="h-6 flex justify-between items-center">
-      <div>
+    <div class="h-6 flex justify-between items-center text-xs">
+      <span class="text-text-secondary dark:text-text-secondary font-mono">
         {{ delay }}ms
-      </div>
+      </span>
       <n-tag
-        round
         size="small"
+        :bordered="false"
       >
         {{ protocol }}
       </n-tag>
@@ -82,38 +87,19 @@ function handleClick() {
 <style scoped lang="scss">
 .card-wrapper {
   @apply relative;
-  @apply transform transition-transform duration-500 hover:scale-110 cursor-pointer;
-  @apply w-[130px] h-[110px] shadow-2xl bg-[#f9f7f7] py-3 px-2 flex flex-col gap-[2px] rounded-md;
-  @apply dark:bg-[#3e4247] dark:text-slate-100;
+  @apply transition-all duration-250 cursor-pointer;
+  @apply w-[130px] min-w-[120px] h-[110px] xl:w-[140px] shadow-card bg-bg-card dark:bg-dark-bg-card py-3 px-3 flex flex-col gap-[2px] rounded-lg;
+  @apply hover:shadow-card-hover hover:-translate-y-1;
+  @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2;
 }
 
 .active-card {
-  @apply bg-[#e6fffa] dark:bg-[#2d3748];
-  box-shadow: 0 0 15px rgba(99, 226, 183, 0.6);
-  position: relative;
-
-  &::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    border-radius: 6px;
-    padding: 2px;
-    background: linear-gradient(90deg, #00ff88, #00d4ff, #ff00ff, #00ff88, #00d4ff, #ff00ff);
-    background-size: 250% 100%;
-    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-    -webkit-mask-composite: xor;
-    mask-composite: exclude;
-    animation: borderFlow 2s linear infinite;
-    pointer-events: none;
-  }
+  @apply bg-primary-light/20 dark:bg-primary/10;
+  box-shadow: 0 0 0 2px #5352ed, 0 8px 16px rgba(83, 82, 237, 0.15);
 }
 
-@keyframes borderFlow {
-  0% {
-    background-position: 0% 50%;
-  }
-  100% {
-    background-position: 250% 50%;
-  }
+// Add active state for keyboard users
+.card-wrapper:active {
+  @apply scale-[0.98];
 }
 </style>

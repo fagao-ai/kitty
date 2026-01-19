@@ -286,24 +286,41 @@ onMounted(async () => {
 
 <template>
   <div class="flex flex-col w-full h-full gap-y-4">
-    <header-bar>
+    <header-bar @toggle-mobile-menu="$emit('toggle-mobile-menu')">
+      <template #mobile-menu-button>
+        <n-icon size="24">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M3 12h18M3 6h18M3 18h18" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </n-icon>
+      </template>
       <template #title>
         {{ t('menubar.proxies') }}
       </template>
       <template #default>
         <n-button
-          round
           size="small"
           @click="showInsertModal = true"
         >
           {{ t('common.add') }}
         </n-button>
         <n-button
-          round
           size="small"
           @click="showImportModal = true"
         >
           {{ t('common.import') }}
+        </n-button>
+      </template>
+      <template #mobile-actions>
+        <n-button
+          size="small"
+          @click="showInsertModal = true"
+        >
+          <n-icon>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 5v14M5 12h14" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </n-icon>
         </n-button>
       </template>
     </header-bar>
@@ -341,13 +358,15 @@ onMounted(async () => {
 
     <!-- Float button for speed test -->
     <n-float-button
-      :right="20"
-      :top="70"
-      :width="40"
-      :height="40"
+      :right="24"
+      :bottom="24"
+      :top="undefined"
+      :width="48"
+      :height="48"
+      class="z-50"
       @click="testAllProxiesSpeed"
     >
-      <n-icon class="text-[#63E2B7] text-2xl">
+      <n-icon class="text-accent text-2xl">
         <svg
           xmlns="http://www.w3.org/2000/svg"
           xmlns:xlink="http://www.w3.org/1999/xlink"

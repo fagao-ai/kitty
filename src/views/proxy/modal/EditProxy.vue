@@ -46,7 +46,7 @@ async function handleUpdateProxy() {
 <template>
   <n-modal
     v-model:show="showEditModal"
-    class="w-1/2 h-1/2"
+    class="w-full h-full sm:w-[90%] sm:h-auto md:w-3/4 lg:w-1/2"
     :mask-closable="false"
     transform-origin="center"
     preset="card"
@@ -62,15 +62,13 @@ async function handleUpdateProxy() {
       <xray-form v-model:form="(formState as XrayProxy)" />
     </template>
     <template #footer>
-      <div class="w-full flex flex-center gap-16">
+      <div class="w-full flex flex-center gap-3">
         <n-button
-          round
           @click="emits('onCancelEdit')"
         >
           {{ t('common.cancel') }}
         </n-button>
         <n-button
-          round
           type="primary"
           @click="handleUpdateProxy"
         >
@@ -80,3 +78,23 @@ async function handleUpdateProxy() {
     </template>
   </n-modal>
 </template>
+
+<style>
+.n-modal {
+  border-radius: 12px;
+}
+
+.n-card-header {
+  padding: 20px 24px !important;
+  border-bottom: 1px solid var(--n-border-color);
+}
+
+.n-card__content {
+  padding: 24px !important;
+}
+
+.n-card__footer {
+  padding: 16px 24px !important;
+  border-top: 1px solid var(--n-border-color);
+}
+</style>

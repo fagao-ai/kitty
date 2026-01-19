@@ -58,9 +58,9 @@ onBeforeUnmount(() => {
         {{ t('setting.title') }}
       </template>
     </header-bar>
-    <div class="flex-1 flex flex-col gap-y-6 pr-4">
+    <div class="flex-1 flex flex-col gap-y-6 pr-6">
       <div
-        class="dark:bg-dark grid grid-cols-2 grid-rows-2 gap-x-16 gap-y-4 p-6 bg-[#f9f7f7] shadow-lg rounded-md text-[#5b7497] dark:text-slate-300"
+        class="grid grid-cols-2 grid-rows-2 gap-x-16 gap-y-4 p-6 bg-bg-card dark:bg-dark-bg-card shadow-card rounded-lg text-text-secondary dark:text-text-secondary"
       >
         <n-skeleton
           v-if="loading"
@@ -72,7 +72,7 @@ onBeforeUnmount(() => {
           v-else
           class="flex justify-between items-center"
         >
-          <div class="font-semibold">
+          <div class="font-semibold text-text-primary dark:text-text-primary">
             {{ t('setting.autoStart') }}
           </div>
           <div class="font-medium">
@@ -93,7 +93,7 @@ onBeforeUnmount(() => {
           v-else
           class="flex justify-between items-center"
         >
-          <div class="font-semibold">
+          <div class="font-semibold text-text-primary dark:text-text-primary">
             {{ t('setting.language') }}
           </div>
           <div class="font-medium">
@@ -121,7 +121,7 @@ onBeforeUnmount(() => {
           v-else
           class="flex justify-between items-center"
         >
-          <div class="font-semibold">
+          <div class="font-semibold text-text-primary dark:text-text-primary">
             {{ t('setting.systemProxy') }}
           </div>
           <div class="font-medium">
@@ -143,16 +143,16 @@ onBeforeUnmount(() => {
           v-else
           class="flex justify-between items-center"
         >
-          <div class="font-semibold">
+          <div class="font-semibold text-text-primary dark:text-text-primary">
             {{ t('setting.allowLan') }}
           </div>
-          <div class="font-medium">
+          <div class="font-medium text-text-muted dark:text-text-muted">
             Off
           </div>
         </div>
       </div>
       <div
-        class="dark:bg-dark dark:text-slate-300 grid grid-cols-2 grid-rows-2 gap-x-16 gap-y-4 p-6 text-[#5b7497] bg-[#f9f7f7] shadow-lg rounded-md"
+        class="grid grid-cols-2 grid-rows-2 gap-x-16 gap-y-4 p-6 bg-bg-card dark:bg-dark-bg-card shadow-card rounded-lg text-text-secondary dark:text-text-secondary"
       >
         <n-skeleton
           v-if="loading"
@@ -164,7 +164,7 @@ onBeforeUnmount(() => {
           v-else
           class="flex justify-between items-center"
         >
-          <div class="font-semibold">
+          <div class="font-semibold text-text-primary dark:text-text-primary">
             {{ t('setting.mode') }}
           </div>
           <div class="font-medium">
@@ -181,7 +181,7 @@ onBeforeUnmount(() => {
           v-else
           class="flex justify-between items-center"
         >
-          <div class="font-semibold">
+          <div class="font-semibold text-text-primary dark:text-text-primary">
             {{ t('setting.socks5Port') }}
           </div>
           <div class="font-medium w-20">
@@ -205,7 +205,7 @@ onBeforeUnmount(() => {
           v-else
           class="flex justify-between items-center"
         >
-          <div class="font-semibold">
+          <div class="font-semibold text-text-primary dark:text-text-primary">
             {{ t('setting.httpPort') }}
           </div>
           <div class="font-medium w-20">
@@ -229,14 +229,13 @@ onBeforeUnmount(() => {
           v-else
           class="flex justify-between items-center"
         >
-          <div class="font-semibold">
+          <div class="font-semibold text-text-primary dark:text-text-primary">
             {{ t('setting.delayTestUrl') }}
           </div>
           <div class="font-medium w-60">
             <n-input
               v-model:value="baseConfig.delayTestUrl"
               type="text"
-              :show-button="false"
               @blur="handleBaseConfigUpdate"
             />
           </div>
@@ -251,7 +250,7 @@ onBeforeUnmount(() => {
           v-else
           class="flex justify-between items-center"
         >
-          <div class="font-semibold">
+          <div class="font-semibold text-text-primary dark:text-text-primary">
             {{ t('setting.subscriptionAutoUpdate') }}
           </div>
           <div class="font-medium w-20">

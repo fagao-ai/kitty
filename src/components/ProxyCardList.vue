@@ -23,7 +23,7 @@ const emits = defineEmits<Emits>()
   <div class="w-full h-full">
     <n-scrollbar>
       <template v-if="data.length !== 0">
-        <div class="grid grid-cols-5 auto-rows-fr gap-4 xl:grid-cols-6 xxl:grid-cols-7 xxxl:grid-cols-8 tv:grid-cols-10">
+        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 xxl:grid-cols-7 xxxl:grid-cols-8 tv:grid-cols-10 gap-2">
           <template
             v-for="(card, index) in data"
             :key="index"

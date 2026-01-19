@@ -77,12 +77,12 @@ window.$message = useMessage()
     <div class="flex-1 flex flex-col">
       <div
         data-tauri-drag-region
-        class="text-5xl font-bold h-1/6 flex flex-center text-primay cursor-default"
+        class="text-5xl font-bold h-1/6 flex flex-center text-primary cursor-default tracking-tight"
       >
         kitty
       </div>
       <div
-        class="flex-1 text-white text-lg"
+        class="flex-1 text-lg"
         data-tauri-drag-region
       >
         <n-menu
@@ -93,10 +93,10 @@ window.$message = useMessage()
       </div>
     </div>
     <div class="h-1/8 flex flex-center flex-col">
-      <div class="text-primay text-xs">
+      <div class="text-text-secondary dark:text-text-muted text-xs font-medium">
         {{ t('menubar.version') }}
       </div>
-      <div class="text-primay text-xs">
+      <div class="text-text-muted dark:text-text-muted text-xs">
         {{ `${version}.beta` }}
       </div>
     </div>
@@ -109,12 +109,18 @@ window.$message = useMessage()
     @apply flex justify-center items-center;
     padding-left: 0 !important;
     padding-right: 0 !important;
+    margin-bottom: 4px;
+    border-radius: 8px;
+    transition: all 0.2s ease;
 
     .n-menu-item-content-header {
-
       .router-link-active {
-        font-size: 18px;
+        font-weight: 500;
       }
+    }
+
+    &:hover {
+      @apply bg-bg-muted dark:bg-dark-bg-muted;
     }
   }
 }
