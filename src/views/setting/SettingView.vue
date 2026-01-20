@@ -53,7 +53,14 @@ onBeforeUnmount(() => {
 
 <template>
   <div class="w-full h-full flex flex-col gap-y-4">
-    <header-bar>
+    <header-bar @toggle-mobile-menu="$emit('toggle-mobile-menu')">
+      <template #mobile-menu-button>
+        <n-icon size="24">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M3 12h18M3 6h18M3 18h18" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </n-icon>
+      </template>
       <template #title>
         {{ t('setting.title') }}
       </template>

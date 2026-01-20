@@ -73,9 +73,28 @@ initRules()
 
 <template>
   <div class="flex w-full h-full flex-col">
-    <header-bar>
+    <header-bar @toggle-mobile-menu="$emit('toggle-mobile-menu')">
+      <template #mobile-menu-button>
+        <n-icon size="24">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M3 12h18M3 6h18M3 18h18" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </n-icon>
+      </template>
       <template #title>
         {{ t('menubar.rules') }}
+      </template>
+      <template #mobile-actions>
+        <n-button
+          size="small"
+          @click="handleAddRule"
+        >
+          <n-icon>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 5v14M5 12h14" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </n-icon>
+        </n-button>
       </template>
       <template #default>
         <n-button
