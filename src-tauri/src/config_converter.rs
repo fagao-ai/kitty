@@ -30,6 +30,9 @@ pub struct TcpServerConfig {
     /// Routing rules
     #[serde(skip_serializing_if = "Option::is_none")]
     pub rules: Option<Vec<Rule>>,
+    /// Geo routing configuration for Clash-style traffic diversion
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub geo_routing: Option<GeoRoutingConfig>,
 }
 
 /// TUN server configuration for VPN mode.
@@ -52,6 +55,9 @@ pub struct TunServerConfig {
     pub icmp_enabled: bool,
     /// Routing rules
     pub rules: Vec<Rule>,
+    /// Geo routing configuration for Clash-style traffic diversion
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub geo_routing: Option<GeoRoutingConfig>,
 }
 
 /// Server protocol type.
@@ -193,6 +199,63 @@ pub struct Bandwidth {
     pub down: String,
 }
 
+/// Geo routing configuration for Clash-style traffic diversion.
+///
+/// This matches the shoes library's GeoRoutingConfig structure.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct GeoRoutingConfig {
+    /// Path to GeoIP.dat file
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub geoip_file: Option<String>,
+    /// Path to GeoSite.dat file
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub geosite_file: Option<String>,
+}
+
+impl GeoRoutingConfig {
+    /// Create a new GeoRoutingConfig with paths to the .dat files.
+    ///
+    /// Uses the same path resolution as GeoDataManager:
+    /// - First tries CARGO_MANIFEST_DIR/static/
+    /// - Falls back to CARGO_MANIFEST_DIR
+    /// - Falls back to OUT_DIR
+    pub fn new() -> Self {
+        let project_dir = std::env::var("CARGO_MANIFEST_DIR")
+            .or_else(|_| std::env::var("OUT_DIR"))
+            .unwrap_or_else(|_| ".".to_string());
+
+        let project_path = std::path::Path::new(&project_dir);
+        let static_dir = project_path.join("static");
+        let base_dir = if static_dir.exists() {
+            static_dir
+        } else {
+            project_path.to_path_buf()
+        };
+
+        // Only use GeoIP for now, GeoSite files use different formats
+        Self {
+            geoip_file: Some(base_dir.join("kitty_geoip.dat").to_string_lossy().to_string()),
+            geosite_file: None,  // Disable GeoSite until we find compatible file
+        }
+    }
+
+    /// Create GeoRoutingConfig with custom paths.
+    pub fn with_paths(geoip_file: String, geosite_file: String) -> Self {
+        Self {
+            geoip_file: Some(geoip_file),
+            geosite_file: Some(geosite_file),
+        }
+    }
+
+    /// Create GeoRoutingConfig without geo files (disables geo routing).
+    pub fn disabled() -> Self {
+        Self {
+            geoip_file: None,
+            geosite_file: None,
+        }
+    }
+}
+
 /// Main converter for transforming hysteria configs to shoes YAML.
 pub struct ShoesConfigConverter;
 
@@ -226,6 +289,9 @@ impl ShoesConfigConverter {
             }),
         };
 
+        // Create geo routing config
+        let geo_routing = Some(GeoRoutingConfig::new());
+
         // Create HTTP proxy config
         let http_config = TcpServerConfig {
             address: format!("127.0.0.1:{http_port}"),
@@ -237,6 +303,7 @@ impl ShoesConfigConverter {
                 action: "allow".to_string(),
                 client_chain: Some(client_chain.clone()),
             }]),
+            geo_routing: geo_routing.clone(),
         };
 
         // Create SOCKS5 proxy config
@@ -250,6 +317,7 @@ impl ShoesConfigConverter {
                 action: "allow".to_string(),
                 client_chain: Some(client_chain),
             }]),
+            geo_routing,
         };
 
         // Serialize to YAML
@@ -307,6 +375,7 @@ impl ShoesConfigConverter {
                 action: "allow".to_string(),
                 client_chain: Some(client_chain),
             }],
+            geo_routing: Some(GeoRoutingConfig::new()),
         };
 
         // Serialize to YAML
@@ -327,6 +396,9 @@ impl ShoesConfigConverter {
         // Build the client chain hop
         let client_chain = Self::build_client_chain(model, stream_settings, client_protocol)?;
 
+        // Create geo routing config
+        let geo_routing = Some(GeoRoutingConfig::new());
+
         // Create HTTP proxy config
         let http_config = TcpServerConfig {
             address: format!("127.0.0.1:{http_port}"),
@@ -338,6 +410,7 @@ impl ShoesConfigConverter {
                 action: "allow".to_string(),
                 client_chain: Some(client_chain.clone()),
             }]),
+            geo_routing: geo_routing.clone(),
         };
 
         // Create SOCKS5 proxy config
@@ -351,6 +424,7 @@ impl ShoesConfigConverter {
                 action: "allow".to_string(),
                 client_chain: Some(client_chain),
             }]),
+            geo_routing,
         };
 
         // Serialize to YAML
@@ -392,6 +466,7 @@ impl ShoesConfigConverter {
                 action: "allow".to_string(),
                 client_chain: Some(client_chain),
             }],
+            geo_routing: Some(GeoRoutingConfig::new()),
         };
 
         // Serialize to YAML
@@ -415,6 +490,9 @@ impl ShoesConfigConverter {
         let client_protocol = Self::build_client_protocol(first_model, stream_settings)?;
         let client_chain = Self::build_client_chain(first_model, stream_settings, client_protocol)?;
 
+        // Create geo routing config
+        let geo_routing = Some(GeoRoutingConfig::new());
+
         // Create HTTP proxy config
         let http_config = TcpServerConfig {
             address: format!("127.0.0.1:{http_port}"),
@@ -426,6 +504,7 @@ impl ShoesConfigConverter {
                 action: "allow".to_string(),
                 client_chain: Some(client_chain.clone()),
             }]),
+            geo_routing: geo_routing.clone(),
         };
 
         // Create SOCKS5 proxy config
@@ -439,6 +518,7 @@ impl ShoesConfigConverter {
                 action: "allow".to_string(),
                 client_chain: Some(client_chain),
             }]),
+            geo_routing,
         };
 
         // Serialize to YAML
@@ -585,6 +665,7 @@ mod tests {
                     }),
                 }),
             }]),
+            geo_routing: None,
         };
 
         let yaml = serde_yaml::to_string(&config).unwrap();
@@ -616,6 +697,7 @@ mod tests {
                     quic_settings: None,
                 }),
             }]),
+            geo_routing: None,
         };
 
         let yaml = serde_yaml::to_string(&config).unwrap();
@@ -645,6 +727,7 @@ mod tests {
                     quic_settings: None,
                 }),
             }]),
+            geo_routing: None,
         };
 
         let yaml = serde_yaml::to_string(&config).unwrap();
@@ -674,6 +757,7 @@ mod tests {
                     quic_settings: None,
                 }),
             }]),
+            geo_routing: None,
         };
 
         let yaml = serde_yaml::to_string(&config).unwrap();
@@ -706,6 +790,7 @@ mod tests {
                     quic_settings: None,
                 }),
             }]),
+            geo_routing: None,
         };
 
         let yaml = serde_yaml::to_string(&config).unwrap();
@@ -739,6 +824,7 @@ mod tests {
                     quic_settings: None,
                 }),
             }]),
+            geo_routing: None,
         };
 
         let yaml = serde_yaml::to_string(&config).unwrap();
@@ -774,6 +860,7 @@ mod tests {
                     quic_settings: None,
                 }),
             }]),
+            geo_routing: None,
         };
 
         let yaml = serde_yaml::to_string(&config).unwrap();
@@ -783,5 +870,67 @@ mod tests {
         assert!(yaml.contains("short_id: 0123456789abcdef"));
         assert!(yaml.contains("sni_hostname: www.google.com"));
         assert!(yaml.contains("type: vless"));
+    }
+
+    #[test]
+    fn test_geo_routing_serialization() {
+        let config = TcpServerConfig {
+            address: "127.0.0.1:1080".to_string(),
+            protocol: ServerProtocol::Socks {
+                udp_enabled: Some(true),
+            },
+            rules: Some(vec![Rule {
+                masks: "0.0.0.0/0".to_string(),
+                action: "allow".to_string(),
+                client_chain: Some(ClientChainHop {
+                    address: "example.com:443".to_string(),
+                    protocol: ClientProtocol::Vless {
+                        user_id: "b85798ef-e9dc-46a4-9a87-8da4499d36d0".to_string(),
+                        udp_enabled: Some(true),
+                    },
+                    transport: Some("tcp".to_string()),
+                    quic_settings: None,
+                }),
+            }]),
+            geo_routing: Some(GeoRoutingConfig::with_paths(
+                "/path/to/geoip.dat".to_string(),
+                "/path/to/geosite.dat".to_string(),
+            )),
+        };
+
+        let yaml = serde_yaml::to_string(&config).unwrap();
+        println!("Geo routing YAML output:\n{}", yaml);
+        assert!(yaml.contains("geo_routing:"));
+        assert!(yaml.contains("geoip_file: /path/to/geoip.dat"));
+        assert!(yaml.contains("geosite_file: /path/to/geosite.dat"));
+    }
+
+    #[test]
+    fn test_geo_routing_disabled_serialization() {
+        let config = TcpServerConfig {
+            address: "127.0.0.1:1080".to_string(),
+            protocol: ServerProtocol::Socks {
+                udp_enabled: Some(true),
+            },
+            rules: Some(vec![Rule {
+                masks: "0.0.0.0/0".to_string(),
+                action: "allow".to_string(),
+                client_chain: Some(ClientChainHop {
+                    address: "example.com:443".to_string(),
+                    protocol: ClientProtocol::Vless {
+                        user_id: "b85798ef-e9dc-46a4-9a87-8da4499d36d0".to_string(),
+                        udp_enabled: Some(true),
+                    },
+                    transport: Some("tcp".to_string()),
+                    quic_settings: None,
+                }),
+            }]),
+            geo_routing: None,  // None = geo routing disabled
+        };
+
+        let yaml = serde_yaml::to_string(&config).unwrap();
+        println!("Geo routing disabled YAML output:\n{}", yaml);
+        // When None, geo_routing should not appear in output (skip_serializing_if)
+        assert!(!yaml.contains("geo_routing:"));
     }
 }
