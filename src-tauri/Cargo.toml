@@ -64,6 +64,10 @@ log = "0.4"
 simplelog = "0.12.1"
 rustem_proxy = "0.1.5"
 serde_yaml = "0.9"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["fmt", "env-filter"] }
+tracing-appender = "0.2"
+tracing-log = "0.2"
 
 [workspace]
 members = [

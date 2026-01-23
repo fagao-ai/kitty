@@ -1,6 +1,7 @@
 use log::{LevelFilter, Log, Metadata, Record};
 use simplelog::{Config, SharedLogger};
 use std::sync::{mpsc, Mutex};
+use tracing_subscriber::fmt::MakeWriter;
 
 pub struct KittyLogger {
     level: LevelFilter,
@@ -48,5 +49,39 @@ impl SharedLogger for KittyLogger {
 
     fn as_log(self: Box<Self>) -> Box<dyn Log> {
         Box::new(*self)
+    }
+}
+
+/// Writer that sends log messages to the frontend via KittyLogger
+#[derive(Clone)]
+pub struct FrontendWriter {
+    sender: mpsc::Sender<String>,
+}
+
+impl FrontendWriter {
+    pub fn new(sender: mpsc::Sender<String>) -> Self {
+        Self { sender }
+    }
+}
+
+impl std::io::Write for FrontendWriter {
+    fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
+        let msg = String::from_utf8_lossy(buf);
+        eprintln!("📝 FrontendWriter received: {:?}", msg);  // Debug output
+        let _ = self.sender.send(msg.to_string());
+        Ok(buf.len())
+    }
+
+    fn flush(&mut self) -> std::io::Result<()> {
+        Ok(())
+    }
+}
+
+/// MakeWriter implementation for tracing subscriber
+impl<'a> MakeWriter<'a> for FrontendWriter {
+    type Writer = FrontendWriter;
+
+    fn make_writer(&'a self) -> Self::Writer {
+        FrontendWriter::new(self.sender.clone())
     }
 }

@@ -5,6 +5,7 @@ use simplelog::{ColorChoice, CombinedLogger, Config, TermLogger, TerminalMode};
 use std::{path::PathBuf, sync::mpsc};
 use tauri::Emitter;
 use tauri_plugin_autostart::AutoLaunchManager;
+use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, EnvFilter};
 
 use crate::{logger::KittyLogger, state::DatabaseState, tray::Tray};
 use anyhow::Result;
@@ -80,21 +81,73 @@ fn setup_system_autostart<'a>(handle: &tauri::AppHandle) -> Result<(), Box<dyn s
 
 fn setup_kitty_logger(app: &tauri::AppHandle) -> Result<(), Box<dyn std::error::Error>> {
     let (sender, receiver) = mpsc::channel();
-    CombinedLogger::init(vec![
-        TermLogger::new(
-            LevelFilter::Debug,
-            Config::default(),
-            TerminalMode::Mixed,
-            ColorChoice::Auto,
-        ),
-        KittyLogger::new(LevelFilter::Info, Config::default(), sender),
-    ])
-    .unwrap();
+
+    // Initialize tracing subscriber (for shoes logs) - MUST be before any shoes function call
+    let frontend_writer = crate::logger::FrontendWriter::new(sender.clone());
+    let env_filter = EnvFilter::try_from_default_env()
+        .unwrap_or_else(|_| EnvFilter::new("info,shoes=debug"));
+
+    // Create a subscriber with both terminal and frontend output
+    let subscriber = tracing_subscriber::registry()
+        .with(env_filter)
+        .with(
+            // Terminal output layer for local debugging
+            tracing_subscriber::fmt::layer()
+                .with_writer(std::io::stdout)
+                .with_ansi(true)
+                .with_target(true)
+        )
+        .with(
+            // Frontend writer layer for forwarding to UI
+            tracing_subscriber::fmt::layer()
+                .with_writer(frontend_writer.clone())
+                .with_ansi(false)
+                .with_target(false)
+        );
+
+    // Try to set as global default - this should work before any shoes call
+    match subscriber.try_init() {
+        Ok(_) => {
+            println!("✓ Tracing subscriber initialized successfully");
+            // Now bridge log crate to tracing (after subscriber is set)
+            let _ = tracing_log::LogTracer::init();
+        }
+        Err(e) => {
+            eprintln!("✗ Failed to initialize tracing subscriber: {}", e);
+            // Fallback: initialize simplelog for terminal output only
+            CombinedLogger::init(vec![
+                TermLogger::new(
+                    LevelFilter::Debug,
+                    Config::default(),
+                    TerminalMode::Mixed,
+                    ColorChoice::Auto,
+                ),
+                KittyLogger::new(LevelFilter::Info, Config::default(), sender.clone()),
+            ])
+            .unwrap();
+        }
+    }
+
+    // Log some initialization messages
+    log::info!("Kitty application starting...");
+    log::debug!("Logger initialized successfully");
+    tracing::info!("Tracing subscriber initialized - shoes logs will be forwarded to frontend");
+
+    // Forward log messages to frontend
     let app_clone = app.clone();
     tauri::async_runtime::spawn(async move {
+        eprintln!("📡 Log forwarder task started");
         loop {
             match receiver.recv() {
-                Ok(message) => app_clone.emit("kitty_logger", message).unwrap(),
+                Ok(message) => {
+                    eprintln!("📨 Received from channel: {:?}", message);
+                    // Trim trailing newlines and whitespace
+                    let message = message.trim().to_string();
+                    if !message.is_empty() {
+                        eprintln!("🚀 Emitting to frontend: {:?}", message);
+                        let _ = app_clone.emit("kitty_logger", message);
+                    }
+                }
                 Err(_) => {
                     debug!("Channel closed");
                     break;
