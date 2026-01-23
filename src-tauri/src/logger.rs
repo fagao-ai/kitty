@@ -67,7 +67,6 @@ impl FrontendWriter {
 impl std::io::Write for FrontendWriter {
     fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
         let msg = String::from_utf8_lossy(buf);
-        eprintln!("📝 FrontendWriter received: {:?}", msg);  // Debug output
         let _ = self.sender.send(msg.to_string());
         Ok(buf.len())
     }

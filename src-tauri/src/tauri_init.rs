@@ -108,12 +108,11 @@ fn setup_kitty_logger(app: &tauri::AppHandle) -> Result<(), Box<dyn std::error::
     // Try to set as global default - this should work before any shoes call
     match subscriber.try_init() {
         Ok(_) => {
-            println!("✓ Tracing subscriber initialized successfully");
             // Now bridge log crate to tracing (after subscriber is set)
             let _ = tracing_log::LogTracer::init();
         }
         Err(e) => {
-            eprintln!("✗ Failed to initialize tracing subscriber: {}", e);
+            eprintln!("Failed to initialize tracing subscriber: {}", e);
             // Fallback: initialize simplelog for terminal output only
             CombinedLogger::init(vec![
                 TermLogger::new(
@@ -136,15 +135,11 @@ fn setup_kitty_logger(app: &tauri::AppHandle) -> Result<(), Box<dyn std::error::
     // Forward log messages to frontend
     let app_clone = app.clone();
     tauri::async_runtime::spawn(async move {
-        eprintln!("📡 Log forwarder task started");
         loop {
             match receiver.recv() {
                 Ok(message) => {
-                    eprintln!("📨 Received from channel: {:?}", message);
-                    // Trim trailing newlines and whitespace
                     let message = message.trim().to_string();
                     if !message.is_empty() {
-                        eprintln!("🚀 Emitting to frontend: {:?}", message);
                         let _ = app_clone.emit("kitty_logger", message);
                     }
                 }
