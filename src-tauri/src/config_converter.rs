@@ -232,10 +232,9 @@ impl GeoRoutingConfig {
             project_path.to_path_buf()
         };
 
-        // Only use GeoIP for now, GeoSite files use different formats
         Self {
             geoip_file: Some(base_dir.join("kitty_geoip.dat").to_string_lossy().to_string()),
-            geosite_file: None,  // Disable GeoSite until we find compatible file
+            geosite_file: Some(base_dir.join("kitty_geosite.dat").to_string_lossy().to_string()),
         }
     }
 

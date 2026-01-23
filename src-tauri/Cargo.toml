@@ -17,16 +17,22 @@ crate-type = [
 ]
 
 [build-dependencies]
-tauri-build = { version = "2.0.0-rc.0", features = [] }
+tauri-build = { version = "2.0", features = [] }
 anyhow = { version = "1", features = [ "backtrace" ] }
-reqwest = { version = "0.11.22", features = [ "blocking" ] }
+reqwest = { version = "0.12", features = [ "blocking" ] }
 build-target = "0.4.0"
 zip = "0.5"
 
 [dependencies]
-#shoes = { path = "/Users/hezhaozhao/myself/shoes", features = [ "ffi" ] }
-shoes = { path = "/home/hezhaozhao/shoes", features = [ "ffi" ] }
-tauri = { version = "2.0.0-rc.0", features = [
+# 使用 GitHub 依赖
+shoes = { git = "https://github.com/kitty-eu-org/shoes.git", branch = "kitty", features = [ "ffi" ] }
+# 新增依赖以支持 shoes 的需求（版本与 shoes 匹配）
+rand = "0.9"
+rustls = "0.23"
+socket2 = "0.6"
+hyper = { version = "1.0", features = ["server", "http1", "http2"] }
+hyper-util = { version = "0.1", features = ["tokio", "server"] }
+tauri = { version = "2.0", features = [
   "tray-icon",
   # "icon-ico",
   "image-ico",
@@ -46,15 +52,15 @@ entity = { path = "./entity" }
 protocols = { path = "./protocols" }
 migration = { path = "./migration" }
 tokio = { version = "1.34.0", features = [ "macros" ] }
-tauri-plugin-process = "2.0.0-rc.0"
+tauri-plugin-process = "2.0"
 thiserror = "1.0.50"
 anyhow = "1"
-tauri-plugin-autostart = "2.0.0-rc.0"
-tauri-plugin-notification = "2.0.0-rc.0"
-reqwest = { version = "0.11.22", features = [ "json" ] }
-base64 = "0.21.7"
-tauri-plugin-clipboard-manager = "2.0.0-rc.0"
-log = "0.4.20"
+tauri-plugin-autostart = "2.0"
+tauri-plugin-notification = "2.0"
+reqwest = { version = "0.12", features = [ "json" ] }
+base64 = "0.22"
+tauri-plugin-clipboard-manager = "2.0"
+log = "0.4"
 simplelog = "0.12.1"
 rustem_proxy = "0.1.5"
 serde_yaml = "0.9"
@@ -66,6 +72,23 @@ members = [
   "entity",
   "protocols"
 ]
+
+[workspace.dependencies]
+# 使用与 shoes 兼容的版本（根据 shoes Cargo.lock）
+rand = "0.9"
+rustls = "0.23"
+hyper = "1.0"
+hyper-util = "0.1"
+http = "1"
+h2 = "0.4"
+socket2 = "0.6"
+webpki-roots = "1"
+thiserror = "1.0"
+serde = "1.0"
+tokio = "1.34"
+# sqlx 版本与 sea-orm 0.12 兼容
+sqlx = { version = "0.7", features = ["runtime-tokio-rustls"] }
+
 
 [features]
 # this feature is used for production builds or when `devPath` points to the filesystem

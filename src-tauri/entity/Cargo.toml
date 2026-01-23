@@ -15,7 +15,7 @@ anyhow = "1"
 rand = "0.8.5"
 url = { version = "2.5.0", optional = true, features = [ "default" ] }
 base64 = { version = "0.21.7", optional = true, features = [ "std" ] }
-sea-orm = "0.12.6"
+sea-orm = "0.12"
 log = "0.4.20"
 uuid = "1.8.0"
 
