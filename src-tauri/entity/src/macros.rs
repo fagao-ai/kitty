@@ -42,7 +42,8 @@ macro_rules! generate_model_functions {
             let origin_id = self.id;
             let json_value = serde_json::to_value(self).unwrap();
             let record = self::Entity::find_by_id(origin_id).one(db).await?;
-            let mut record: self::ActiveModel = record.unwrap().into();
+            let record = record.ok_or_else(|| DbErr::RecordNotFound(format!("Record with id {} not found", origin_id)))?;
+            let mut record: self::ActiveModel = record.into();
             let _ = record.set_from_json(json_value);
             let res = record.update(db).await?;
             Ok(res)

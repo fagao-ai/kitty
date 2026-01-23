@@ -29,7 +29,7 @@ impl ActiveModelBehavior for ActiveModel {}
 
 impl Model {
     pub async fn update_sysproxy_flag(db: &DatabaseConnection, value: bool) -> Result<(), DbErr> {
-        let record = self::Model::first(db).await?.unwrap();
+        let record = self::Model::first(db).await?.ok_or_else(|| DbErr::RecordNotFound("base_config not found".to_string()))?;
         let mut record: self::ActiveModel = record.into();
         record.sysproxy_flag = Set(value);
         let _ = record.update(db).await?;

@@ -11,7 +11,7 @@ impl CommonAPI {
     where
         C: ConnectionTrait,
     {
-        let record = base_config::Model::first(db).await?.unwrap();
+        let record = base_config::Model::first(db).await?.ok_or_else(|| anyhow::anyhow!("base_config not exists"))?;
         let http_port = record.http_port;
         let socks_port = record.socks_port;
         #[cfg(target_os = "windows")]
