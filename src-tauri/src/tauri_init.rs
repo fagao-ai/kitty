@@ -5,13 +5,11 @@ use simplelog::{ColorChoice, CombinedLogger, Config, TermLogger, TerminalMode};
 use std::{path::PathBuf, sync::mpsc};
 use tauri::Emitter;
 use tauri_plugin_autostart::AutoLaunchManager;
-use tokio::sync::RwLock;
 
 use crate::{logger::KittyLogger, state::DatabaseState, tray::Tray};
 use anyhow::Result;
 use entity::base_config;
 use std::fs;
-use std::sync::Arc;
 use tauri::{Manager, State};
 
 pub async fn init_db(app_dir: PathBuf) -> Result<DatabaseConnection, DbErr> {

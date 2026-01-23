@@ -1,14 +1,11 @@
-use std::collections::HashMap;
 
-use entity::base_config;
-use entity::hysteria::{self, HysteriaConfig};
-use tauri::{AppHandle, Manager, State};
+use entity::hysteria::{self};
+use tauri::State;
 
 use crate::apis::hysteria_apis::HysteriaAPI;
 use crate::state::DatabaseState;
 use crate::types::{CommandResult, KittyResponse};
 
-use super::utils::{get_http_socks_ports, speed_delay};
 
 #[tauri::command(rename_all = "snake_case")]
 pub async fn add_hysteria_item<'a>(
@@ -57,24 +54,4 @@ pub async fn update_hysteria_item<'a>(
     let db = state.get_db();
     HysteriaAPI.update_hysteria_item(&db, record).await?;
     Ok(())
-}
-
-#[tauri::command(rename_all = "snake_case")]
-pub async fn speed_hysteria_delay<'a>(
-    app_handle: AppHandle,
-    state: State<'a, DatabaseState>,
-    record_ids: Option<Vec<i32>>,
-) -> CommandResult<HashMap<i32, u128>> {
-    // TODO: Implement delay testing using shoes library
-    // For now, this is a stub that returns an error
-    // The implementation would:
-    // 1. Convert each hysteria record to shoes YAML config
-    // 2. Start individual shoes servers for testing
-    // 3. Run delay tests against each server
-    // 4. Return results and clean up servers
-
-    // Old implementation used XrayCommandGroup with binaries
-    // New implementation should use shoes::tcp::tcp_server::start_servers
-
-    Err(anyhow::anyhow!("Delay testing not yet implemented for shoes library. Please use manual testing.").into())
 }

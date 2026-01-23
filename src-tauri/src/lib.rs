@@ -1,4 +1,4 @@
-use state::{DatabaseState, KittyLoggerState, ProcessManagerState};
+use state::{DatabaseState, ProcessManagerState};
 use std::env;
 use tauri::RunEvent;
 use tauri::{generate_handler, ipc::Invoke};
@@ -92,7 +92,6 @@ pub fn run() {
             db: Default::default(),
         });
     let builder = builder.manage(ProcessManagerState::default());
-    let builder = builder.manage(KittyLoggerState::default());
     let builder = builder
         // .plugin(tauri_plugin_window::init())
         .plugin(tauri_plugin_notification::init())
@@ -106,7 +105,6 @@ pub fn run() {
         hysteria_api::get_all_hysterias,
         hysteria_api::update_hysteria_item,
         hysteria_api::delete_hysteria_item,
-        hysteria_api::speed_hysteria_delay,
         hysteria_api::get_hysteria_by_id,
         xray_api::refresh_xray_subscription,
         xray_api::batch_get_subscriptions,
@@ -115,14 +113,11 @@ pub fn run() {
         xray_api::import_xray_subscribe,
         xray_api::update_xray_item,
         xray_api::delete_xray_item,
-        // xray_api::speed_xray_delay, // TODO: not yet implemented for shoes
         xray_api::get_xray_by_id,
         xray_api::proxies_delay_test,
         common_api::query_base_config,
         common_api::update_base_config,
         common_api::copy_proxy_env_cmd,
-        common_api::query_base_config,
-        common_api::update_base_config,
         common_api::query_rules,
         common_api::delete_rules,
         common_api::add_rules,

@@ -8,20 +8,14 @@ use entity::utils::is_port_available;
 use entity::{
     base_config,
     hysteria::{self as hysteria_entity},
-    rules::{self},
     xray::{self as xray_entity},
 };
 use serde::Serialize;
 
-use std::{
-    collections::HashMap,
-    net::{IpAddr, Ipv4Addr},
-};
-use tauri::{AppHandle, Manager, State};
+use tauri::{AppHandle, State};
 
 use crate::{
     config_converter::ShoesConfigConverter,
-    proxy::delay::ProxyType,
     proxy::system_proxy::{clear_system_proxy, set_system_proxy},
     state::{DatabaseState, ProcessManagerState},
     types::{CommandResult, KittyCommandError, KittyResponse},
@@ -87,7 +81,7 @@ pub(super) async fn start_servers_internal(
 /// 4. Starts xray server(s) if configured
 #[tauri::command(rename_all = "snake_case")]
 pub async fn start_all_servers<'a>(
-    app_handle: AppHandle,
+    _app_handle: AppHandle,
     process_state: State<'a, ProcessManagerState>,
     db_state: State<'a, DatabaseState>,
     xray_id: Option<i32>,
@@ -185,7 +179,8 @@ pub async fn set_system_proxy_only<'a>(
     db_state: State<'a, DatabaseState>,
 ) -> CommandResult<KittyResponse<()>> {
     let db = db_state.get_db();
-    let record: base_config::Model = base_config::Model::first(&db).await?.unwrap();
+    let record: base_config::Model = base_config::Model::first(&db).await?
+        .ok_or_else(|| anyhow::anyhow!("Base config not found"))?;
 
     set_system_proxy(&record.local_ip, record.socks_port, Some(record.http_port));
     base_config::Model::update_sysproxy_flag(&db, true).await?;
@@ -193,11 +188,6 @@ pub async fn set_system_proxy_only<'a>(
 }
 
 // Re-export commonly used items
-pub use server::{
-    is_any_server_running, is_proxy_server_running, start_hysteria_server_by_id,
-    start_proxy_server, start_servers_from_db, start_xray_server_by_id, stop_all_servers,
-    stop_proxy_server,
-};
 
 // ============================================================================
 // Active Proxy Management Commands

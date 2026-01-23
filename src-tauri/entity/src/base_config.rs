@@ -29,10 +29,31 @@ impl ActiveModelBehavior for ActiveModel {}
 
 impl Model {
     pub async fn update_sysproxy_flag(db: &DatabaseConnection, value: bool) -> Result<(), DbErr> {
-        let record = self::Model::first(db).await?.ok_or_else(|| DbErr::RecordNotFound("base_config not found".to_string()))?;
-        let mut record: self::ActiveModel = record.into();
-        record.sysproxy_flag = Set(value);
-        let _ = record.update(db).await?;
+        let record = self::Model::first(db).await?;
+        match record {
+            Some(record) => {
+                let mut record: self::ActiveModel = record.into();
+                record.sysproxy_flag = Set(value);
+                let _ = record.update(db).await?;
+            }
+            None => {
+                // Create default base_config if not exists
+                let default_config = Model {
+                    id: 0,
+                    local_ip: "127.0.0.1".to_string(),
+                    http_port: 10086,
+                    socks_port: 10087,
+                    delay_test_url: "https://gstatic.com/generate_204".to_string(),
+                    sysproxy_flag: value,
+                    auto_start: false,
+                    language: "zh-CN".to_string(),
+                    allow_lan: false,
+                    mode: "Rules".to_string(),
+                    update_interval: 3,
+                };
+                let _ = default_config.insert_one(db).await?;
+            }
+        }
         Ok(())
     }
     generate_model_functions!();

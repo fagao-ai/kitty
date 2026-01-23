@@ -28,10 +28,9 @@ pub async fn download_subcriptions(url: &str) -> anyhow::Result<Vec<ProtocolLine
             .build()?;
 
     let resp = client.get(url).send().await?;
-    let mut resp_text = String::new();
-    if resp.status().is_success() {
-        resp_text = resp.text().await?;
-    }else{
+    let resp_text = if resp.status().is_success() {
+        resp.text().await?
+    } else {
         return Err(anyhow!("download subscriptions failed.").into());
     };
 

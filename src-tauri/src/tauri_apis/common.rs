@@ -2,12 +2,10 @@ use crate::apis::common_apis::CommonAPI;
 use crate::proxy::delay::kitty_current_proxy_delay;
 use crate::state::DatabaseState;
 use crate::types::{CommandResult, KittyResponse};
-use anyhow::anyhow;
 use entity::base_config;
 use entity::rules;
-use sea_orm::{DatabaseConnection, TransactionTrait};
+use sea_orm::DatabaseConnection;
 use tauri::State;
-use tauri_plugin_autostart::AutoLaunchManager;
 use tauri_plugin_clipboard_manager::ClipboardExt;
 
 #[cfg(any(target_os = "macos", target_os = "linux", target_os = "windows"))]

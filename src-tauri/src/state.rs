@@ -1,9 +1,6 @@
 use sea_orm::DatabaseConnection;
-use std::collections::HashSet;
-use std::sync::mpsc::Receiver;
 use std::sync::Arc;
-use tokio::sync::watch::Sender;
-use tokio::sync::{Mutex, RwLock};
+use tokio::sync::Mutex;
 use tokio::task::JoinHandle;
 
 pub struct DatabaseState {
@@ -40,14 +37,3 @@ impl Default for ProcessManagerState {
     }
 }
 
-pub struct KittyLoggerState {
-    pub logger_reciver: Mutex<Option<Receiver<String>>>,
-}
-
-impl Default for KittyLoggerState {
-    fn default() -> Self {
-        Self {
-            logger_reciver: Mutex::new(None),
-        }
-    }
-}

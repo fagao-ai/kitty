@@ -18,25 +18,6 @@ use crate::types::{CommandResult, KittyResponse};
 // Import start_servers from shoes library
 use shoes::tcp::tcp_server::start_servers;
 
-/// Start shoes proxy servers from YAML configuration.
-///
-/// This function is defined in mod.rs and re-exported here for convenience.
-pub async fn start_shoes_servers(
-    yaml_config: &str,
-) -> Result<Vec<tokio::task::JoinHandle<()>>> {
-    let configs = shoes::config::load_config_str(yaml_config)
-        .map_err(|e| anyhow!("Failed to parse shoes YAML config: {e}"))?;
-
-    let mut all_handles = Vec::new();
-    for config in configs {
-        let handles = super::start_servers_internal(config).await
-            .map_err(|e| anyhow!("Failed to start shoes server: {e}"))?;
-        all_handles.extend(handles);
-    }
-
-    Ok(all_handles)
-}
-
 /// Server manager for handling multiple running servers.
 pub struct ServerManager {
     /// Running server handles
@@ -177,11 +158,6 @@ impl ServerManager {
         }
         Err(anyhow!("No available ports found"))
     }
-
-    /// Check if any servers are currently running.
-    pub fn is_running(&self) -> bool {
-        !self.running_servers.is_empty()
-    }
 }
 
 impl Default for ServerManager {
@@ -197,7 +173,7 @@ pub async fn start_servers_from_db(
     process_manager: &ProcessManagerState,
     db: &DatabaseConnection,
 ) -> Result<()> {
-    let mut manager = process_manager.running_servers.lock().await;
+    let _manager = process_manager.running_servers.lock().await;
 
     // Create a temporary server manager to handle the startup
     let mut server_manager = ServerManager::new();
@@ -285,7 +261,7 @@ pub async fn start_xray_server_by_id<'a>(
     xray_id: i32,
 ) -> CommandResult<KittyResponse<()>> {
     let db = state.get_db();
-    let xray_record = xray::Model::get_by_id(&db, xray_id)
+    let _xray_record = xray::Model::get_by_id(&db, xray_id)
         .await?
         .ok_or_else(|| anyhow!("Xray record {} not found", xray_id))?;
 
@@ -307,7 +283,7 @@ pub async fn start_hysteria_server_by_id<'a>(
     hysteria_id: i32,
 ) -> CommandResult<KittyResponse<()>> {
     let db = state.get_db();
-    let hysteria_record = hysteria::Model::get_by_id(&db, hysteria_id)
+    let _hysteria_record = hysteria::Model::get_by_id(&db, hysteria_id)
         .await?
         .ok_or_else(|| anyhow!("Hysteria record {} not found", hysteria_id))?;
 

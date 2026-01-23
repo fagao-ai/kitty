@@ -1,5 +1,4 @@
 use anyhow::Result;
-use base64::{engine::general_purpose, Engine as _};
 use entity::subscribe;
 use entity::xray;
 use sea_orm::ActiveModelTrait;
@@ -9,13 +8,10 @@ use sea_orm::Set;
 use sea_orm::TransactionTrait;
 use std::str::FromStr;
 
-use crate::apis::api_traits::APIServiceTrait;
-
 use super::parse_subscription::download_subcriptions;
 
 pub struct XrayAPI;
 
-impl APIServiceTrait for XrayAPI {}
 impl XrayAPI {
     pub async fn get_all(&self, db: &DatabaseConnection) -> Result<Vec<xray::Model>> {
         let xray_proxies = xray::Model::fetch_all(db).await?;

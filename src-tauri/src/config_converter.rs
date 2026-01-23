@@ -237,22 +237,6 @@ impl GeoRoutingConfig {
             geosite_file: Some(base_dir.join("kitty_geosite.dat").to_string_lossy().to_string()),
         }
     }
-
-    /// Create GeoRoutingConfig with custom paths.
-    pub fn with_paths(geoip_file: String, geosite_file: String) -> Self {
-        Self {
-            geoip_file: Some(geoip_file),
-            geosite_file: Some(geosite_file),
-        }
-    }
-
-    /// Create GeoRoutingConfig without geo files (disables geo routing).
-    pub fn disabled() -> Self {
-        Self {
-            geoip_file: None,
-            geosite_file: None,
-        }
-    }
 }
 
 /// Main converter for transforming hysteria configs to shoes YAML.
@@ -332,6 +316,7 @@ impl ShoesConfigConverter {
     }
 
     /// Convert a hysteria Model to shoes YAML config for TUN/VPN mode.
+    #[allow(dead_code)]
     pub fn hysteria_to_tun_yaml(
         model: &hysteria::Model,
         tun_address: String,
@@ -439,6 +424,7 @@ impl ShoesConfigConverter {
     }
 
     /// Convert an xray Model to shoes YAML config for TUN/VPN mode.
+    #[allow(dead_code)]
     pub fn xray_to_tun_yaml(
         model: &xray::Model,
         tun_address: String,

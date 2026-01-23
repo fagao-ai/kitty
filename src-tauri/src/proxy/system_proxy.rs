@@ -1,4 +1,3 @@
-use anyhow::Result;
 
 #[cfg(target_os = "windows")]
 static DEFAULT_BYPASS: &str = "localhost;127.*;192.168.*;<local>";

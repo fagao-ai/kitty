@@ -34,7 +34,10 @@ async function handleProxy(val: boolean) {
 
 watchOnce(() => baseConfig.autoStart, async () => {
   baseConfig.autoStart = await isEnabled()
-  await handleBaseConfigUpdate()
+  // Only update if id is valid (loaded from backend)
+  if (baseConfig.id > 0) {
+    await handleBaseConfigUpdate()
+  }
 }, { immediate: true })
 
 const unwatchProxyEnable = watch(() => baseConfig.sysproxyFlag, () => {

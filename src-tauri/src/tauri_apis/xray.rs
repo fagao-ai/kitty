@@ -1,16 +1,13 @@
-use std::collections::HashMap;
 
-use entity::xray::{self, XrayConfig};
-use entity::{base_config, subscribe};
-use tauri::{AppHandle, Manager, State};
+use entity::xray::{self};
+use entity::subscribe;
+use tauri::State;
 
 use crate::apis::xray_apis::XrayAPI;
 use crate::proxy::delay::{kitty_proxies_delay, ProxyDelay, ProxyInfo};
-use crate::config_converter::ShoesConfigConverter;
 use crate::state::DatabaseState;
 use crate::types::{CommandResult, KittyResponse};
 
-use super::utils::speed_delay;
 
 #[tauri::command(rename_all = "snake_case")]
 pub async fn get_xray_by_id<'a>(
@@ -67,26 +64,6 @@ pub async fn update_xray_item<'a>(
     let db = state.get_db();
     XrayAPI.update_xray_item(&db, record).await?;
     Ok(())
-}
-
-#[tauri::command(rename_all = "snake_case")]
-pub async fn speed_xray_delay<'a>(
-    app_handle: AppHandle,
-    state: State<'a, DatabaseState>,
-    record_ids: Option<Vec<i32>>,
-) -> CommandResult<HashMap<i32, u128>> {
-    // TODO: Implement delay testing using shoes library
-    // For now, this is a stub that returns an error
-    // The implementation would:
-    // 1. Convert each xray record to shoes YAML config
-    // 2. Start individual shoes servers for testing
-    // 3. Run delay tests against each server
-    // 4. Return results and clean up servers
-
-    // Old implementation used XrayCommandGroup with binaries
-    // New implementation should use shoes::tcp::tcp_server::start_servers
-
-    Err(anyhow::anyhow!("Delay testing not yet implemented for shoes library. Please use manual testing.").into())
 }
 
 #[tauri::command(rename_all = "snake_case")]

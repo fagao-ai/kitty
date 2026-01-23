@@ -1,4 +1,4 @@
-use log::{set_boxed_logger, set_max_level, LevelFilter, Log, Metadata, Record, SetLoggerError};
+use log::{LevelFilter, Log, Metadata, Record};
 use simplelog::{Config, SharedLogger};
 use std::sync::{mpsc, Mutex};
 
@@ -9,15 +9,6 @@ pub struct KittyLogger {
 }
 
 impl KittyLogger {
-    pub fn init(
-        log_level: LevelFilter,
-        config: Config,
-        sender: mpsc::Sender<String>,
-    ) -> Result<(), SetLoggerError> {
-        set_max_level(log_level);
-        set_boxed_logger(KittyLogger::new(log_level, config, sender))
-    }
-
     pub fn new(
         log_level: LevelFilter,
         config: Config,

@@ -8,14 +8,6 @@ pub struct KittyResponse<T> {
 }
 
 impl<T> KittyResponse<T> {
-    pub fn from_msg(code: i8, msg: &str) -> Self {
-        Self {
-            data: None,
-            code,
-            msg: Some(msg.to_string()),
-        }
-    }
-
     pub fn from_data(data: T) -> Self {
         Self {
             code: 0,
@@ -52,11 +44,6 @@ pub enum KittyCommandError {
 
     #[error(transparent)]
     StdError(#[from] std::io::Error),
-}
-
-#[derive(Debug, Serialize)]
-struct ErrorMessage {
-    error: String,
 }
 
 // we must manually implement serde::Serialize

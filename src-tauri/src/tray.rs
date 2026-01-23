@@ -1,4 +1,3 @@
-use std::path::{Path, PathBuf};
 
 use crate::state::DatabaseState;
 use crate::tauri_event_handler::on_exit_clear_commands;
@@ -48,11 +47,11 @@ impl Tray {
             })
             .on_tray_icon_event(|tray, event| match event {
                 TrayIconEvent::Click {
-                    id,
-                    position,
-                    rect,
-                    button,
-                    button_state,
+                    id: _,
+                    position: _,
+                    rect: _,
+                    button: _,
+                    button_state: _,
                 } => {
                     let app = tray.app_handle();
                     if let Some(window) = app.get_webview_window("main") {

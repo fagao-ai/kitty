@@ -5,13 +5,12 @@
 
 use anyhow::{anyhow, Result};
 use entity::{base_config, hysteria, xray};
-use log::{error, info, warn};
+use log::{info, warn};
 use sea_orm::DatabaseConnection;
 use std::sync::atomic::{AtomicBool, Ordering};
-use tokio::sync::Mutex;
 
 use crate::config_converter::ShoesConfigConverter;
-use crate::proxy::delay::{test_all_proxies_delay, ProxyDelay, ProxyType};
+use crate::proxy::delay::{test_all_proxies_delay, ProxyType};
 use crate::state::ProcessManagerState;
 use crate::tauri_apis::start_servers_internal;
 
@@ -19,18 +18,21 @@ use crate::tauri_apis::start_servers_internal;
 #[derive(Debug, Clone)]
 pub enum AutoStartResult {
     Success {
+        #[allow(dead_code)]
         proxy_id: u32,
+        #[allow(dead_code)]
         proxy_type: ProxyType,
+        #[allow(dead_code)]
         delay: u128,
     },
     Fallback {
+        #[allow(dead_code)]
         proxy_id: u32,
+        #[allow(dead_code)]
         proxy_type: ProxyType,
     },
     NoProxies,
-    AllFailed,
     AlreadyRunning,
-    Error(String),
 }
 
 /// Auto-starter for measuring delays and starting the fastest proxy server.
@@ -208,13 +210,6 @@ impl AutoStarter {
         }
 
         Ok(AutoStartResult::NoProxies)
-    }
-
-    /// Set active proxy info (for manual switching).
-    pub async fn set_active_proxy(&self, id: u32, proxy_type: ProxyType) {
-        *self.process_manager.active_proxy_id.lock().await = Some(id);
-        *self.process_manager.active_proxy_type.lock().await = Some(proxy_type.to_string());
-        info!("Set active proxy: ID={:?}, type={:?}", id, proxy_type);
     }
 }
 

@@ -1,7 +1,7 @@
 use crate::types::{CommandResult, KittyResponse};
 use anyhow::Result;
 use entity::{base_config, rules};
-use sea_orm::{ConnectionTrait, DatabaseConnection};
+use sea_orm::ConnectionTrait;
 
 pub struct CommonAPI;
 
@@ -30,7 +30,24 @@ impl CommonAPI {
         let record = base_config::Model::first(db).await?;
         let response = match record {
             Some(record) => KittyResponse::<base_config::Model>::from_data(record),
-            None => KittyResponse::from_msg(101, "base_config not exists"),
+            None => {
+                // Create default base_config if not exists
+                let default_config = base_config::Model {
+                    id: 0,
+                    local_ip: "127.0.0.1".to_string(),
+                    http_port: 10086,
+                    socks_port: 10087,
+                    delay_test_url: "https://gstatic.com/generate_204".to_string(),
+                    sysproxy_flag: false,
+                    auto_start: false,
+                    language: "zh-CN".to_string(),
+                    allow_lan: false,
+                    mode: "Rules".to_string(),
+                    update_interval: 3,
+                };
+                let inserted = default_config.insert_one(db).await?;
+                KittyResponse::<base_config::Model>::from_data(inserted)
+            }
         };
         Ok(response)
     }
@@ -73,16 +90,5 @@ impl CommonAPI {
     {
         let _ = rules::Model::delete_by_ids(db, ids).await?;
         Ok(KittyResponse::default())
-    }
-
-    pub async fn update_rules<C>(
-        db: &C,
-        record: rules::Model,
-    ) -> CommandResult<KittyResponse<rules::Model>>
-    where
-        C: ConnectionTrait,
-    {
-        let updated_record = record.update(db).await?;
-        Ok(KittyResponse::<rules::Model>::from_data(updated_record))
     }
 }
