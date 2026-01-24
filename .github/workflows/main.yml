@@ -1,73 +1,288 @@
-name: Release App
+name: Release
 
 on:
-  workflow_dispatch:
-  release:
-    types: [published]
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref_name }}
+  cancel-in-progress: true
 
 jobs:
-    publish-tauri:
-        permissions:
-            contents: write
-        strategy:
-            fail-fast: false
-            matrix:
-                include:
-                    - target: aarch64-apple-darwin
-                      platform: macos-latest
-                    - target: x86_64-apple-darwin
-                      platform: macos-latest
-                    - target: x86_64-unknown-linux-gnu
-                      platform: ubuntu-22.04
-                    - target: x86_64-pc-windows-msvc
-                      platform: windows-latest
+  release:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: windows-2022
+          - os: ubuntu-22.04
+          - os: macos-15-intel
+            arch: x86_64
+          - os: macos-14
+            arch: arm64
 
-        runs-on: ${{ matrix.platform }}
-        steps:
-            - uses: actions/checkout@v3
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
 
-            - name: Get version
-              id: get_version
-              uses: battila7/get-version-action@v2
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
 
-            - name: setup node
-              uses: actions/setup-node@v3
-              with:
-                  node-version: 18
-            - name: Install PNPM
-              run: npm i -g pnpm
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@1.91.0
 
-            - name: install Rust stable
-              uses: dtolnay/rust-toolchain@stable
+      - name: Install macOS system deps
+        if: runner.os == 'macOS'
+        run: |
+          # Install OpenSSL (needed for both architectures)
+          # GitHub Actions macOS runners are x86_64, even when building for arm64
+          echo "Installing OpenSSL for ${{ matrix.arch }} architecture build"
+          brew install openssl@3
 
-            - name: Rust cache
-              uses: swatinem/rust-cache@988c164c3d0e93c4dbab36aaf5bbeb77425b2894
-              with:
-                workspaces: packages/desktop
-                shared-key: ${{ matrix.tauri-target }}-${{ hashFiles('packages/desktop/Cargo.lock') }}
+          # Set up environment variables
+          echo "OPENSSL_DIR=$(brew --prefix openssl@3)" >> $GITHUB_ENV
+          echo "PKG_CONFIG_PATH=$(brew --prefix openssl@3)/lib/pkgconfig:$PKG_CONFIG_PATH" >> $GITHUB_ENV
 
+          # Additional settings for cross-compilation if building for arm64
+          if [ "${{ matrix.arch }}" = "arm64" ]; then
+            echo "PKG_CONFIG_ALLOW_CROSS=1" >> $GITHUB_ENV
+          fi
 
-            - name: install dependencies (ubuntu only)
-              if: matrix.platform == 'ubuntu-22.04'
-              run: |
-                  sudo apt-get update
-                  sudo apt-get install -y libwebkit2gtk-4.1-dev build-essential curl wget file libssl-dev libayatana-appindicator3-dev librsvg2-dev
-            - name: install dependencies (mac only)
-              if: matrix.platform == 'macos-latest'
-              run: |
-                  rustup target add ${{matrix.target}}
+      - name: Add Rust target
+        if: runner.os == 'macOS'
+        run: |
+          if [ "${{ matrix.arch }}" = "x86_64" ]; then
+            rustup target add x86_64-apple-darwin
+          else
+            rustup target add aarch64-apple-darwin
+          fi
 
-            - name: install frontend dependencies
-              run: pnpm install # change this to npm or pnpm depending on which one you use
+      - name: Install Linux system deps
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          set -euxo pipefail
+          sudo apt-get update
+          # Core build tools and pkg-config
+          sudo apt-get install -y --no-install-recommends \
+            build-essential \
+            pkg-config \
+            curl \
+            wget \
+            file \
+            patchelf \
+            libssl-dev
+          # GTK/GLib stack for gdk-3.0, glib-2.0, gio-2.0
+          sudo apt-get install -y --no-install-recommends \
+            libgtk-3-dev \
+            librsvg2-dev \
+            libayatana-appindicator3-dev
+          # WebKit2GTK (version differs across Ubuntu images; try 4.1 then 4.0)
+          sudo apt-get install -y --no-install-recommends libwebkit2gtk-4.1-dev \
+            || sudo apt-get install -y --no-install-recommends libwebkit2gtk-4.0-dev
+          # libsoup also changed major version; prefer 3.0 with fallback to 2.4
+          sudo apt-get install -y --no-install-recommends libsoup-3.0-dev \
+            || sudo apt-get install -y --no-install-recommends libsoup2.4-dev
 
-            - name: Build Tauri App
-              uses: tauri-apps/tauri-action@dev
-              env:
-                GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-              with:
-                  tagName: kitty___VERSION__ # the action automatically replaces \_\_VERSION\_\_ with the app version
-                  releaseName: 'kitty __VERSION__'
-                  releaseBody: 'upgrade tauri to 2.0'
-                  releaseDraft: false
-                  prerelease: false
-                  args: --target ${{matrix.target}}
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 9
+          run_install: false
+
+      - name: Get pnpm store directory
+        id: pnpm-store
+        shell: bash
+        run: echo "path=$(pnpm store path --silent)" >> $GITHUB_OUTPUT
+
+      - name: Setup pnpm cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.pnpm-store.outputs.path }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: ${{ runner.os }}-pnpm-store-
+
+      - name: Install frontend deps
+        run: pnpm install --frozen-lockfile
+
+      - name: Update version from tag
+        shell: bash
+        run: |
+          # Extract version from tag (remove 'v' prefix)
+          VERSION="${GITHUB_REF_NAME#v}"
+          echo "Updating version to $VERSION"
+
+          # Update Cargo.toml
+          if [[ "$OSTYPE" == "darwin"* ]]; then
+            # macOS
+            sed -i '' "s/^version = .*/version = \"$VERSION\"/" src-tauri/Cargo.toml
+          else
+            # Linux
+            sed -i "s/^version = .*/version = \"$VERSION\"/" src-tauri/Cargo.toml
+          fi
+
+          # Update package.json
+          if command -v jq &> /dev/null; then
+            jq --arg version "$VERSION" '.version = $version' package.json > package.json.tmp
+            mv package.json.tmp package.json
+          else
+            # Fallback using node
+            node -e "const pkg = require('./package.json'); pkg.version = '$VERSION'; require('fs').writeFileSync('./package.json', JSON.stringify(pkg, null, 2));"
+          fi
+
+          echo "Version updated to $VERSION"
+          cat src-tauri/Cargo.toml | grep version
+          cat package.json | grep version
+
+      - name: Build Tauri App (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          # Build for the specific architecture based on matrix
+          export OPENSSL_DIR=$(brew --prefix openssl@3)
+          export PKG_CONFIG_PATH=$(brew --prefix openssl@3)/lib/pkgconfig:$PKG_CONFIG_PATH
+
+          if [ "${{ matrix.arch }}" = "x86_64" ]; then
+            echo "Building for x86_64 architecture"
+            pnpm tauri build --target x86_64-apple-darwin
+          else
+            echo "Building for arm64 architecture"
+            pnpm tauri build --target aarch64-apple-darwin
+          fi
+
+      - name: Build Tauri App (Windows)
+        if: runner.os == 'Windows'
+        run: pnpm tauri build
+
+      - name: Build Tauri App (Linux)
+        if: runner.os == 'Linux'
+        run: pnpm tauri build
+
+      - name: Prepare macOS Assets
+        if: runner.os == 'macOS'
+        shell: bash
+        run: |
+          set -euxo pipefail
+          mkdir -p release-assets
+          VERSION="${GITHUB_REF_NAME}"  # e.g., v1.0.0
+          ARCH="${{ matrix.arch }}"
+
+          # Determine target path based on architecture
+          if [ "$ARCH" = "x86_64" ]; then
+            TARGET_PATH="src-tauri/target/x86_64-apple-darwin/release/bundle/dmg"
+            ARCH_SUFFIX="x86_64"
+          else
+            TARGET_PATH="src-tauri/target/aarch64-apple-darwin/release/bundle/dmg"
+            ARCH_SUFFIX="arm64"
+          fi
+
+          # Find .dmg file
+          DMG=""
+          if [ -d "$TARGET_PATH" ]; then
+            DMG=$(find "$TARGET_PATH" -maxdepth 1 -name "*.dmg" -type f | head -1 || true)
+          fi
+
+          if [ -n "$DMG" ]; then
+            NEW_DMG="Kitty-${VERSION}-macOS-${ARCH_SUFFIX}.dmg"
+            cp "$DMG" "release-assets/$NEW_DMG"
+            echo "macOS ${ARCH_SUFFIX} DMG copied: $NEW_DMG"
+          else
+            echo "No macOS ${ARCH_SUFFIX} .dmg found in $TARGET_PATH" >&2
+            exit 1
+          fi
+
+      - name: Prepare Windows Assets
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          New-Item -ItemType Directory -Force -Path release-assets | Out-Null
+          $VERSION = $env:GITHUB_REF_NAME  # e.g., v1.0.0
+
+          # Find MSI installer
+          $msi = Get-ChildItem -Path 'src-tauri/target/release/bundle/msi' -Recurse -Include *.msi -ErrorAction SilentlyContinue | Select-Object -First 1
+          if ($null -eq $msi) {
+            $msi = Get-ChildItem -Path 'src-tauri/target/release/bundle' -Recurse -Include *.msi -ErrorAction SilentlyContinue | Select-Object -First 1
+          }
+
+          if ($null -ne $msi) {
+            $dest = "Kitty-$VERSION-Windows.msi"
+            Copy-Item $msi.FullName (Join-Path release-assets $dest)
+            Write-Host "Installer copied: $dest"
+          } else {
+            Write-Error 'No Windows MSI installer found'
+          }
+
+      - name: Prepare Linux Assets
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          set -euxo pipefail
+          mkdir -p release-assets
+          VERSION="${GITHUB_REF_NAME}"  # e.g., v1.0.0
+
+          # Find AppImage
+          APPIMAGE=$(find src-tauri/target/release/bundle -name "*.AppImage" | head -1 || true)
+          if [ -n "$APPIMAGE" ]; then
+            NEW_APPIMAGE="Kitty-${VERSION}-Linux.AppImage"
+            cp "$APPIMAGE" "release-assets/$NEW_APPIMAGE"
+            echo "AppImage copied: $NEW_APPIMAGE"
+          else
+            echo "No AppImage found under target/release/bundle" >&2
+          fi
+
+          # Find .deb package
+          DEB=$(find src-tauri/target/release/bundle -name "*.deb" | head -1 || true)
+          if [ -n "$DEB" ]; then
+            NEW_DEB="Kitty-${VERSION}-Linux.deb"
+            cp "$DEB" "release-assets/$NEW_DEB"
+            echo "Deb package copied: $NEW_DEB"
+          else
+            echo "No .deb found (optional)" >&2
+          fi
+
+      - name: List prepared assets
+        shell: bash
+        run: |
+          ls -la release-assets || true
+
+      - name: Upload Release Assets
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: Kitty ${{ github.ref_name }}
+          prerelease: false
+          body: |
+            ## Kitty ${{ github.ref_name }}
+
+            现代化的代理客户端
+
+            ### 下载
+
+            - **macOS**:
+              - Intel 芯片: `Kitty-${{ github.ref_name }}-macOS-x86_64.dmg`
+              - Apple Silicon (M1/M2/M3): `Kitty-${{ github.ref_name }}-macOS-arm64.dmg`
+            - **Windows**: `Kitty-${{ github.ref_name }}-Windows.msi`
+            - **Linux**: `Kitty-${{ github.ref_name }}-Linux.AppImage` 或 `Kitty-${{ github.ref_name }}-Linux.deb`
+
+            ### 安装说明
+
+            - macOS:
+              - 根据你的 Mac 芯片类型下载对应的版本（Intel 或 Apple Silicon）
+              - 打开 .dmg 文件，将应用拖入 Applications 文件夹
+              - ⚠️ **重要提示**: 如果首次打开应用时提示"无法验证开发者"或"已损坏"，请在终端中执行以下命令：
+                ```bash
+                sudo xattr -cr /Applications/Kitty.app
+                ```
+            - Windows: 运行 .msi 安装程序
+            - Linux:
+              - AppImage: 下载后添加执行权限 `chmod +x Kitty-*-Linux.AppImage` 然后运行
+              - Debian/Ubuntu: 使用 `dpkg -i Kitty-*-Linux.deb` 安装
+          files: release-assets/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
