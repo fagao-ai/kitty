@@ -4,7 +4,7 @@
   "version": "0.0.6",
   "type": "module",
   "scripts": {
-    "version": "node scripts/sync-version.js",
+    "version": "bash scripts/sync-version.sh",
     "dev": "vite",
     "build": "vite build",
     "build:web": "vite build --mode web",
