@@ -8,6 +8,7 @@ import type { ProxyCard as Card, ProxyType } from '@/types/proxy'
 
 interface Props {
   data: Card[]
+  switchingId?: number | null
 }
 
 interface Emits {
@@ -37,6 +38,7 @@ const emits = defineEmits<Emits>()
               :protocol="card.protocol"
               :source="card.source"
               :is-active="card.isActive"
+              :switching-id="switchingId"
               @dblclick="emits('dblclick', card.id, card.type)"
               @click="emits('click', card.id, card.type)"
             />

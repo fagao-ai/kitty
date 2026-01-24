@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { NTag } from 'naive-ui'
+import { NTag, NSpin } from 'naive-ui'
 import type { ProxyCard, ProxyType } from '@/types/proxy'
 
 interface Emits {
@@ -8,8 +8,10 @@ interface Emits {
   (e: 'click', id: number, type: ProxyType): void
 }
 
-const props = defineProps<ProxyCard>()
+const props = defineProps<ProxyCard & { switchingId?: number | null }>()
 const emits = defineEmits<Emits>()
+
+const isSwitching = computed(() => props.switchingId === props.id)
 
 const tagType = computed(() => {
   if (props.delay <= 500)
@@ -33,7 +35,7 @@ function handleClick() {
 <template>
   <div
     class="card-wrapper"
-    :class="{ 'active-card': isActive }"
+    :class="{ 'active-card': isActive, 'switching-card': isSwitching }"
     role="button"
     :aria-label="`${name} - ${protocol} - ${delay}ms`"
     :aria-pressed="isActive"
@@ -42,6 +44,11 @@ function handleClick() {
     @dblclick="handleDblClick"
     @keydown.enter="handleClick"
   >
+    <!-- Loading overlay -->
+    <div v-if="isSwitching" class="loading-overlay">
+      <n-spin size="small" />
+    </div>
+
     <!-- Subscription tag (top right) - only show for subscription nodes -->
     <div v-if="source === 'subscription'" class="absolute top-2 right-2 z-10">
       <n-tag
@@ -96,6 +103,17 @@ function handleClick() {
 .active-card {
   @apply bg-primary-light/20 dark:bg-primary/10;
   box-shadow: 0 0 0 2px #5352ed, 0 8px 16px rgba(83, 82, 237, 0.15);
+}
+
+.switching-card {
+  @apply opacity-60 pointer-events-none;
+}
+
+.loading-overlay {
+  @apply absolute inset-0 z-20;
+  @apply flex items-center justify-center;
+  @apply bg-bg-card/80 dark:bg-dark-bg-card/80;
+  @apply rounded-lg;
 }
 
 // Add active state for keyboard users

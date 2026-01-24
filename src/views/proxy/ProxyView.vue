@@ -40,6 +40,9 @@ const showImportModal = ref(false)
 // Speed test state
 const isTestingSpeed = ref(false)
 
+// Switching proxy state
+const switchingProxyId = ref<number | null>(null)
+
 // Save original proxy data for speed test
 const hysteriaProxiesData = ref<HysteriaProxy[]>([])
 const xrayProxiesData = ref<XrayProxy[]>([])
@@ -101,6 +104,7 @@ async function fetchActiveProxy() {
 
 // Single click to switch proxy
 async function handleCardClick(id: number, proxyType: ProxyType) {
+  switchingProxyId.value = id
   try {
     await switchToProxy(id, proxyType)
     proxyStore.value.activeProxyId = id
@@ -111,6 +115,8 @@ async function handleCardClick(id: number, proxyType: ProxyType) {
     await initAllProxies()
     await fetchActiveProxy()
     message.error(`Switch failed: ${e?.message || 'Unknown error'}. Proxy list refreshed.`)
+  } finally {
+    switchingProxyId.value = null
   }
 }
 
@@ -330,6 +336,7 @@ onMounted(async () => {
     <div class="flex-1 w-full overflow-y-hidden">
       <proxy-card-list
         :data="cards"
+        :switching-id="switchingProxyId"
         @dblclick="handleCardDblClick"
         @click="handleCardClick"
       />

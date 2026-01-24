@@ -48,17 +48,8 @@ pub async fn download_subcriptions(url: &str) -> anyhow::Result<Vec<ProtocolLine
                 line
             };
             let protocol = trimed_line.split("://").next().unwrap();
-            // let protocol_str = trimed_line.split("://").last().unwrap();
             results.push(ProtocolLine::new(trimed_line.to_string(), protocol.into()))
-            // if protocol_str.starts_with("eyJ") {
-            //     // let decode_bytes = general_purpose::STANDARD.decode(new_protocol_str)?;
-            //     // let protocol_line =String::from_utf8(decode_bytes).expect("Invalid UTF-8 sequence");
-            //     let new_line = format!("{protocol}://{protocol_str}");
-            //     println!("new_line: {}", new_line);
-            //     results.push(ProtocolLine::new(new_line, protocol.into()))
-            // }
         }
     }
-    // println!("{:?}", results.len());
     anyhow::Ok(results)
 }

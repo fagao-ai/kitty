@@ -98,15 +98,6 @@ sqlx = { version = "0.7", features = ["runtime-tokio-rustls"] }
 # this feature is used for production builds or when `devPath` points to the filesystem
 # DO NOT REMOVE!!
 custom-protocol = [ "tauri/custom-protocol" ]
-default = [
-  "xray",
-  "hysteria"
-]
-# shoes_proxy is the new implementation using shoes library
-shoes_proxy = []
-# Legacy features (kept for compatibility with existing APIs)
-xray = []
-hysteria = []
 
 [target."cfg(not(any(target_os = \"android\", target_os = \"ios\")))".dependencies]
 tauri-plugin-autostart = "2"

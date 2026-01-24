@@ -22,11 +22,7 @@ use crate::{
 };
 
 pub mod common;
-// Legacy API modules for xray and hysteria (still using database entities)
-#[cfg(feature = "hysteria")]
-pub mod hysteria;
-#[cfg(feature = "xray")]
-pub mod xray;
+pub mod proxy;
 pub mod utils;
 pub mod server;
 
