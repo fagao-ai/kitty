@@ -20,6 +20,7 @@ pub struct Model {
     pub update_interval: i32,
     pub allow_lan: bool,
     pub mode: String,
+    pub log_level: String,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
@@ -50,6 +51,7 @@ impl Model {
                     allow_lan: false,
                     mode: "Rules".to_string(),
                     update_interval: 3,
+                    log_level: "debug".to_string(),
                 };
                 let _ = default_config.insert_one(db).await?;
             }

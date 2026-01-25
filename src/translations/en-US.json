@@ -28,7 +28,8 @@
     "socks5Port": "Socks5 port",
     "httpPort": "HTTP port",
     "delayTestUrl": "Delay test url",
-    "subscriptionAutoUpdate": "Subscription Auto Update (h)"
+    "subscriptionAutoUpdate": "Subscription Auto Update (h)",
+    "logLevel": "Log Level"
   },
   "proxy": {
     "hysteria": {

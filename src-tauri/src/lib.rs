@@ -1,4 +1,4 @@
-use state::{DatabaseState, ProcessManagerState};
+use state::{DatabaseState, LogLevelState, ProcessManagerState};
 use std::env;
 use tauri::RunEvent;
 use tauri::{generate_handler, ipc::Invoke};
@@ -89,6 +89,7 @@ pub fn run() {
             db: Default::default(),
         });
     let builder = builder.manage(ProcessManagerState::default());
+    let builder = builder.manage(LogLevelState::default());
     let builder = builder
         // .plugin(tauri_plugin_window::init())
         .plugin(tauri_plugin_notification::init())
@@ -123,6 +124,8 @@ pub fn run() {
         common_api::add_rules,
         common_api::update_rules_item,
         common_api::test_current_proxy,
+        common_api::get_log_level,
+        common_api::set_log_level,
         // Server commands
         server_api::start_proxy_server,
         server_api::stop_proxy_server,

@@ -5,13 +5,13 @@ use simplelog::{ColorChoice, CombinedLogger, Config, TermLogger, TerminalMode};
 use std::{path::PathBuf, sync::mpsc};
 use tauri::Emitter;
 use tauri_plugin_autostart::AutoLaunchManager;
-use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, EnvFilter};
+use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, EnvFilter, registry::Registry};
 
-use crate::{logger::KittyLogger, state::DatabaseState, tray::Tray};
+use crate::{logger::KittyLogger, state::{DatabaseState, LogLevelState}, tray::Tray};
 use anyhow::Result;
-use entity::base_config;
 use std::fs;
 use tauri::{Manager, State};
+use entity::base_config;
 
 pub async fn init_db(app_dir: PathBuf) -> Result<DatabaseConnection, DbErr> {
     let sqlite_path = app_dir.join("MyApp.sqlite");
@@ -82,14 +82,25 @@ fn setup_system_autostart<'a>(handle: &tauri::AppHandle) -> Result<(), Box<dyn s
 fn setup_kitty_logger(app: &tauri::AppHandle) -> Result<(), Box<dyn std::error::Error>> {
     let (sender, receiver) = mpsc::channel();
 
+    // Get the LogLevelState to store the filter handle for hot-reloading
+    let log_level_state: State<LogLevelState> = app.state();
+
     // Initialize tracing subscriber (for shoes logs) - MUST be before any shoes function call
     let frontend_writer = crate::logger::FrontendWriter::new(sender.clone());
     let env_filter = EnvFilter::try_from_default_env()
         .unwrap_or_else(|_| EnvFilter::new("info,shoes=debug"));
 
+    // Create a reloadable filter for hot-reloading log level
+    let (filter, reload_handle) = tracing_subscriber::reload::Layer::new(env_filter);
+
+    // Store the reload handle in LogLevelState
+    let mut handle = log_level_state.filter_handle.blocking_lock();
+    *handle = Some(reload_handle);
+    drop(handle);
+
     // Create a subscriber with both terminal and frontend output
     let subscriber = tracing_subscriber::registry()
-        .with(env_filter)
+        .with(filter)
         .with(
             // Terminal output layer for local debugging
             tracing_subscriber::fmt::layer()
@@ -154,6 +165,34 @@ fn setup_kitty_logger(app: &tauri::AppHandle) -> Result<(), Box<dyn std::error::
     Ok(())
 }
 
+/// Initialize log level from database on startup
+fn setup_log_level_from_db(app: &tauri::AppHandle) -> Result<(), Box<dyn std::error::Error>> {
+    let log_level_state: State<LogLevelState> = app.state();
+    let db_state: State<DatabaseState> = app.state();
+    let db = db_state.get_db();
+
+    // Get the log level from database
+    let log_level = tauri::async_runtime::block_on(async move {
+        base_config::Model::first(&db).await.ok()
+    });
+
+    if let Some(Some(record)) = log_level {
+        let log_level = record.log_level;
+
+        // Update runtime log level
+        let handle = log_level_state.filter_handle.blocking_lock();
+        if let Some(filter_handle) = handle.as_ref() {
+            let new_filter = format!("info,shoes={},kitty={}", log_level, log_level);
+            let _ = filter_handle.modify(|filter| {
+                *filter = EnvFilter::new(new_filter);
+            });
+            tracing::info!("Log level initialized from database: {}", log_level);
+        }
+    }
+
+    Ok(())
+}
+
 /// Auto-measure and start the fastest proxy server on app startup.
 /// This is the default behavior - no configuration needed.
 fn setup_auto_start_fastest<'a>(handle: &tauri::AppHandle) -> Result<(), Box<dyn std::error::Error>> {
@@ -211,6 +250,7 @@ pub fn init_setup<'a>(app: &'a mut tauri::App) -> Result<(), Box<dyn std::error:
     let _ = setup_kitty_logger(handle)?;
     let _ = setup_db(handle)?;
     let _ = setup_db(handle)?;
+    let _ = setup_log_level_from_db(handle)?;
     let _ = setup_system_autostart(handle)?;
     let _ = setup_auto_start_fastest(handle)?;
     let _ = Tray::init_tray(handle)?;

@@ -9,7 +9,7 @@ import { settingStore } from '@/views/setting/store'
 import { useConfig } from '@/views/setting/hook'
 
 const { t, locale } = useI18n()
-const { baseConfig, handleSwitchAutoStart, handleBaseConfigUpdate, handleSwitchProxy, loading, proxyLoading, initConfig } = useConfig()
+const { baseConfig, handleSwitchAutoStart, handleBaseConfigUpdate, handleSwitchProxy, handleLogLevelChange, loading, proxyLoading, initConfig } = useConfig()
 initConfig()
 
 async function handleLanguageChange(lang: string) {
@@ -271,6 +271,47 @@ onBeforeUnmount(() => {
               :min="1"
               @blur="handleUpdateInterval"
             />
+          </div>
+        </div>
+      </div>
+      <div
+        class="grid grid-cols-2 grid-rows-2 gap-x-16 gap-y-4 p-6 bg-bg-card dark:bg-dark-bg-card shadow-card rounded-lg text-text-secondary dark:text-text-secondary"
+      >
+        <n-skeleton
+          v-if="loading"
+          width="100%"
+          :height="34"
+          round
+        />
+        <div
+          v-else
+          class="flex justify-between items-center col-span-2"
+        >
+          <div class="font-semibold text-text-primary dark:text-text-primary">
+            {{ t('setting.logLevel') }}
+          </div>
+          <div class="font-medium">
+            <n-radio-group
+              v-model:value="baseConfig.logLevel"
+              name="logLevelGroup"
+              @update:value="handleLogLevelChange"
+            >
+              <n-radio-button value="trace">
+                Trace
+              </n-radio-button>
+              <n-radio-button value="debug">
+                Debug
+              </n-radio-button>
+              <n-radio-button value="info">
+                Info
+              </n-radio-button>
+              <n-radio-button value="warn">
+                Warn
+              </n-radio-button>
+              <n-radio-button value="error">
+                Error
+              </n-radio-button>
+            </n-radio-group>
           </div>
         </div>
       </div>

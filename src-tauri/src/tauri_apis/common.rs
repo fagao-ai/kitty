@@ -1,12 +1,13 @@
 use crate::apis::common_apis::CommonAPI;
 use crate::proxy::delay::kitty_current_proxy_delay;
-use crate::state::DatabaseState;
+use crate::state::{DatabaseState, LogLevelState};
 use crate::types::{CommandResult, KittyResponse};
 use entity::base_config;
 use entity::rules;
 use sea_orm::DatabaseConnection;
 use tauri::State;
 use tauri_plugin_clipboard_manager::ClipboardExt;
+use tracing_subscriber::EnvFilter;
 
 #[cfg(any(target_os = "macos", target_os = "linux", target_os = "windows"))]
 use tauri::AppHandle;
@@ -99,4 +100,46 @@ pub async fn test_current_proxy<'a>(
     println!("proxy: {}", proxy);
     let res = kitty_current_proxy_delay(proxy, target_url).await;
     Ok(KittyResponse::from_data(res))
+}
+
+#[tauri::command(rename_all = "snake_case")]
+pub async fn get_log_level<'a>(
+    state: State<'a, DatabaseState>,
+) -> CommandResult<KittyResponse<String>> {
+    let db = state.get_db();
+    let record = base_config::Model::first(&db).await?
+        .ok_or_else(|| anyhow::anyhow!("base_config not exists"))?;
+    Ok(KittyResponse::from_data(record.log_level))
+}
+
+#[tauri::command(rename_all = "snake_case")]
+pub async fn set_log_level<'a>(
+    state_db: State<'a, DatabaseState>,
+    state_log: State<'a, LogLevelState>,
+    log_level: String,
+) -> CommandResult<KittyResponse<()>> {
+    // Validate log level
+    let valid_levels = vec!["trace", "debug", "info", "warn", "error"];
+    if !valid_levels.contains(&log_level.as_str()) {
+        return Err(anyhow::anyhow!("Invalid log level: {}", log_level).into());
+    }
+
+    let db = state_db.get_db();
+    let mut record = base_config::Model::first(&db).await?
+        .ok_or_else(|| anyhow::anyhow!("base_config not exists"))?;
+
+    // Update database
+    record.log_level = log_level.clone();
+    record.update(&db).await?;
+
+    // Update runtime log level
+    let handle = state_log.filter_handle.lock().await;
+    if let Some(filter_handle) = handle.as_ref() {
+        let new_filter = format!("info,shoes={},kitty={}", log_level, log_level);
+        let _ = filter_handle.modify(|filter| {
+            *filter = EnvFilter::new(new_filter);
+        });
+    }
+
+    Ok(KittyResponse::default())
 }

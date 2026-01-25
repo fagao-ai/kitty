@@ -10,4 +10,5 @@ export interface KittyBaseConfig {
   allowLan: boolean
   mode: 'Global' | 'Rules' | 'Direct'
   updateInterval: number
+  logLevel: 'trace' | 'debug' | 'info' | 'warn' | 'error'
 }

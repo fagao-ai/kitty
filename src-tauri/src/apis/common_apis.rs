@@ -44,6 +44,7 @@ impl CommonAPI {
                     allow_lan: false,
                     mode: "Rules".to_string(),
                     update_interval: 3,
+                    log_level: "debug".to_string(),
                 };
                 let inserted = default_config.insert_one(db).await?;
                 KittyResponse::<base_config::Model>::from_data(inserted)
