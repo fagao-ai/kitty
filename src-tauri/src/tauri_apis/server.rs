@@ -84,7 +84,8 @@ impl ServerManager {
         let configs: Vec<Config> = shoes::config::load_config_str(&yaml_config)?;
 
         for config in configs {
-            let handles = start_servers(config).await?;
+            let resolver = std::sync::Arc::new(shoes::resolver::CachingNativeResolver::new()) as std::sync::Arc<dyn shoes::resolver::Resolver>;
+            let handles = start_servers(config, resolver).await?;
             self.running_servers.extend(handles);
         }
 
@@ -119,7 +120,8 @@ impl ServerManager {
         let configs: Vec<Config> = shoes::config::load_config_str(&yaml_config)?;
 
         for config in configs {
-            let handles = start_servers(config).await?;
+            let resolver = std::sync::Arc::new(shoes::resolver::CachingNativeResolver::new()) as std::sync::Arc<dyn shoes::resolver::Resolver>;
+            let handles = start_servers(config, resolver).await?;
             self.running_servers.extend(handles);
         }
 

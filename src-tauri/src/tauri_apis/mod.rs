@@ -65,7 +65,8 @@ async fn start_shoes_servers(yaml_config: &str) -> Result<Vec<tokio::task::JoinH
 pub(super) async fn start_servers_internal(
     config: shoes::config::Config,
 ) -> std::io::Result<Vec<tokio::task::JoinHandle<()>>> {
-    shoes::tcp::tcp_server::start_servers(config).await
+    let resolver = std::sync::Arc::new(shoes::resolver::CachingNativeResolver::new()) as std::sync::Arc<dyn shoes::resolver::Resolver>;
+    shoes::tcp::tcp_server::start_servers(config, resolver).await
 }
 
 /// Start all configured proxy servers (without setting system proxy).
