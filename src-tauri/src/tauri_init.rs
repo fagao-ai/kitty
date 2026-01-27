@@ -2,12 +2,13 @@ use log::{debug, trace, LevelFilter};
 use migration::{Migrator, MigratorTrait};
 use sea_orm::{ConnectOptions, Database, DatabaseConnection, DbErr};
 use simplelog::{ColorChoice, CombinedLogger, Config, TermLogger, TerminalMode};
-use std::{path::PathBuf, sync::mpsc};
+use std::path::PathBuf;
 use tauri::Emitter;
 use tauri_plugin_autostart::AutoLaunchManager;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, EnvFilter, registry::Registry};
 
-use crate::{logger::KittyLogger, state::{DatabaseState, LogLevelState}, tray::Tray};
+use crate::state::{DatabaseState, LogLevelState};
+use crate::tray::Tray;
 use anyhow::Result;
 use std::fs;
 use tauri::{Manager, State};
@@ -16,7 +17,6 @@ use entity::base_config;
 pub async fn init_db(app_dir: PathBuf) -> Result<DatabaseConnection, DbErr> {
     let sqlite_path = app_dir.join("MyApp.sqlite");
     trace!("{:?}", sqlite_path);
-    println!("{:?}", sqlite_path);
     let sqlite_url = format!("sqlite://{}?mode=rwc", sqlite_path.to_string_lossy());
     let connect_options = ConnectOptions::new(sqlite_url)
         .sqlx_logging(false)
@@ -80,15 +80,17 @@ fn setup_system_autostart<'a>(handle: &tauri::AppHandle) -> Result<(), Box<dyn s
 }
 
 fn setup_kitty_logger(app: &tauri::AppHandle) -> Result<(), Box<dyn std::error::Error>> {
-    let (sender, receiver) = mpsc::channel();
+    // Use async channel for better performance
+    let (sender, mut receiver) = tokio::sync::mpsc::unbounded_channel();
 
     // Get the LogLevelState to store the filter handle for hot-reloading
     let log_level_state: State<LogLevelState> = app.state();
 
     // Initialize tracing subscriber (for shoes logs) - MUST be before any shoes function call
-    let frontend_writer = crate::logger::FrontendWriter::new(sender.clone());
+    // Default: info level, shoes follows the same level
+    let frontend_writer = crate::logger::FrontendWriter::new(sender);
     let env_filter = EnvFilter::try_from_default_env()
-        .unwrap_or_else(|_| EnvFilter::new("info,shoes=debug"));
+        .unwrap_or_else(|_| EnvFilter::new("info,shoes=info"));
 
     // Create a reloadable filter for hot-reloading log level
     let (filter, reload_handle) = tracing_subscriber::reload::Layer::new(env_filter);
@@ -98,65 +100,54 @@ fn setup_kitty_logger(app: &tauri::AppHandle) -> Result<(), Box<dyn std::error::
     *handle = Some(reload_handle);
     drop(handle);
 
-    // Create a subscriber with both terminal and frontend output
+    // Create a subscriber with ONLY frontend output (no stdout)
     let subscriber = tracing_subscriber::registry()
         .with(filter)
         .with(
-            // Terminal output layer for local debugging
-            tracing_subscriber::fmt::layer()
-                .with_writer(std::io::stdout)
-                .with_ansi(true)
-                .with_target(true)
-        )
-        .with(
             // Frontend writer layer for forwarding to UI
             tracing_subscriber::fmt::layer()
-                .with_writer(frontend_writer.clone())
+                .with_writer(frontend_writer)
                 .with_ansi(false)
                 .with_target(false)
         );
 
     // Try to set as global default - this should work before any shoes call
     match subscriber.try_init() {
-        Ok(_) => {
-            // Now bridge log crate to tracing (after subscriber is set)
-            let _ = tracing_log::LogTracer::init();
-        }
+        Ok(_) => {}
         Err(e) => {
             eprintln!("Failed to initialize tracing subscriber: {}", e);
-            // Fallback: initialize simplelog for terminal output only
-            CombinedLogger::init(vec![
-                TermLogger::new(
-                    LevelFilter::Debug,
-                    Config::default(),
-                    TerminalMode::Mixed,
-                    ColorChoice::Auto,
-                ),
-                KittyLogger::new(LevelFilter::Info, Config::default(), sender.clone()),
-            ])
-            .unwrap();
         }
     }
 
-    // Log some initialization messages
-    log::info!("Kitty application starting...");
-    log::debug!("Logger initialized successfully");
-    tracing::info!("Tracing subscriber initialized - shoes logs will be forwarded to frontend");
-
-    // Forward log messages to frontend
+    // Forward log messages to frontend with batching and throttling
     let app_clone = app.clone();
     tauri::async_runtime::spawn(async move {
+        let mut log_buffer = Vec::with_capacity(100);
+        let batch_size = 50;  // Send every 50 logs
+        let max_interval_ms = 100;  // Or every 100ms
+        let mut total_count = 0u64;
+        let mut interval = tokio::time::interval(tokio::time::Duration::from_millis(max_interval_ms));
+
         loop {
-            match receiver.recv() {
-                Ok(message) => {
-                    let message = message.trim().to_string();
-                    if !message.is_empty() {
-                        let _ = app_clone.emit("kitty_logger", message);
+            tokio::select! {
+                // Receive new logs
+                Some(message) = receiver.recv() => {
+                    log_buffer.push(message.trim().to_string());
+
+                    // Send if buffer is full
+                    if log_buffer.len() >= batch_size {
+                        total_count += log_buffer.len() as u64;
+                        let batch: Vec<String> = log_buffer.drain(..).collect();
+                        let _ = app_clone.emit("kitty_logger", batch);
                     }
                 }
-                Err(_) => {
-                    debug!("Channel closed");
-                    break;
+                // Periodic flush
+                _ = interval.tick() => {
+                    if !log_buffer.is_empty() {
+                        total_count += log_buffer.len() as u64;
+                        let batch: Vec<String> = log_buffer.drain(..).collect();
+                        let _ = app_clone.emit("kitty_logger", batch);
+                    }
                 }
             }
         }
@@ -179,10 +170,10 @@ fn setup_log_level_from_db(app: &tauri::AppHandle) -> Result<(), Box<dyn std::er
     if let Some(Some(record)) = log_level {
         let log_level = record.log_level;
 
-        // Update runtime log level
+        // Update runtime log level - shoes follows the same log level
         let handle = log_level_state.filter_handle.blocking_lock();
         if let Some(filter_handle) = handle.as_ref() {
-            let new_filter = format!("info,shoes={},kitty={}", log_level, log_level);
+            let new_filter = format!("{},shoes={}", log_level, log_level);
             let _ = filter_handle.modify(|filter| {
                 *filter = EnvFilter::new(new_filter);
             });

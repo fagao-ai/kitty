@@ -97,7 +97,6 @@ pub async fn test_current_proxy<'a>(
     proxy: String,
     target_url: String,
 ) -> CommandResult<KittyResponse<u128>> {
-    println!("proxy: {}", proxy);
     let res = kitty_current_proxy_delay(proxy, target_url).await;
     Ok(KittyResponse::from_data(res))
 }
@@ -132,10 +131,10 @@ pub async fn set_log_level<'a>(
     record.log_level = log_level.clone();
     record.update(&db).await?;
 
-    // Update runtime log level
+    // Update runtime log level - shoes follows the same log level
     let handle = state_log.filter_handle.lock().await;
     if let Some(filter_handle) = handle.as_ref() {
-        let new_filter = format!("info,shoes={},kitty={}", log_level, log_level);
+        let new_filter = format!("{},shoes={}", log_level, log_level);
         let _ = filter_handle.modify(|filter| {
             *filter = EnvFilter::new(new_filter);
         });

@@ -89,11 +89,6 @@ impl ServerManager {
             self.running_servers.extend(handles);
         }
 
-        println!(
-            "Started xray server {} (protocol: {:?})",
-            xray_record.name, xray_record.protocol
-        );
-
         Ok(())
     }
 
@@ -125,11 +120,6 @@ impl ServerManager {
             self.running_servers.extend(handles);
         }
 
-        println!(
-            "Started hysteria server {}",
-            hysteria_record.name
-        );
-
         Ok(())
     }
 
@@ -139,7 +129,6 @@ impl ServerManager {
             handle.abort();
         }
         self.used_ports.clear();
-        println!("All servers stopped");
     }
 
     /// Get two available ports for HTTP and SOCKS5 proxies.

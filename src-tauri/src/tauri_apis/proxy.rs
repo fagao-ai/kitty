@@ -10,6 +10,7 @@ use serde::{Deserialize, Serialize};
 use serde_json;
 use tauri::State;
 
+use crate::proxy::delay::{kitty_proxies_delay, ProxyInfo};
 use crate::state::DatabaseState;
 use crate::types::{CommandResult, KittyResponse};
 
@@ -216,11 +217,6 @@ pub async fn refresh_subscription<'a>(
 ) -> CommandResult<KittyResponse<()>> {
     let db = db_state.get_db();
     // TODO: Implement subscription refresh logic
-    if let Some(ids) = record_ids {
-        println!("Refreshing subscriptions: {:?}", ids);
-    } else {
-        println!("Refreshing all subscriptions");
-    }
     Ok(KittyResponse::default())
 }
 
@@ -232,7 +228,6 @@ pub async fn import_subscription<'a>(
 ) -> CommandResult<KittyResponse<()>> {
     let db = db_state.get_db();
     // TODO: Implement subscription import logic
-    println!("Importing subscription from: {}", url);
     Ok(KittyResponse::default())
 }
 
@@ -258,8 +253,8 @@ pub async fn import_xray_subscribe<'a>(
 #[tauri::command(rename_all = "snake_case")]
 pub async fn proxies_delay_test<'a>(
     db_state: State<'a, DatabaseState>,
-    _ids: Vec<i32>,
-) -> CommandResult<KittyResponse<Vec<(i32, u64)>>> {
-    // TODO: Implement delay test logic
-    Ok(KittyResponse::from_data(vec![]))
+    proxies: Vec<ProxyInfo>,
+) -> CommandResult<KittyResponse<Vec<crate::proxy::delay::ProxyDelay>>> {
+    let results = kitty_proxies_delay(proxies).await;
+    Ok(KittyResponse::from_data(results))
 }

@@ -12,7 +12,6 @@ async fn clear_command(app_handle: &AppHandle) {
     }
     running_servers.clear();
 
-    println!("clear_system_proxy called");
     clear_system_proxy();
 }
 

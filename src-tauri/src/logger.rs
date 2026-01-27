@@ -55,11 +55,11 @@ impl SharedLogger for KittyLogger {
 /// Writer that sends log messages to the frontend via KittyLogger
 #[derive(Clone)]
 pub struct FrontendWriter {
-    sender: mpsc::Sender<String>,
+    sender: tokio::sync::mpsc::UnboundedSender<String>,
 }
 
 impl FrontendWriter {
-    pub fn new(sender: mpsc::Sender<String>) -> Self {
+    pub fn new(sender: tokio::sync::mpsc::UnboundedSender<String>) -> Self {
         Self { sender }
     }
 }
@@ -67,6 +67,7 @@ impl FrontendWriter {
 impl std::io::Write for FrontendWriter {
     fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
         let msg = String::from_utf8_lossy(buf);
+        // Use send - unbounded channel won't block, but may drop if receiver is gone
         let _ = self.sender.send(msg.to_string());
         Ok(buf.len())
     }

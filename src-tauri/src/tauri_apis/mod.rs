@@ -83,7 +83,6 @@ pub async fn start_all_servers<'a>(
     db_state: State<'a, DatabaseState>,
     xray_id: Option<i32>,
 ) -> CommandResult<KittyResponse<()>> {
-    println!("start_all_servers: {:?}", xray_id);
 
     let _ = init_state(&process_state).await?;
     let db = db_state.get_db();
@@ -226,7 +225,6 @@ pub async fn switch_to_proxy<'a>(
     proxy_id: u32,
     proxy_type: String,
 ) -> CommandResult<KittyResponse<()>> {
-    println!("switch_to_proxy called: proxy_id={}, proxy_type={}", proxy_id, proxy_type);
     let db = db_state.get_db();
 
     // Stop all running servers
@@ -243,7 +241,6 @@ pub async fn switch_to_proxy<'a>(
     let socks_port = record.socks_port;
 
     let yaml_config = if proxy_type == "hysteria" {
-        println!("Querying hysteria record with id={}", proxy_id);
         let hysteria_record = hysteria_entity::Model::get_by_id(&db, proxy_id as i32).await?
             .ok_or_else(|| anyhow!("Hysteria record {} not found", proxy_id))?;
 
@@ -253,7 +250,6 @@ pub async fn switch_to_proxy<'a>(
             socks_port,
         )?
     } else {
-        println!("Querying xray record with id={}", proxy_id);
         let xray_record = xray_entity::Model::get_by_id(&db, proxy_id as i32).await?
             .ok_or_else(|| anyhow!("Xray record {} not found", proxy_id))?;
 
@@ -272,8 +268,6 @@ pub async fn switch_to_proxy<'a>(
     // Update active proxy state
     *process_manager.active_proxy_id.lock().await = Some(proxy_id);
     *process_manager.active_proxy_type.lock().await = Some(proxy_type.clone());
-
-    println!("Switched to proxy: ID={}, type={}", proxy_id, proxy_type);
 
     Ok(KittyResponse::default())
 }

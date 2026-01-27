@@ -10,25 +10,19 @@ static DEFAULT_BYPASS: &str = "192.168.0.0/16,10.0.0.0/8,172.16.0.0/12,127.0.0.1
 #[cfg(any(target_os = "macos", target_os = "linux", target_os = "windows"))]
 pub fn set_system_proxy(host: &str, _socks_port: u16, http_port: Option<u16>) {
     use rustem_proxy::SystemProxy;
-    // SystemProxy::set(SystemProxy {
-    //     is_enabled: true,
-    //     host: host.to_string(),
-    //     port: _socks_port,
-    //     bypass: DEFAULT_BYPASS.to_string(),
-    //     protocol: rustem_proxy::Protocol::SOCKS,
-    // });
-    if http_port.is_some() {
+
+    if let Some(port) = http_port {
         SystemProxy::set(SystemProxy {
             is_enabled: true,
             host: host.to_string(),
-            port: http_port.unwrap(),
+            port: port,
             bypass: DEFAULT_BYPASS.to_string(),
             protocol: rustem_proxy::Protocol::HTTP,
         });
         SystemProxy::set(SystemProxy {
             is_enabled: true,
             host: host.to_string(),
-            port: http_port.unwrap(),
+            port: port,
             bypass: DEFAULT_BYPASS.to_string(),
             protocol: rustem_proxy::Protocol::HTTPS,
         });

@@ -15,11 +15,21 @@ const logInstRef = ref<LogInst | null>(null)
 
 let unlisten: UnlistenFn | undefined
 let unwatch: WatchStopHandle | undefined
+let eventCount = 0
 const { enqueueLog, logQueue } = useLogQueue(1000)
 
 onMounted(async () => {
-  unlisten = await listen<string>('kitty_logger', (event) => {
-    enqueueLog(event.payload)
+  console.log('[LogView] Setting up kitty_logger listener')
+  unlisten = await listen<string | string[]>('kitty_logger', (event) => {
+    eventCount++
+    // Handle both single string (old format) and array (new batch format)
+    const logs = Array.isArray(event.payload) ? event.payload : [event.payload]
+    for (const log of logs) {
+      enqueueLog(log)
+    }
+    if (eventCount <= 10 || eventCount % 50 === 0) {
+      console.log(`[LogView] Batch #${eventCount}: ${logs.length} logs`)
+    }
   })
   unwatch = watchEffect(() => {
     if (logQueue.value.length > 0) {
@@ -28,9 +38,11 @@ onMounted(async () => {
       })
     }
   })
+  console.log('[LogView] Listener set up complete')
 })
 
 onUnmounted(() => {
+  console.log(`[LogView] Unmounting, total events received: ${eventCount}`)
   unlisten?.()
   unwatch?.()
 })

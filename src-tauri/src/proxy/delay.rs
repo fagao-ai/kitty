@@ -76,7 +76,7 @@ async fn measure_tcp_latency(proxy_info: &ProxyInfo) -> ProxyDelay {
     // 尝试连接到目标 IP 和端口
     match tokio::time::timeout(
         std::time::Duration::from_secs(3),
-        TcpStream::connect(address),
+        TcpStream::connect(&address),
     )
     .await
     {
@@ -121,7 +121,7 @@ pub async fn kitty_proxies_delay(proxies: Vec<ProxyInfo>) -> Vec<ProxyDelay> {
         result.push(res);
     }
 
-    // sory result by delay
+    // sort result by delay
     result.sort_by(|a, b| a.delay.cmp(&b.delay));
     result
 }
@@ -185,19 +185,16 @@ mod tests {
         }
 
         let results = kitty_proxies_delay(aa).await;
-        println!("{:?}", results);
         assert!(results.len() > 0);
         assert!(results[0].delay > 0);
     }
 
     #[tokio::test]
     async fn test_current_proxy() {
-        let delay = kitty_current_proxy_delay(
+        let _delay = kitty_current_proxy_delay(
             "http://127.0.0.1:7890".to_string(),
             "https://www.google.com".to_string(),
         )
         .await;
-
-        println!("delay {}", delay);
     }
 }

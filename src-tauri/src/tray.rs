@@ -78,7 +78,6 @@ impl Tray {
             }
             "quit" => {
                 on_exit_clear_commands(app_handle);
-                println!("on_exit_clear_commands called");
                 app_handle.exit(0);
                 std::process::exit(0);
             }
