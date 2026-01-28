@@ -6097,6 +6097,7 @@ checksum = "0fda2ff0d084019ba4d7c6f371c95d8fd75ce3524c3cb8fb653a3023f6323e64"
 [[package]]
 name = "shoes"
 version = "0.2.7"
+source = "git+https://github.com/kitty-eu-org/shoes.git?branch=kitty#e3db7edf9dfb035284d6cac4421ab7900b8aaeea"
 dependencies = [
  "addr",
  "android_logger",
