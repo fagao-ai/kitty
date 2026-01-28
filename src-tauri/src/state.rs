@@ -2,8 +2,6 @@ use sea_orm::DatabaseConnection;
 use std::sync::Arc;
 use tokio::sync::Mutex;
 use tokio::task::JoinHandle;
-use tracing_subscriber::reload::Handle;
-use tracing_subscriber::{EnvFilter, Registry};
 
 pub struct DatabaseState {
     pub db: std::sync::Mutex<Option<DatabaseConnection>>,
@@ -38,10 +36,3 @@ impl Default for ProcessManagerState {
         }
     }
 }
-
-/// LogLevelState stores the handle for hot-reloading log level
-#[derive(Clone, Default)]
-pub struct LogLevelState {
-    pub filter_handle: Arc<Mutex<Option<Handle<EnvFilter, Registry>>>>,
-}
-

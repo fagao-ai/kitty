@@ -12,7 +12,7 @@ use entity::{
 };
 use serde::Serialize;
 
-use tauri::{AppHandle, State};
+use tauri::{AppHandle, Manager, State};
 
 use crate::{
     config_converter::ShoesConfigConverter,
@@ -78,7 +78,7 @@ pub(super) async fn start_servers_internal(
 /// 4. Starts xray server(s) if configured
 #[tauri::command(rename_all = "snake_case")]
 pub async fn start_all_servers<'a>(
-    _app_handle: AppHandle,
+    app_handle: AppHandle,
     process_state: State<'a, ProcessManagerState>,
     db_state: State<'a, DatabaseState>,
     xray_id: Option<i32>,
@@ -88,6 +88,10 @@ pub async fn start_all_servers<'a>(
     let db = db_state.get_db();
     let mut all_server_handles = Vec::new();
     let mut start_cmd_flag = false;
+
+    // Get the resource directory for geo files
+    let resource_dir = app_handle.path().resource_dir()
+        .map_err(|e| KittyCommandError::AnyHowError(anyhow!("Failed to get resource dir: {}", e)))?;
 
     let record: base_config::Model = base_config::Model::first(&db).await.unwrap().unwrap();
     let http_port = record.http_port;
@@ -108,6 +112,7 @@ pub async fn start_all_servers<'a>(
             &hysteria_record,
             http_port,
             socks_port,
+            &resource_dir,
         )
         .map_err(|e| KittyCommandError::AnyHowError(anyhow!("Failed to convert hysteria config: {}", e)))?;
 
@@ -134,6 +139,7 @@ pub async fn start_all_servers<'a>(
             &xray_records,
             http_port,
             socks_port,
+            &resource_dir,
         )
         .map_err(|e| KittyCommandError::AnyHowError(anyhow!("Failed to convert xray config: {}", e)))?;
 
@@ -220,12 +226,17 @@ pub async fn get_active_proxy<'a>(
 /// 3. Updates the active proxy state
 #[tauri::command(rename_all = "snake_case")]
 pub async fn switch_to_proxy<'a>(
+    app_handle: AppHandle,
     db_state: State<'a, DatabaseState>,
     process_manager: State<'a, ProcessManagerState>,
     proxy_id: u32,
     proxy_type: String,
 ) -> CommandResult<KittyResponse<()>> {
     let db = db_state.get_db();
+
+    // Get the resource directory for geo files
+    let resource_dir = app_handle.path().resource_dir()
+        .map_err(|e| KittyCommandError::AnyHowError(anyhow!("Failed to get resource dir: {}", e)))?;
 
     // Stop all running servers
     let mut servers = process_manager.running_servers.lock().await;
@@ -248,6 +259,7 @@ pub async fn switch_to_proxy<'a>(
             &hysteria_record,
             http_port,
             socks_port,
+            &resource_dir,
         )?
     } else {
         let xray_record = xray_entity::Model::get_by_id(&db, proxy_id as i32).await?
@@ -257,6 +269,7 @@ pub async fn switch_to_proxy<'a>(
             &xray_record,
             http_port,
             socks_port,
+            &resource_dir,
         )?
     };
 

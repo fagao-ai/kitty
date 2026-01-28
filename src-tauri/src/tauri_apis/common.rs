@@ -1,6 +1,6 @@
 use crate::apis::common_apis::CommonAPI;
 use crate::proxy::delay::kitty_current_proxy_delay;
-use crate::state::{DatabaseState, LogLevelState};
+use crate::state::DatabaseState;
 use crate::types::{CommandResult, KittyResponse};
 use entity::base_config;
 use entity::rules;
@@ -114,7 +114,6 @@ pub async fn get_log_level<'a>(
 #[tauri::command(rename_all = "snake_case")]
 pub async fn set_log_level<'a>(
     state_db: State<'a, DatabaseState>,
-    state_log: State<'a, LogLevelState>,
     log_level: String,
 ) -> CommandResult<KittyResponse<()>> {
     // Validate log level
@@ -131,13 +130,15 @@ pub async fn set_log_level<'a>(
     record.log_level = log_level.clone();
     record.update(&db).await?;
 
-    // Update runtime log level - shoes follows the same log level
-    let handle = state_log.filter_handle.lock().await;
-    if let Some(filter_handle) = handle.as_ref() {
-        let new_filter = format!("{},shoes={}", log_level, log_level);
-        let _ = filter_handle.modify(|filter| {
-            *filter = EnvFilter::new(new_filter);
-        });
+    // Update runtime log level using global filter reload handle
+    if let Some(filter_handle) = crate::get_filter_reload_handle() {
+        if let Ok(handle) = filter_handle.lock() {
+            let new_filter = format!("{},shoes={}", log_level, log_level);
+            let _ = handle.modify(|filter| {
+                *filter = EnvFilter::new(new_filter);
+            });
+            tracing::info!("Runtime log level updated to: {}", log_level);
+        }
     }
 
     Ok(KittyResponse::default())

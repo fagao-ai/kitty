@@ -1,13 +1,12 @@
-use log::{debug, trace, LevelFilter};
+use log::trace;
 use migration::{Migrator, MigratorTrait};
 use sea_orm::{ConnectOptions, Database, DatabaseConnection, DbErr};
-use simplelog::{ColorChoice, CombinedLogger, Config, TermLogger, TerminalMode};
 use std::path::PathBuf;
 use tauri::Emitter;
 use tauri_plugin_autostart::AutoLaunchManager;
-use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, EnvFilter, registry::Registry};
+use tracing_subscriber::EnvFilter;
 
-use crate::state::{DatabaseState, LogLevelState};
+use crate::state::DatabaseState;
 use crate::tray::Tray;
 use anyhow::Result;
 use std::fs;
@@ -80,85 +79,64 @@ fn setup_system_autostart<'a>(handle: &tauri::AppHandle) -> Result<(), Box<dyn s
 }
 
 fn setup_kitty_logger(app: &tauri::AppHandle) -> Result<(), Box<dyn std::error::Error>> {
-    // Use async channel for better performance
-    let (sender, mut receiver) = tokio::sync::mpsc::unbounded_channel();
+    // Get the log sender that was created during early initialization
+    let sender = crate::get_log_sender()
+        .ok_or("Log sender not initialized")?;
 
-    // Get the LogLevelState to store the filter handle for hot-reloading
-    let log_level_state: State<LogLevelState> = app.state();
+    // First, drain the buffered logs accumulated during startup
+    let buffered_logs = {
+        let mut buffer = crate::LOG_BUFFER.lock().unwrap();
+        buffer.drain(..).collect::<Vec<String>>()
+    };
 
-    // Initialize tracing subscriber (for shoes logs) - MUST be before any shoes function call
-    // Default: info level, shoes follows the same level
-    let frontend_writer = crate::logger::FrontendWriter::new(sender);
-    let env_filter = EnvFilter::try_from_default_env()
-        .unwrap_or_else(|_| EnvFilter::new("info,shoes=info"));
-
-    // Create a reloadable filter for hot-reloading log level
-    let (filter, reload_handle) = tracing_subscriber::reload::Layer::new(env_filter);
-
-    // Store the reload handle in LogLevelState
-    let mut handle = log_level_state.filter_handle.blocking_lock();
-    *handle = Some(reload_handle);
-    drop(handle);
-
-    // Create a subscriber with ONLY frontend output (no stdout)
-    let subscriber = tracing_subscriber::registry()
-        .with(filter)
-        .with(
-            // Frontend writer layer for forwarding to UI
-            tracing_subscriber::fmt::layer()
-                .with_writer(frontend_writer)
-                .with_ansi(false)
-                .with_target(false)
-        );
-
-    // Try to set as global default - this should work before any shoes call
-    match subscriber.try_init() {
-        Ok(_) => {}
-        Err(e) => {
-            eprintln!("Failed to initialize tracing subscriber: {}", e);
+    // Send buffered logs to frontend immediately
+    if !buffered_logs.is_empty() {
+        tracing::info!("Sending {} buffered startup logs to frontend", buffered_logs.len());
+        let batch: Vec<String> = buffered_logs.iter()
+            .map(|s| s.trim().to_string())
+            .filter(|s| !s.is_empty())
+            .collect();
+        if !batch.is_empty() {
+            let _ = app.emit("kitty_logger", batch);
         }
     }
 
-    // Forward log messages to frontend with batching and throttling
+    // Create a task that periodically checks buffer and sends to frontend
     let app_clone = app.clone();
     tauri::async_runtime::spawn(async move {
-        let mut log_buffer = Vec::with_capacity(100);
-        let batch_size = 50;  // Send every 50 logs
-        let max_interval_ms = 100;  // Or every 100ms
-        let mut total_count = 0u64;
-        let mut interval = tokio::time::interval(tokio::time::Duration::from_millis(max_interval_ms));
+        let mut interval = tokio::time::interval(tokio::time::Duration::from_millis(100));
 
         loop {
-            tokio::select! {
-                // Receive new logs
-                Some(message) = receiver.recv() => {
-                    log_buffer.push(message.trim().to_string());
+            interval.tick().await;
 
-                    // Send if buffer is full
-                    if log_buffer.len() >= batch_size {
-                        total_count += log_buffer.len() as u64;
-                        let batch: Vec<String> = log_buffer.drain(..).collect();
-                        let _ = app_clone.emit("kitty_logger", batch);
-                    }
+            // Check if there are new logs in the buffer
+            let new_logs = {
+                let mut buffer = crate::LOG_BUFFER.lock().unwrap();
+                if buffer.is_empty() {
+                    Vec::new()
+                } else {
+                    buffer.drain(..).collect::<Vec<String>>()
                 }
-                // Periodic flush
-                _ = interval.tick() => {
-                    if !log_buffer.is_empty() {
-                        total_count += log_buffer.len() as u64;
-                        let batch: Vec<String> = log_buffer.drain(..).collect();
-                        let _ = app_clone.emit("kitty_logger", batch);
-                    }
+            };
+
+            if !new_logs.is_empty() {
+                let batch: Vec<String> = new_logs.iter()
+                    .map(|s| s.trim().to_string())
+                    .filter(|s| !s.is_empty())
+                    .collect();
+                if !batch.is_empty() {
+                    let _ = app_clone.emit("kitty_logger", batch);
                 }
             }
         }
     });
 
+    tracing::info!("✓ setup_kitty_logger completed - logs will be sent to frontend");
     Ok(())
 }
 
 /// Initialize log level from database on startup
 fn setup_log_level_from_db(app: &tauri::AppHandle) -> Result<(), Box<dyn std::error::Error>> {
-    let log_level_state: State<LogLevelState> = app.state();
     let db_state: State<DatabaseState> = app.state();
     let db = db_state.get_db();
 
@@ -170,14 +148,17 @@ fn setup_log_level_from_db(app: &tauri::AppHandle) -> Result<(), Box<dyn std::er
     if let Some(Some(record)) = log_level {
         let log_level = record.log_level;
 
-        // Update runtime log level - shoes follows the same log level
-        let handle = log_level_state.filter_handle.blocking_lock();
-        if let Some(filter_handle) = handle.as_ref() {
-            let new_filter = format!("{},shoes={}", log_level, log_level);
-            let _ = filter_handle.modify(|filter| {
-                *filter = EnvFilter::new(new_filter);
-            });
-            tracing::info!("Log level initialized from database: {}", log_level);
+        // Update runtime log level using global filter reload handle
+        if let Some(filter_handle) = crate::get_filter_reload_handle() {
+            if let Ok(handle) = filter_handle.lock() {
+                let new_filter = format!("{},shoes={}", log_level, log_level);
+
+                if handle.modify(|filter| {
+                    *filter = EnvFilter::new(new_filter.clone());
+                }).is_ok() {
+                    tracing::info!("Log level initialized from database: {}", log_level);
+                }
+            }
         }
     }
 
@@ -198,11 +179,23 @@ fn setup_auto_start_fastest<'a>(handle: &tauri::AppHandle) -> Result<(), Box<dyn
     // Clone ProcessManagerState for use in async task
     let process_manager_clone = process_manager.inner().clone();
 
+    // Get the resource directory for geo files
+    let resource_dir = handle.path().resource_dir()
+        .map_err(|e| {
+            log::error!("Failed to get resource dir: {}", e);
+            Box::new(e) as Box<dyn std::error::Error>
+        })?;
+
     // Auto-start fastest is enabled by default
     tauri::async_runtime::spawn(async move {
+        // CRITICAL: Increase delay to ensure tracing subscriber is fully initialized
+        // This is especially important for release builds where the startup is faster
+        // and LogTracer needs time to be fully set up before shoes starts logging
+        tokio::time::sleep(tokio::time::Duration::from_millis(500)).await;
+
         info!("Auto-start fastest: beginning delay measurement");
 
-        let auto_starter = AutoStarter::new(db, process_manager_clone);
+        let auto_starter = AutoStarter::new(db, process_manager_clone, resource_dir);
         match auto_starter.start_fastest_server().await {
             Ok(result) => {
                 info!("Auto-start completed: {:?}", result);
@@ -216,35 +209,13 @@ fn setup_auto_start_fastest<'a>(handle: &tauri::AppHandle) -> Result<(), Box<dyn
     Ok(())
 }
 
-// fn setup_global_shortcut<'a>(handle: &tauri::AppHandle) -> Result<(), Box<dyn std::error::Error>> {
-//     use tauri_plugin_global_shortcut::{Code, GlobalShortcutExt, Modifiers, Shortcut};
-
-//     let command_w_shortcut = Shortcut::new(Some(Modifiers::META), Code::KeyW);
-//     // let command_w_shortcut = Shortcut::new(Some(Modifiers::META), Code::KeyW);
-//     let app_handle = handle.clone();
-//     handle.plugin(
-//         tauri_plugin_global_shortcut::Builder::with_handler(move |_app, shortcut| {
-//             if shortcut == &command_w_shortcut {
-//                 let window = app_handle.get_webview_window("main").unwrap();
-//                 window.hide().unwrap();
-//             }
-//         })
-//         .build(),
-//     )?;
-
-//     handle.global_shortcut().register(command_w_shortcut)?;
-//     Ok(())
-// }
-
 pub fn init_setup<'a>(app: &'a mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
     let handle = app.handle();
     let _ = setup_kitty_logger(handle)?;
-    let _ = setup_db(handle)?;
     let _ = setup_db(handle)?;
     let _ = setup_log_level_from_db(handle)?;
     let _ = setup_system_autostart(handle)?;
     let _ = setup_auto_start_fastest(handle)?;
     let _ = Tray::init_tray(handle)?;
-    // let _ = setup_global_shortcut(handle)?;
     Ok(())
 }

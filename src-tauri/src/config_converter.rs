@@ -213,25 +213,12 @@ pub struct GeoRoutingConfig {
 }
 
 impl GeoRoutingConfig {
-    /// Create a new GeoRoutingConfig with paths to the .dat files.
+    /// Create a new GeoRoutingConfig with paths to the .dat files from the resource directory.
     ///
-    /// Uses the same path resolution as GeoDataManager:
-    /// - First tries CARGO_MANIFEST_DIR/static/
-    /// - Falls back to CARGO_MANIFEST_DIR
-    /// - Falls back to OUT_DIR
-    pub fn new() -> Self {
-        let project_dir = std::env::var("CARGO_MANIFEST_DIR")
-            .or_else(|_| std::env::var("OUT_DIR"))
-            .unwrap_or_else(|_| ".".to_string());
-
-        let project_path = std::path::Path::new(&project_dir);
-        let static_dir = project_path.join("static");
-        let base_dir = if static_dir.exists() {
-            static_dir
-        } else {
-            project_path.to_path_buf()
-        };
-
+    /// This is the preferred method for packaged apps, as it uses the app's resource directory.
+    pub fn with_paths(resource_dir: &std::path::Path) -> Self {
+        // Resources are in the "static" subdirectory of the resource dir
+        let base_dir = resource_dir.join("static");
         Self {
             geoip_file: Some(base_dir.join("kitty_geoip.dat").to_string_lossy().to_string()),
             geosite_file: Some(base_dir.join("kitty_geosite.dat").to_string_lossy().to_string()),
@@ -248,6 +235,7 @@ impl ShoesConfigConverter {
         model: &hysteria::Model,
         http_port: u16,
         socks_port: u16,
+        resource_dir: &std::path::Path,
     ) -> Result<String> {
         // Build the Hysteria2 client protocol
         let client_protocol = ClientProtocol::Hysteria2 {
@@ -273,7 +261,7 @@ impl ShoesConfigConverter {
         };
 
         // Create geo routing config
-        let geo_routing = Some(GeoRoutingConfig::new());
+        let geo_routing = Some(GeoRoutingConfig::with_paths(resource_dir));
 
         // Create HTTP proxy config
         let http_config = TcpServerConfig {
@@ -307,11 +295,6 @@ impl ShoesConfigConverter {
         let configs = vec![ShoesConfig::Server(http_config), ShoesConfig::Server(socks_config)];
         let yaml = serde_yaml::to_string(&configs).map_err(|e| anyhow!("Failed to serialize YAML: {}", e))?;
 
-        // Debug: Print the generated YAML configuration
-        println!("=== Generated Hysteria2 YAML Configuration ===");
-        println!("{}", yaml);
-        println!("=== End of YAML Configuration ===");
-
         Ok(yaml)
     }
 
@@ -321,6 +304,7 @@ impl ShoesConfigConverter {
         model: &hysteria::Model,
         tun_address: String,
         tun_netmask: String,
+        resource_dir: &std::path::Path,
     ) -> Result<String> {
         // Build the Hysteria2 client protocol
         let client_protocol = ClientProtocol::Hysteria2 {
@@ -359,7 +343,7 @@ impl ShoesConfigConverter {
                 action: "allow".to_string(),
                 client_chain: Some(client_chain),
             }],
-            geo_routing: Some(GeoRoutingConfig::new()),
+            geo_routing: Some(GeoRoutingConfig::with_paths(resource_dir)),
         };
 
         // Serialize to YAML
@@ -372,6 +356,7 @@ impl ShoesConfigConverter {
         model: &xray::Model,
         http_port: u16,
         socks_port: u16,
+        resource_dir: &std::path::Path,
     ) -> Result<String> {
         // Build the base client protocol from the xray config
         let stream_settings = model.stream_settings();
@@ -381,7 +366,7 @@ impl ShoesConfigConverter {
         let client_chain = Self::build_client_chain(model, stream_settings, client_protocol)?;
 
         // Create geo routing config
-        let geo_routing = Some(GeoRoutingConfig::new());
+        let geo_routing = Some(GeoRoutingConfig::with_paths(resource_dir));
 
         // Create HTTP proxy config
         let http_config = TcpServerConfig {
@@ -415,11 +400,6 @@ impl ShoesConfigConverter {
         let configs = vec![ShoesConfig::Server(http_config), ShoesConfig::Server(socks_config)];
         let yaml = serde_yaml::to_string(&configs).map_err(|e| anyhow!("Failed to serialize YAML: {}", e))?;
 
-        // Debug: Print the generated YAML configuration
-        println!("=== Generated XRay YAML Configuration ===");
-        println!("{}", yaml);
-        println!("=== End of YAML Configuration ===");
-
         Ok(yaml)
     }
 
@@ -429,6 +409,7 @@ impl ShoesConfigConverter {
         model: &xray::Model,
         tun_address: String,
         tun_netmask: String,
+        resource_dir: &std::path::Path,
     ) -> Result<String> {
         // Build the base client protocol from the xray config
         let stream_settings = model.stream_settings();
@@ -451,7 +432,7 @@ impl ShoesConfigConverter {
                 action: "allow".to_string(),
                 client_chain: Some(client_chain),
             }],
-            geo_routing: Some(GeoRoutingConfig::new()),
+            geo_routing: Some(GeoRoutingConfig::with_paths(resource_dir)),
         };
 
         // Serialize to YAML
@@ -464,6 +445,7 @@ impl ShoesConfigConverter {
         models: &[xray::Model],
         http_port: u16,
         socks_port: u16,
+        resource_dir: &std::path::Path,
     ) -> Result<String> {
         if models.is_empty() {
             return Err(anyhow!("No xray models provided"));
@@ -476,7 +458,7 @@ impl ShoesConfigConverter {
         let client_chain = Self::build_client_chain(first_model, stream_settings, client_protocol)?;
 
         // Create geo routing config
-        let geo_routing = Some(GeoRoutingConfig::new());
+        let geo_routing = Some(GeoRoutingConfig::with_paths(resource_dir));
 
         // Create HTTP proxy config
         let http_config = TcpServerConfig {
@@ -877,17 +859,14 @@ mod tests {
                     quic_settings: None,
                 }),
             }]),
-            geo_routing: Some(GeoRoutingConfig::with_paths(
-                "/path/to/geoip.dat".to_string(),
-                "/path/to/geosite.dat".to_string(),
-            )),
+            geo_routing: Some(GeoRoutingConfig::with_paths(std::path::Path::new("/path/to"))),
         };
 
         let yaml = serde_yaml::to_string(&config).unwrap();
         println!("Geo routing YAML output:\n{}", yaml);
         assert!(yaml.contains("geo_routing:"));
-        assert!(yaml.contains("geoip_file: /path/to/geoip.dat"));
-        assert!(yaml.contains("geosite_file: /path/to/geosite.dat"));
+        assert!(yaml.contains("geoip_file: /path/to/kitty_geoip.dat"));
+        assert!(yaml.contains("geosite_file: /path/to/kitty_geosite.dat"));
     }
 
     #[test]

@@ -3267,6 +3267,7 @@ dependencies = [
  "anyhow",
  "base64 0.22.1",
  "build-target",
+ "ctor",
  "entity",
  "hyper",
  "hyper-util",
@@ -6096,7 +6097,6 @@ checksum = "0fda2ff0d084019ba4d7c6f371c95d8fd75ce3524c3cb8fb653a3023f6323e64"
 [[package]]
 name = "shoes"
 version = "0.2.7"
-source = "git+https://github.com/kitty-eu-org/shoes.git?branch=kitty#ca1b0ae68292e9ac407b7088dded5fa298c1db4f"
 dependencies = [
  "addr",
  "android_logger",

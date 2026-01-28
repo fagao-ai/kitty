@@ -7,6 +7,7 @@ use anyhow::{anyhow, Result};
 use entity::{base_config, hysteria, xray};
 use log::{info, warn};
 use sea_orm::DatabaseConnection;
+use std::path::PathBuf;
 use std::sync::atomic::{AtomicBool, Ordering};
 
 use crate::config_converter::ShoesConfigConverter;
@@ -39,6 +40,7 @@ pub enum AutoStartResult {
 pub struct AutoStarter {
     db: DatabaseConnection,
     process_manager: ProcessManagerState,
+    resource_dir: PathBuf,
     is_running: std::sync::Arc<AtomicBool>,
 }
 
@@ -47,10 +49,12 @@ impl AutoStarter {
     pub fn new(
         db: DatabaseConnection,
         process_manager: ProcessManagerState,
+        resource_dir: PathBuf,
     ) -> Self {
         Self {
             db,
             process_manager,
+            resource_dir,
             is_running: std::sync::Arc::new(AtomicBool::new(false)),
         }
     }
@@ -140,6 +144,7 @@ impl AutoStarter {
                     &xray_record,
                     base_config.http_port,
                     base_config.socks_port,
+                    &self.resource_dir,
                 )?
             }
             ProxyType::Hysteria2 => {
@@ -155,11 +160,14 @@ impl AutoStarter {
                     &hysteria_record,
                     base_config.http_port,
                     base_config.socks_port,
+                    &self.resource_dir,
                 )?
             }
         };
 
         // Parse and start servers
+        info!("About to load shoes config and start servers");
+
         let configs = shoes::config::load_config_str(&yaml_config)?;
         let mut all_handles = Vec::new();
 

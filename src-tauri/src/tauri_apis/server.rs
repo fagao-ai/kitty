@@ -8,7 +8,8 @@ use entity::{hysteria, xray};
 use sea_orm::DatabaseConnection;
 use shoes::config::Config;
 use std::collections::HashSet;
-use tauri::State;
+use std::path::PathBuf;
+use tauri::{Manager, State};
 use tokio::task::JoinHandle;
 
 use crate::config_converter::ShoesConfigConverter;
@@ -24,14 +25,17 @@ pub struct ServerManager {
     running_servers: Vec<JoinHandle<()>>,
     /// Used ports tracking
     used_ports: HashSet<u16>,
+    /// Resource directory for geo files
+    resource_dir: PathBuf,
 }
 
 impl ServerManager {
     /// Create a new server manager.
-    pub fn new() -> Self {
+    pub fn new(resource_dir: PathBuf) -> Self {
         Self {
             running_servers: Vec::new(),
             used_ports: HashSet::new(),
+            resource_dir,
         }
     }
 
@@ -78,9 +82,11 @@ impl ServerManager {
             &xray_record,
             http_port,
             socks_port,
+            &self.resource_dir,
         )?;
 
         // Parse and start servers
+        log::info!("About to start shoes server for xray proxy");
         let configs: Vec<Config> = shoes::config::load_config_str(&yaml_config)?;
 
         for config in configs {
@@ -109,9 +115,11 @@ impl ServerManager {
             &hysteria_record,
             http_port,
             socks_port,
+            &self.resource_dir,
         )?;
 
         // Parse and start servers
+        log::info!("About to start shoes server for hysteria proxy");
         let configs: Vec<Config> = shoes::config::load_config_str(&yaml_config)?;
 
         for config in configs {
@@ -153,7 +161,7 @@ impl ServerManager {
 
 impl Default for ServerManager {
     fn default() -> Self {
-        Self::new()
+        Self::new(std::path::PathBuf::from("."))
     }
 }
 
@@ -163,11 +171,12 @@ impl Default for ServerManager {
 pub async fn start_servers_from_db(
     process_manager: &ProcessManagerState,
     db: &DatabaseConnection,
+    resource_dir: &std::path::Path,
 ) -> Result<()> {
     let _manager = process_manager.running_servers.lock().await;
 
     // Create a temporary server manager to handle the startup
-    let mut server_manager = ServerManager::new();
+    let mut server_manager = ServerManager::new(resource_dir.to_path_buf());
     server_manager.start_servers_from_config(db).await?;
 
     // Transfer the running servers to the process manager state
@@ -199,7 +208,7 @@ mod tests {
 
     #[test]
     fn test_find_available_port() {
-        let mut manager = ServerManager::new();
+        let mut manager = ServerManager::new(std::path::PathBuf::from("."));
         let port1 = manager.find_available_port().unwrap();
         let port2 = manager.find_available_port().unwrap();
         assert_ne!(port1, port2);
@@ -218,11 +227,14 @@ mod tests {
 /// to start, then launches the appropriate shoes server.
 #[tauri::command(rename_all = "snake_case")]
 pub async fn start_proxy_server<'a>(
+    app_handle: tauri::AppHandle,
     state: State<'a, DatabaseState>,
     process_manager: State<'a, ProcessManagerState>,
 ) -> CommandResult<KittyResponse<()>> {
     let db = state.get_db();
-    start_servers_from_db(&process_manager, &db).await?;
+    let resource_dir = app_handle.path().resource_dir()
+        .map_err(|e| crate::types::KittyCommandError::AnyHowError(anyhow!("Failed to get resource dir: {}", e)))?;
+    start_servers_from_db(&process_manager, &db, &resource_dir).await?;
     Ok(KittyResponse::default())
 }
 

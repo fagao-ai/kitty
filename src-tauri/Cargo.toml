@@ -24,8 +24,8 @@ build-target = "0.4.0"
 zip = "0.5"
 
 [dependencies]
-# 使用 GitHub 依赖
-shoes = { git = "https://github.com/kitty-eu-org/shoes.git", branch = "kitty", features = [ "ffi" ] }
+# 使用本地 shoes（release_max_level_debug 修改）
+shoes = { path = "/Users/hezhaozhao/myself/shoes", features = [ "ffi" ] }
 # 新增依赖以支持 shoes 的需求（版本与 shoes 匹配）
 rand = "0.9"
 rustls = "0.23"
@@ -60,14 +60,15 @@ tauri-plugin-notification = "2.0"
 reqwest = { version = "0.12", features = [ "json" ] }
 base64 = "0.22"
 tauri-plugin-clipboard-manager = "2.0"
-log = "0.4"
+log = {version="0.4", features= ["std", "max_level_debug", "release_max_level_debug"] }
 simplelog = "0.12.1"
 rustem_proxy = "0.1.5"
 serde_yaml = "0.9"
-tracing = "0.1"
+tracing = {version="0.1", features= ["std", "max_level_debug", "release_max_level_debug"] }
 tracing-subscriber = { version = "0.3", features = ["fmt", "env-filter"] }
 tracing-appender = "0.2"
 tracing-log = "0.2"
+ctor = "0.2"
 
 [workspace]
 members = [
