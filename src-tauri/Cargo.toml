@@ -1,8 +1,8 @@
 [package]
 name = "kitty"
-version = "1.0.1"
+version = "1.0.2"
 description = "A Tauri App"
-authors = [ "you" ]
+authors = ["you"]
 repository = ""
 edition = "2021"
 
@@ -10,22 +10,20 @@ edition = "2021"
 
 [lib]
 name = "kitty_lib"
-crate-type = [
-  "staticlib",
-  "cdylib",
-  "rlib"
-]
+crate-type = ["staticlib", "cdylib", "rlib"]
 
 [build-dependencies]
 tauri-build = { version = "2.0", features = [] }
-anyhow = { version = "1", features = [ "backtrace" ] }
-reqwest = { version = "0.12", features = [ "blocking" ] }
+anyhow = { version = "1", features = ["backtrace"] }
+reqwest = { version = "0.12", features = ["blocking"] }
 build-target = "0.4.0"
 zip = "0.5"
 
 [dependencies]
 # 使用 GitHub 依赖（kitty 分支，包含 release_max_level_debug）
-shoes = { git = "https://github.com/kitty-eu-org/shoes.git", branch = "kitty", features = [ "ffi" ] }
+shoes = { git = "https://github.com/kitty-eu-org/shoes.git", branch = "kitty", features = [
+  "ffi",
+] }
 # 新增依赖以支持 shoes 的需求（版本与 shoes 匹配）
 rand = "0.9"
 rustls = "0.23"
@@ -36,7 +34,7 @@ tauri = { version = "2.0", features = [
   "tray-icon",
   # "icon-ico",
   "image-ico",
-  "image-png"
+  "image-png",
   # "icon-png",
   # "devtools"
 ] }
@@ -51,32 +49,35 @@ sea-orm = { version = "0.12", features = [
 entity = { path = "./entity" }
 protocols = { path = "./protocols" }
 migration = { path = "./migration" }
-tokio = { version = "1.34.0", features = [ "macros" ] }
+tokio = { version = "1.34.0", features = ["macros"] }
 tauri-plugin-process = "2.0"
 thiserror = "1.0.50"
 anyhow = "1"
 tauri-plugin-autostart = "2.0"
 tauri-plugin-notification = "2.0"
-reqwest = { version = "0.12", features = [ "json" ] }
+reqwest = { version = "0.12", features = ["json"] }
 base64 = "0.22"
 tauri-plugin-clipboard-manager = "2.0"
-log = {version="0.4", features= ["std", "max_level_debug", "release_max_level_info"] }
+log = { version = "0.4", features = [
+  "std",
+  "max_level_debug",
+  "release_max_level_info",
+] }
 simplelog = "0.12.1"
 rustem_proxy = "0.1.5"
 serde_yaml = "0.9"
-tracing = {version="0.1", features= ["std", "max_level_debug", "release_max_level_debug"] }
+tracing = { version = "0.1", features = [
+  "std",
+  "max_level_debug",
+  "release_max_level_debug",
+] }
 tracing-subscriber = { version = "0.3", features = ["fmt", "env-filter"] }
 tracing-appender = "0.2"
 tracing-log = "0.2"
 ctor = "0.2"
 
 [workspace]
-members = [
-  ".",
-  "migration",
-  "entity",
-  "protocols"
-]
+members = [".", "migration", "entity", "protocols"]
 
 [workspace.dependencies]
 # 使用与 shoes 兼容的版本（根据 shoes Cargo.lock）
@@ -98,7 +99,7 @@ sqlx = { version = "0.7", features = ["runtime-tokio-rustls"] }
 [features]
 # this feature is used for production builds or when `devPath` points to the filesystem
 # DO NOT REMOVE!!
-custom-protocol = [ "tauri/custom-protocol" ]
+custom-protocol = ["tauri/custom-protocol"]
 
 [target."cfg(not(any(target_os = \"android\", target_os = \"ios\")))".dependencies]
 tauri-plugin-autostart = "2"
