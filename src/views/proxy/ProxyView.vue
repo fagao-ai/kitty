@@ -1,36 +1,28 @@
 <script setup lang="ts">
 import { NButton, NIcon, useMessage } from 'naive-ui'
-import { computed, h, onMounted, ref, watch } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import type { Component, VNode } from 'vue'
-import {
-  LogoDocker,
-  LogoGithub,
-  LogoGoogle,
-  LogoTwitch,
-  LogoTwitter,
-  LogoYoutube,
-} from '@vicons/ionicons5'
 import { ProxyType } from '@/types/proxy'
 import AddProxy from '@/views/proxy/modal/AddProxy.vue'
-import type { ProxyCard as Card, HysteriaProxy, XrayProxy, ProxyDelayInfo } from '@/types/proxy'
+import type { ProxyCard as Card, HysteriaProxy, ProxyDelayInfo, XrayProxy } from '@/types/proxy'
 import { proxyStore } from '@/views/proxy/store'
 import ProxyCardList from '@/components/ProxyCardList.vue'
 import {
+  getActiveProxy,
   getAllHysterias,
   getAllXraies,
   getProxyByIdAndType,
-  getActiveProxy,
   switchToProxy,
-  currentProxyDelay,
   xrayProxiedDelay,
 } from '@/apis/proxy'
 import ImportProxy from '@/views/proxy/modal/ImportProxy.vue'
 import EditProxy from '@/views/proxy/modal/EditProxy.vue'
 import HeaderBar from '@/components/HeaderBar.vue'
 import { useSubscriptionAutoUpdate } from '@/tools/autoUpdateHook'
-import { settingStore } from '@/views/setting/store'
 
+defineEmits<{
+  toggleMobileMenu: []
+}>()
 const { t } = useI18n()
 const message = useMessage()
 
@@ -54,8 +46,8 @@ const allCards = ref<Card[]>([])
 const cards = computed(() => {
   return allCards.value.map(card => ({
     ...card,
-    isActive: card.id === proxyStore.value.activeProxyId &&
-              card.type === proxyStore.value.activeProxyType,
+    isActive: card.id === proxyStore.value.activeProxyId
+      && card.type === proxyStore.value.activeProxyType,
   }))
 })
 
@@ -110,12 +102,14 @@ async function handleCardClick(id: number, proxyType: ProxyType) {
     proxyStore.value.activeProxyId = id
     proxyStore.value.activeProxyType = proxyType
     message.success('Switched successfully')
-  } catch (e: any) {
+  }
+  catch (e: any) {
     // If switching failed, refresh the proxy list as it might be stale
     await initAllProxies()
     await fetchActiveProxy()
     message.error(`Switch failed: ${e?.message || 'Unknown error'}. Proxy list refreshed.`)
-  } finally {
+  }
+  finally {
     switchingProxyId.value = null
   }
 }
@@ -141,18 +135,18 @@ function handleCancelEdit() {
   editingProxy.value = {}
 }
 
-async function handleUpdatedProxy(proxyType: ProxyType) {
+async function handleUpdatedProxy(_proxyType: ProxyType) {
   await initAllProxies()
   showEditModal.value = false
   message.success(t('common.updateSuccess'))
 }
 
 // Parse Hysteria server field (format "example.com:port")
-function parseHysteriaServer(server: string): { address: string; port: number } {
+function parseHysteriaServer(server: string): { address: string, port: number } {
   const parts = server.split(':')
   return {
     address: parts[0] || '',
-    port: parts[1] ? parseInt(parts[1], 10) : 443,
+    port: parts[1] ? Number.parseInt(parts[1], 10) : 443,
   }
 }
 
@@ -161,10 +155,6 @@ async function testAllProxiesSpeed() {
   isTestingSpeed.value = true
   try {
     const delayInfos: ProxyDelayInfo[] = []
-
-    console.log('开始测速，总卡片数:', allCards.value.length)
-    console.log('xray 数据:', xrayProxiesData.value.length)
-    console.log('hysteria 数据:', hysteriaProxiesData.value.length)
 
     for (const card of allCards.value) {
       if (card.type === ProxyType.Xray) {
@@ -177,7 +167,8 @@ async function testAllProxiesSpeed() {
             proxy_type: 'Xray',
           })
         }
-      } else {
+      }
+      else {
         const hysteria = hysteriaProxiesData.value.find(p => p.id === card.id)
         if (hysteria) {
           const { address, port } = parseHysteriaServer(hysteria.server)
@@ -191,85 +182,24 @@ async function testAllProxiesSpeed() {
       }
     }
 
-    console.log('准备测速的节点:', delayInfos)
-
     const delayResults = await xrayProxiedDelay(delayInfos)
-    console.log('测速结果:', delayResults)
 
-    allCards.value = allCards.value.map(card => {
+    allCards.value = allCards.value.map((card) => {
       const delay = delayResults[card.id] ?? delayResults[String(card.id)] ?? 9999
       return { ...card, delay }
     })
 
+    // Sort cards by delay in ascending order (smallest delay first)
+    allCards.value.sort((a, b) => a.delay - b.delay)
+
     message.success(`测速完成，测试了 ${delayInfos.length} 个节点`)
-  } catch (e: any) {
+  }
+  catch (e: any) {
     message.error(`测速失败: ${e?.message || '未知错误'}`)
-  } finally {
+  }
+  finally {
     isTestingSpeed.value = false
   }
-}
-
-// Speed test
-function renderIcon(icon: Component) {
-  return () => {
-    return h(NIcon, null, {
-      default: () => h(icon),
-    })
-  }
-}
-const speeds = ref<{ label: string, key: string, url?: string, icon?: () => VNode, delay?: number }[]>([
-  {
-    label: '测速所有节点',
-    key: 'testAll',
-  },
-  {
-    label: 'Google',
-    key: 'Google',
-    url: 'https://www.google.com',
-    icon: renderIcon(LogoGoogle),
-  },
-  {
-    label: 'Github',
-    key: 'Github',
-    url: 'https://www.github.com',
-    icon: renderIcon(LogoGithub),
-  },
-  {
-    label: 'Docker',
-    key: 'Docker',
-    url: 'https://registry-1.docker.io/v2/',
-    icon: renderIcon(LogoDocker),
-  },
-  {
-    label: 'Youtube',
-    key: 'Youtube',
-    url: 'https://www.youtube',
-    icon: renderIcon(LogoYoutube),
-  },
-  {
-    label: 'X',
-    key: 'X',
-    url: 'https://www.x.com',
-    icon: renderIcon(LogoTwitter),
-  },
-  {
-    label: 'Twitch',
-    key: 'Twitch',
-    url: 'https://www.twitch.tv',
-    icon: renderIcon(LogoTwitch),
-  },
-])
-
-async function onShowSpeed() {
-  const proxyUrl = `http://127.0.0.1:${settingStore.value.port}`
-  speeds.value.forEach((item) => {
-    if (item.url) {
-      currentProxyDelay(proxyUrl, item.url).then((delay) => {
-        item.delay = delay
-        item.label = `${delay}ms`
-      })
-    }
-  })
 }
 
 // Subscription update logic
@@ -278,7 +208,8 @@ const { updateStatus } = useSubscriptionAutoUpdate()
 watch(updateStatus, async (newStatus, oldStatus) => {
   if (oldStatus === void 0 && newStatus === 'running') {
     await initAllProxies()
-  } else if (oldStatus === 'running' && newStatus === 'stop') {
+  }
+  else if (oldStatus === 'running' && newStatus === 'stop') {
     await initAllProxies()
   }
 }, { immediate: true })
@@ -292,11 +223,11 @@ onMounted(async () => {
 
 <template>
   <div class="flex flex-col w-full h-full gap-y-4">
-    <header-bar @toggle-mobile-menu="$emit('toggle-mobile-menu')">
+    <header-bar @toggle-mobile-menu="$emit('toggleMobileMenu')">
       <template #mobile-menu-button>
         <n-icon size="24">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M3 12h18M3 6h18M3 18h18" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M3 12h18M3 6h18M3 18h18" stroke-linecap="round" stroke-linejoin="round" />
           </svg>
         </n-icon>
       </template>
@@ -324,7 +255,7 @@ onMounted(async () => {
         >
           <n-icon>
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M12 5v14M5 12h14" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M12 5v14M5 12h14" stroke-linecap="round" stroke-linejoin="round" />
             </svg>
           </n-icon>
         </n-button>
