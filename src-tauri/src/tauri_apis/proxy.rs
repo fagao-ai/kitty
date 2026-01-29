@@ -3,11 +3,11 @@
 //! This module provides Tauri commands for managing proxy records.
 //! The actual proxy serving is done via the shoes library.
 
-use anyhow::{anyhow, Result};
+use anyhow::anyhow;
 use entity::{hysteria, xray};
-use sea_orm::DatabaseConnection;
 use serde::{Deserialize, Serialize};
 use serde_json;
+use std::str::FromStr;
 use tauri::State;
 
 use crate::proxy::delay::{kitty_proxies_delay, ProxyInfo};
@@ -216,7 +216,102 @@ pub async fn refresh_subscription<'a>(
     record_ids: Option<Vec<i32>>,
 ) -> CommandResult<KittyResponse<()>> {
     let db = db_state.get_db();
-    // TODO: Implement subscription refresh logic
+
+    // Fetch subscriptions to refresh
+    let subscriptions = if let Some(ids) = record_ids {
+        entity::subscribe::Model::fetch_by_ids(&db, ids).await?
+    } else {
+        entity::subscribe::Model::fetch_all(&db).await?
+    };
+
+    if subscriptions.is_empty() {
+        return Ok(KittyResponse::default());
+    }
+
+    // Refresh each subscription
+    use sea_orm::{ModelTrait, TransactionTrait};
+    for subscribe_item in subscriptions {
+        // Download new subscription content
+        let subscriptions_result =
+            crate::apis::parse_subscription::download_subcriptions(&subscribe_item.url).await;
+
+        let new_subscriptions = match subscriptions_result {
+            Ok(subs) => subs,
+            Err(e) => {
+                log::warn!(
+                    "Failed to download subscription (id: {}): {}",
+                    subscribe_item.id,
+                    e
+                );
+                continue; // Skip this subscription and continue with others
+            }
+        };
+
+        // Start transaction for this subscription
+        let txn = match db.begin().await {
+            Ok(t) => t,
+            Err(e) => {
+                log::error!(
+                    "Failed to start transaction for subscription (id: {}): {}",
+                    subscribe_item.id,
+                    e
+                );
+                continue;
+            }
+        };
+
+        // Get and delete old xray records
+        let old_xray_records = subscribe_item
+            .find_related(xray::Entity)
+            .all(&db)
+            .await
+            .unwrap_or_default();
+
+        let xray_ids: Vec<i32> = old_xray_records.iter().map(|x| x.id).collect();
+        if !xray_ids.is_empty() {
+            if let Err(e) = xray::Model::delete_by_ids(&txn, xray_ids).await {
+                log::error!(
+                    "Failed to delete old xray records for subscription (id: {}): {}",
+                    subscribe_item.id,
+                    e
+                );
+                continue;
+            }
+        }
+
+        // Parse and insert new xray records
+        let mut xray_models = Vec::new();
+        for line in new_subscriptions {
+            if !line.is_xray() {
+                continue;
+            }
+            if let Ok(mut xray_model) = xray::Model::from_str(&line.line.trim()) {
+                xray_model.subscribe_id = Some(subscribe_item.id);
+                xray_models.push(xray_model);
+            }
+        }
+
+        if !xray_models.is_empty() {
+            if let Err(e) = xray::Model::insert_many(&txn, xray_models).await {
+                log::error!(
+                    "Failed to insert new xray records for subscription (id: {}): {}",
+                    subscribe_item.id,
+                    e
+                );
+                continue;
+            }
+        }
+
+        // Commit transaction
+        if let Err(e) = txn.commit().await {
+            log::error!(
+                "Failed to commit transaction for subscription (id: {}): {}",
+                subscribe_item.id,
+                e
+            );
+        }
+    }
+
     Ok(KittyResponse::default())
 }
 
@@ -227,7 +322,62 @@ pub async fn import_subscription<'a>(
     url: String,
 ) -> CommandResult<KittyResponse<()>> {
     let db = db_state.get_db();
-    // TODO: Implement subscription import logic
+
+    // Validate URL format - must be http/https
+    if !url.starts_with("http://") && !url.starts_with("https://") {
+        return Err(anyhow!("Only HTTP/HTTPS subscription URLs are supported").into());
+    }
+
+    // Check if subscription URL already exists
+    use sea_orm::EntityTrait;
+    use sea_orm::ColumnTrait;
+    use sea_orm::QueryFilter;
+    let existing = entity::subscribe::Entity::find()
+        .filter(entity::subscribe::Column::Url.eq(&url))
+        .one(&db)
+        .await?;
+
+    if existing.is_some() {
+        return Err(anyhow!("Subscription URL already exists").into());
+    }
+
+    // Download and parse subscription
+    let subscriptions = crate::apis::parse_subscription::download_subcriptions(&url).await?;
+
+    // Start transaction
+    use sea_orm::TransactionTrait;
+    let txn = db.begin().await?;
+
+    // Create subscription record
+    use sea_orm::ActiveModelTrait;
+    use sea_orm::Set;
+    let subscribe = entity::subscribe::ActiveModel {
+        url: Set(url.clone()),
+        ..Default::default()
+    };
+    let subscribe_record = subscribe.insert(&txn).await?;
+
+    // Parse and insert xray records
+    let mut xray_models = Vec::new();
+    for line in subscriptions {
+        if !line.is_xray() {
+            continue;
+        }
+        if let Ok(mut xray_model) = xray::Model::from_str(&line.line.trim()) {
+            xray_model.subscribe_id = Some(subscribe_record.id);
+            xray_models.push(xray_model);
+        }
+    }
+
+    if xray_models.is_empty() {
+        return Err(anyhow!("No valid xray proxies found in subscription").into());
+    }
+
+    xray::Model::insert_many(&txn, xray_models).await?;
+
+    // Commit transaction
+    txn.commit().await?;
+
     Ok(KittyResponse::default())
 }
 
