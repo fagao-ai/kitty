@@ -218,6 +218,8 @@ watch(updateStatus, async (newStatus, oldStatus) => {
 onMounted(async () => {
   await initAllProxies()
   await fetchActiveProxy()
+  // Auto test speed on initial load
+  await testAllProxiesSpeed()
 })
 </script>
 
