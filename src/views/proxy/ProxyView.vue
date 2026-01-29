@@ -152,6 +152,10 @@ function parseHysteriaServer(server: string): { address: string, port: number } 
 
 // Batch test all proxies speed
 async function testAllProxiesSpeed() {
+  // Prevent duplicate clicks
+  if (isTestingSpeed.value)
+    return
+
   isTestingSpeed.value = true
   try {
     const delayInfos: ProxyDelayInfo[] = []
@@ -306,7 +310,14 @@ onMounted(async () => {
       class="z-50"
       @click="testAllProxiesSpeed"
     >
-      <n-icon class="text-accent text-2xl">
+      <!-- Loading spinner icon -->
+      <n-icon v-if="isTestingSpeed" class="text-accent text-2xl speed-test-loading">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+      </n-icon>
+      <!-- Lightning bolt icon -->
+      <n-icon v-else class="text-accent text-2xl">
         <svg
           xmlns="http://www.w3.org/2000/svg"
           xmlns:xlink="http://www.w3.org/1999/xlink"
@@ -326,4 +337,18 @@ onMounted(async () => {
 
 <style lang="scss" scoped>
 /* Removed radio button styles */
+
+/* Speed test loading animation */
+.speed-test-loading {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
 </style>
