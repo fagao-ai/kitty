@@ -6,6 +6,7 @@ mod m20231223_035153_create_xray;
 mod m20240205_054639_add_rules;
 mod m20241126_062352_add_lang_col;
 mod m20260125_202910_add_log_level;
+mod m20260130_120000_add_subscription_fields;
 
 pub struct Migrator;
 
@@ -19,6 +20,7 @@ impl MigratorTrait for Migrator {
             Box::new(m20240205_054639_add_rules::Migration),
             Box::new(m20241126_062352_add_lang_col::Migration),
             Box::new(m20260125_202910_add_log_level::Migration),
+            Box::new(m20260130_120000_add_subscription_fields::Migration),
         ]
     }
 }
