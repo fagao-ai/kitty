@@ -27,15 +27,18 @@ pub struct ServerManager {
     used_ports: HashSet<u16>,
     /// Resource directory for geo files
     resource_dir: PathBuf,
+    /// Path to custom rules JSON file
+    custom_rules_path: PathBuf,
 }
 
 impl ServerManager {
     /// Create a new server manager.
-    pub fn new(resource_dir: PathBuf) -> Self {
+    pub fn new(resource_dir: PathBuf, custom_rules_path: PathBuf) -> Self {
         Self {
             running_servers: Vec::new(),
             used_ports: HashSet::new(),
             resource_dir,
+            custom_rules_path,
         }
     }
 
@@ -78,12 +81,20 @@ impl ServerManager {
         let (http_port, socks_port) = self.get_available_ports()?;
 
         // Generate shoes YAML config for xray
+        log::info!("Custom rules path: {}", self.custom_rules_path.display());
+        log::info!("Custom rules file exists: {}", self.custom_rules_path.exists());
         let yaml_config = ShoesConfigConverter::xray_to_socks_http_yaml(
             &xray_record,
             http_port,
             socks_port,
             &self.resource_dir,
+            Some(&self.custom_rules_path),
         )?;
+
+        // Print YAML config to stdout for debugging
+        println!("=== Generated YAML config ===");
+        println!("{}", yaml_config);
+        println!("=== End of YAML config ===");
 
         // Parse and start servers
         log::info!("About to start shoes server for xray proxy");
@@ -116,6 +127,7 @@ impl ServerManager {
             http_port,
             socks_port,
             &self.resource_dir,
+            Some(&self.custom_rules_path),
         )?;
 
         // Parse and start servers
@@ -161,7 +173,10 @@ impl ServerManager {
 
 impl Default for ServerManager {
     fn default() -> Self {
-        Self::new(std::path::PathBuf::from("."))
+        Self::new(
+            std::path::PathBuf::from("."),
+            std::path::PathBuf::from("custom_rules.json"),
+        )
     }
 }
 
@@ -172,11 +187,12 @@ pub async fn start_servers_from_db(
     process_manager: &ProcessManagerState,
     db: &DatabaseConnection,
     resource_dir: &std::path::Path,
+    custom_rules_path: &std::path::Path,
 ) -> Result<()> {
     let _manager = process_manager.running_servers.lock().await;
 
     // Create a temporary server manager to handle the startup
-    let mut server_manager = ServerManager::new(resource_dir.to_path_buf());
+    let mut server_manager = ServerManager::new(resource_dir.to_path_buf(), custom_rules_path.to_path_buf());
     server_manager.start_servers_from_config(db).await?;
 
     // Transfer the running servers to the process manager state
@@ -208,7 +224,10 @@ mod tests {
 
     #[test]
     fn test_find_available_port() {
-        let mut manager = ServerManager::new(std::path::PathBuf::from("."));
+        let mut manager = ServerManager::new(
+            std::path::PathBuf::from("."),
+            std::path::PathBuf::from("custom_rules.json"),
+        );
         let port1 = manager.find_available_port().unwrap();
         let port2 = manager.find_available_port().unwrap();
         assert_ne!(port1, port2);
@@ -234,7 +253,12 @@ pub async fn start_proxy_server<'a>(
     let db = state.get_db();
     let resource_dir = app_handle.path().resource_dir()
         .map_err(|e| crate::types::KittyCommandError::AnyHowError(anyhow!("Failed to get resource dir: {}", e)))?;
-    start_servers_from_db(&process_manager, &db, &resource_dir).await?;
+    let custom_rules_path = app_handle.path().app_data_dir()
+        .map_err(|e| crate::types::KittyCommandError::AnyHowError(anyhow!("Failed to get app data dir: {}", e)))?
+        .join("custom_rules.json");
+    log::info!("Custom rules file path: {}", custom_rules_path.display());
+    log::info!("Custom rules file exists: {}", custom_rules_path.exists());
+    start_servers_from_db(&process_manager, &db, &resource_dir, &custom_rules_path).await?;
     Ok(KittyResponse::default())
 }
 

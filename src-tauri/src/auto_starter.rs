@@ -41,6 +41,7 @@ pub struct AutoStarter {
     db: DatabaseConnection,
     process_manager: ProcessManagerState,
     resource_dir: PathBuf,
+    custom_rules_path: PathBuf,
     is_running: std::sync::Arc<AtomicBool>,
 }
 
@@ -50,11 +51,13 @@ impl AutoStarter {
         db: DatabaseConnection,
         process_manager: ProcessManagerState,
         resource_dir: PathBuf,
+        custom_rules_path: PathBuf,
     ) -> Self {
         Self {
             db,
             process_manager,
             resource_dir,
+            custom_rules_path,
             is_running: std::sync::Arc::new(AtomicBool::new(false)),
         }
     }
@@ -140,12 +143,20 @@ impl AutoStarter {
                     .await?
                     .ok_or_else(|| anyhow!("Base config not found"))?;
 
-                ShoesConfigConverter::xray_to_socks_http_yaml(
+                let yaml_config = ShoesConfigConverter::xray_to_socks_http_yaml(
                     &xray_record,
                     base_config.http_port,
                     base_config.socks_port,
                     &self.resource_dir,
-                )?
+                    Some(&self.custom_rules_path),
+                )?;
+
+                // Print YAML config for debugging
+                println!("=== Auto-start Xray YAML config ===");
+                println!("{}", yaml_config);
+                println!("=== End of YAML config ===");
+
+                yaml_config
             }
             ProxyType::Hysteria2 => {
                 let hysteria_record = hysteria::Model::get_by_id(&self.db, id as i32)
@@ -156,12 +167,20 @@ impl AutoStarter {
                     .await?
                     .ok_or_else(|| anyhow!("Base config not found"))?;
 
-                ShoesConfigConverter::hysteria_to_socks_http_yaml(
+                let yaml_config = ShoesConfigConverter::hysteria_to_socks_http_yaml(
                     &hysteria_record,
                     base_config.http_port,
                     base_config.socks_port,
                     &self.resource_dir,
-                )?
+                    Some(&self.custom_rules_path),
+                )?;
+
+                // Print YAML config for debugging
+                println!("=== Auto-start Hysteria YAML config ===");
+                println!("{}", yaml_config);
+                println!("=== End of YAML config ===");
+
+                yaml_config
             }
         };
 

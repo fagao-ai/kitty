@@ -19,9 +19,9 @@ interface RulesForm {
 
 const defaultRule: ProxyRule = {
   id: 0,
-  ruleAction: 'direct',
+  action: 'direct',
   ruleType: 'domain_suffix',
-  rule: '',
+  pattern: '',
 }
 
 const defaultRulesFrom: RulesForm = {
@@ -34,11 +34,9 @@ function handleAddRule() {
 }
 
 async function handleRemoveRule(index: number) {
-  const id = rulesForm.rules[index].id
-  if (id) {
-    await deleteRule(id)
-    message.success(t('common.deleteSuccess'))
-  }
+  // Backend expects 1-based index
+  await deleteRule(index + 1)
+  message.success(t('common.deleteSuccess'))
 
   rulesForm.rules.splice(index, 1)
 
@@ -47,20 +45,16 @@ async function handleRemoveRule(index: number) {
 }
 
 async function handleUpdateRule(rule: ProxyRule) {
-  if (!rule.rule)
+  if (!rule.pattern)
     return
 
-  if (rule.ruleType === 'cidr' && !CIDR.isValidCIDR(rule.rule)) {
+  if (rule.ruleType === 'cidr' && !CIDR.isValidCIDR(rule.pattern)) {
     message.error(t('rule.invalidCIDR'), { duration: 5000 })
     return
   }
 
-  if (!rule.id) {
-    await createRule(rule)
-    message.success(t('common.createSuccess'))
-    return
-  }
-  await updateRule({ id: rule.id, rule: rule.rule, ruleAction: rule.ruleAction, ruleType: rule.ruleType })
+  // Save all rules to file (replaces entire file)
+  await updateRule(rulesForm.rules)
   message.success(t('common.createSuccess'))
 }
 
@@ -132,7 +126,7 @@ initRules()
           >
             <div class="flex gap-x-4 w-full">
               <n-select
-                v-model:value="item.ruleAction"
+                v-model:value="item.action"
                 :options="[{ label: 'DIRECT', value: 'direct' }, { label: 'PROXY', value: 'proxy' }, { label: 'REJECT', value: 'reject' }]"
                 @blur="handleUpdateRule(item)"
               />
@@ -142,7 +136,7 @@ initRules()
                 @blur="handleUpdateRule(item)"
               />
               <n-input
-                v-model:value="item.rule"
+                v-model:value="item.pattern"
                 @blur="handleUpdateRule(item)"
               />
               <n-button

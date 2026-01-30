@@ -1,11 +1,12 @@
 use crate::apis::common_apis::CommonAPI;
 use crate::proxy::delay::kitty_current_proxy_delay;
+use crate::rules::Rule;
 use crate::state::DatabaseState;
 use crate::types::{CommandResult, KittyResponse};
 use entity::base_config;
-use entity::rules;
 use sea_orm::DatabaseConnection;
-use tauri::State;
+use std::path::PathBuf;
+use tauri::{Manager, State};
 use tauri_plugin_clipboard_manager::ClipboardExt;
 use tracing_subscriber::EnvFilter;
 
@@ -51,45 +52,53 @@ pub async fn update_base_config<'a>(
     Ok(res)
 }
 
+/// Get the rules file path from the app data directory
+fn get_rules_path<R: Runtime>(app_handle: &AppHandle<R>) -> PathBuf {
+    app_handle
+        .path()
+        .app_data_dir()
+        .unwrap_or_else(|_| PathBuf::from("."))
+        .join("custom_rules.json")
+}
+
 #[tauri::command(rename_all = "snake_case")]
-pub async fn add_rules<'a>(
-    state: State<'a, DatabaseState>,
-    records: Vec<rules::Model>,
+pub async fn add_rules<'a, R: Runtime>(
+    app_handle: AppHandle<R>,
+    records: Vec<Rule>,
 ) -> CommandResult<KittyResponse<()>> {
-    let db = state.get_db();
-    let _ = CommonAPI::add_rules(&db, records).await?;
+    let rules_path = get_rules_path(&app_handle);
+    let _ = CommonAPI::add_rules(rules_path, records).await?;
     Ok(KittyResponse::default())
 }
 
 #[tauri::command(rename_all = "snake_case")]
-pub async fn query_rules<'a>(
-    state: State<'a, DatabaseState>,
-) -> CommandResult<KittyResponse<Vec<rules::Model>>> {
-    let db = state.get_db();
-    let res = CommonAPI::query_rules(&db).await?;
+pub async fn query_rules<'a, R: Runtime>(
+    app_handle: AppHandle<R>,
+) -> CommandResult<KittyResponse<Vec<Rule>>> {
+    let rules_path = get_rules_path(&app_handle);
+    let res = CommonAPI::query_rules(rules_path).await?;
     Ok(res)
 }
 
 #[tauri::command(rename_all = "snake_case")]
-pub async fn delete_rules<'a>(
-    state: State<'a, DatabaseState>,
-    ids: Vec<i32>,
+pub async fn delete_rules<'a, R: Runtime>(
+    app_handle: AppHandle<R>,
+    ids: Vec<usize>,
 ) -> CommandResult<KittyResponse<()>> {
-    let db = state.get_db();
-    let _ = CommonAPI::delete_rules(&db, ids).await?;
+    let rules_path = get_rules_path(&app_handle);
+    let _ = CommonAPI::delete_rules(rules_path, ids).await?;
     Ok(KittyResponse::default())
 }
 
 #[tauri::command(rename_all = "snake_case")]
-pub async fn update_rules_item<'a>(
-    state: State<'a, DatabaseState>,
-    records: Vec<rules::Model>,
+pub async fn update_rules_item<'a, R: Runtime>(
+    app_handle: AppHandle<R>,
+    records: Vec<Rule>,
 ) -> CommandResult<KittyResponse<()>> {
-    let db = state.get_db();
-    let delete_record_ids: Vec<i32> = records.iter().map(|x| x.id).collect();
-    let _ = CommonAPI::delete_rules(&db, delete_record_ids).await?;
-    let res = CommonAPI::add_rules(&db, records).await?;
-    Ok(res)
+    let rules_path = get_rules_path(&app_handle);
+    // Write all rules to file (replaces entire file)
+    crate::rules::write_rules_file(&rules_path, &records)?;
+    Ok(KittyResponse::default())
 }
 
 #[tauri::command(rename_all = "snake_case")]

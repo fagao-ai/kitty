@@ -18,6 +18,7 @@ mod apis;
 mod auto_starter;
 mod config_converter;
 mod proxy;
+mod rules;
 mod state;
 mod tauri_apis;
 mod tauri_event_handler;

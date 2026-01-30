@@ -2,8 +2,8 @@ import { camelizeKeys, decamelizeKeys } from 'humps'
 import type { ProxyRule } from '@/types/rule'
 import { invoke } from '@/utils/invoke'
 
-export async function updateRule(rule: ProxyRule) {
-  await invoke('update_rules_item', { records: [decamelizeKeys(rule)] })
+export async function updateRule(rules: ProxyRule[]) {
+  await invoke('update_rules_item', { records: rules.map(r => decamelizeKeys(r)) })
 }
 
 export async function getAllRules() {

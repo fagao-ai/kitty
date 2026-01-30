@@ -93,6 +93,11 @@ pub async fn start_all_servers<'a>(
     let resource_dir = app_handle.path().resource_dir()
         .map_err(|e| KittyCommandError::AnyHowError(anyhow!("Failed to get resource dir: {}", e)))?;
 
+    // Get custom rules path
+    let custom_rules_path = app_handle.path().app_data_dir()
+        .map_err(|e| KittyCommandError::AnyHowError(anyhow!("Failed to get app data dir: {}", e)))?
+        .join("custom_rules.json");
+
     let record: base_config::Model = base_config::Model::first(&db).await.unwrap().unwrap();
     let http_port = record.http_port;
     let socks_port = record.socks_port;
@@ -113,6 +118,7 @@ pub async fn start_all_servers<'a>(
             http_port,
             socks_port,
             &resource_dir,
+            Some(&custom_rules_path),
         )
         .map_err(|e| KittyCommandError::AnyHowError(anyhow!("Failed to convert hysteria config: {}", e)))?;
 
@@ -140,6 +146,7 @@ pub async fn start_all_servers<'a>(
             http_port,
             socks_port,
             &resource_dir,
+            Some(&custom_rules_path),
         )
         .map_err(|e| KittyCommandError::AnyHowError(anyhow!("Failed to convert xray config: {}", e)))?;
 
@@ -251,6 +258,11 @@ pub async fn switch_to_proxy<'a>(
     let http_port = record.http_port;
     let socks_port = record.socks_port;
 
+    // Get custom rules path
+    let custom_rules_path = app_handle.path().app_data_dir()
+        .map_err(|e| KittyCommandError::AnyHowError(anyhow!("Failed to get app data dir: {}", e)))?
+        .join("custom_rules.json");
+
     let yaml_config = if proxy_type == "hysteria" {
         let hysteria_record = hysteria_entity::Model::get_by_id(&db, proxy_id as i32).await?
             .ok_or_else(|| anyhow!("Hysteria record {} not found", proxy_id))?;
@@ -260,6 +272,7 @@ pub async fn switch_to_proxy<'a>(
             http_port,
             socks_port,
             &resource_dir,
+            Some(&custom_rules_path),
         )?
     } else {
         let xray_record = xray_entity::Model::get_by_id(&db, proxy_id as i32).await?
@@ -270,6 +283,7 @@ pub async fn switch_to_proxy<'a>(
             http_port,
             socks_port,
             &resource_dir,
+            Some(&custom_rules_path),
         )?
     };
 

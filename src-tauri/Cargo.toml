@@ -20,10 +20,12 @@ build-target = "0.4.0"
 zip = "0.5"
 
 [dependencies]
-# 使用 GitHub 依赖（kitty 分支，包含 release_max_level_debug）
-shoes = { git = "https://github.com/kitty-eu-org/shoes.git", branch = "kitty", features = [
+# shoes 使用 GitHub 依赖
+shoes = { git = "https://github.com/kitty-eu-org/shoes", branch = "kitty", features = [
   "ffi",
 ] }
+# GitHub v2ray-router 依赖
+v2ray-router = { git = "https://github.com/fagao-ai/v2ray-router" }
 # 新增依赖以支持 shoes 的需求（版本与 shoes 匹配）
 rand = "0.9"
 rustls = "0.23"

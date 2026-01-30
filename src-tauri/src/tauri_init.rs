@@ -1,4 +1,4 @@
-use log::trace;
+use log::{trace, info};
 use migration::{Migrator, MigratorTrait};
 use sea_orm::{ConnectOptions, Database, DatabaseConnection, DbErr};
 use std::path::PathBuf;
@@ -37,10 +37,27 @@ fn setup_db<'a>(handle: &tauri::AppHandle) -> Result<(), Box<dyn std::error::Err
     }
     trace!("app_dir: {:?}", app_dir);
     let app_state: State<DatabaseState> = handle.state();
+
+    // Get rules file path for migration
+    let rules_path = handle
+        .path()
+        .app_data_dir()
+        .map_err(|e| anyhow::anyhow!("Failed to get app data dir: {}", e))?;
+    if !rules_path.exists() {
+        fs::create_dir_all(&rules_path)?;
+    }
+    let rules_path = rules_path.join("custom_rules.json");
+
     let db = tauri::async_runtime::block_on(async move {
         let db = init_db(app_dir).await;
         match db {
-            Ok(db) => db,
+            Ok(db) => {
+                // Migrate rules from database to file if needed
+                if let Err(e) = crate::apis::common_apis::CommonAPI::migrate_rules_from_db_to_file(&db, rules_path).await {
+                    log::warn!("Failed to migrate rules from database: {}", e);
+                }
+                db
+            },
             Err(err) => {
                 panic!("Error: {}", err);
             }
@@ -186,6 +203,13 @@ fn setup_auto_start_fastest<'a>(handle: &tauri::AppHandle) -> Result<(), Box<dyn
             Box::new(e) as Box<dyn std::error::Error>
         })?;
 
+    let custom_rules_path = handle.path().app_data_dir()
+        .map_err(|e| {
+            log::error!("Failed to get app data dir: {}", e);
+            Box::new(e) as Box<dyn std::error::Error>
+        })?
+        .join("custom_rules.json");
+
     // Auto-start fastest is enabled by default
     tauri::async_runtime::spawn(async move {
         // CRITICAL: Increase delay to ensure tracing subscriber is fully initialized
@@ -194,8 +218,9 @@ fn setup_auto_start_fastest<'a>(handle: &tauri::AppHandle) -> Result<(), Box<dyn
         tokio::time::sleep(tokio::time::Duration::from_millis(500)).await;
 
         info!("Auto-start fastest: beginning delay measurement");
+        info!("Custom rules path: {}", custom_rules_path.display());
 
-        let auto_starter = AutoStarter::new(db, process_manager_clone, resource_dir);
+        let auto_starter = AutoStarter::new(db, process_manager_clone, resource_dir, custom_rules_path);
         match auto_starter.start_fastest_server().await {
             Ok(result) => {
                 info!("Auto-start completed: {:?}", result);

@@ -4,7 +4,7 @@ export type RuleType = 'domain_suffix' | 'domain_preffix' | 'full_domain' | 'cid
 
 export interface ProxyRule {
   id?: number
-  ruleAction: RuleAction
+  action: RuleAction
   ruleType: RuleType
-  rule: string
+  pattern: string
 }

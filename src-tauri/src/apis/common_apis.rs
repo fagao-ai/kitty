@@ -1,11 +1,62 @@
+use crate::rules::{read_rules_file, write_rules_file, Rule, RuleType as FileRuleType};
 use crate::types::{CommandResult, KittyResponse};
 use anyhow::Result;
 use entity::{base_config, rules};
 use sea_orm::ConnectionTrait;
+use std::path::PathBuf;
 
 pub struct CommonAPI;
 
 impl CommonAPI {
+    /// Migrate rules from database to file
+    /// This should be called once during startup to migrate existing rules
+    pub async fn migrate_rules_from_db_to_file<C>(db: &C, rules_path: PathBuf) -> Result<()>
+    where
+        C: ConnectionTrait,
+    {
+        // Check if file already exists
+        if rules_path.exists() {
+            log::info!("Rules file already exists at {}, skipping migration", rules_path.display());
+            return Ok(());
+        }
+
+        // Fetch rules from database
+        let db_rules = rules::Model::fetch_all(db).await?;
+        if db_rules.is_empty() {
+            log::info!("No rules found in database, nothing to migrate");
+            return Ok(());
+        }
+
+        // Convert to file format
+        let file_rules: Vec<Rule> = db_rules
+            .into_iter()
+            .map(|r| Rule {
+                pattern: r.rule,
+                rule_type: match r.rule_type {
+                    rules::RuleType::DomainSuffix => FileRuleType::DomainSuffix,
+                    rules::RuleType::DomainPreffix => FileRuleType::DomainPrefix,
+                    rules::RuleType::FullDomain => FileRuleType::FullDomain,
+                    rules::RuleType::Cidr => FileRuleType::Cidr,
+                    rules::RuleType::DomainRoot => FileRuleType::DomainRoot,
+                },
+                action: match r.rule_action {
+                    rules::RuleAction::Proxy => crate::rules::RuleAction::Proxy,
+                    rules::RuleAction::Direct => crate::rules::RuleAction::Direct,
+                    rules::RuleAction::Reject => crate::rules::RuleAction::Reject,
+                },
+            })
+            .collect();
+
+        // Write to file
+        write_rules_file(&rules_path, &file_rules)?;
+        log::info!(
+            "Migrated {} rules from database to {}",
+            file_rules.len(),
+            rules_path.display()
+        );
+
+        Ok(())
+    }
     #[cfg(any(target_os = "macos", target_os = "linux", target_os = "windows"))]
     pub async fn copy_proxy_env<C>(db: &C) -> Result<String>
     where
@@ -66,30 +117,30 @@ impl CommonAPI {
         ))
     }
 
-    pub async fn add_rules<C>(
-        db: &C,
-        records: Vec<rules::Model>,
-    ) -> CommandResult<KittyResponse<()>>
-    where
-        C: ConnectionTrait,
-    {
-        let _ = rules::Model::insert_many(db, records).await?;
+    pub async fn add_rules(rules_path: PathBuf, records: Vec<Rule>) -> CommandResult<KittyResponse<()>> {
+        let mut existing_rules = read_rules_file(&rules_path).unwrap_or_default();
+        existing_rules.extend(records);
+        write_rules_file(&rules_path, &existing_rules)?;
         Ok(KittyResponse::default())
     }
 
-    pub async fn query_rules<C>(db: &C) -> CommandResult<KittyResponse<Vec<rules::Model>>>
-    where
-        C: ConnectionTrait,
-    {
-        let res = rules::Model::fetch_all(db).await?;
-        Ok(KittyResponse::from_data(res))
+    pub async fn query_rules(rules_path: PathBuf) -> CommandResult<KittyResponse<Vec<Rule>>> {
+        let rules = read_rules_file(&rules_path).unwrap_or_default();
+        Ok(KittyResponse::from_data(rules))
     }
 
-    pub async fn delete_rules<C>(db: &C, ids: Vec<i32>) -> CommandResult<KittyResponse<()>>
-    where
-        C: ConnectionTrait,
-    {
-        let _ = rules::Model::delete_by_ids(db, ids).await?;
+    pub async fn delete_rules(rules_path: PathBuf, ids: Vec<usize>) -> CommandResult<KittyResponse<()>> {
+        let mut rules = read_rules_file(&rules_path).unwrap_or_default();
+        // Remove rules by index (ids are 1-based from frontend)
+        // Sort in descending order to avoid index shifting issues
+        let mut sorted_ids = ids;
+        sorted_ids.sort_by(|a, b| b.cmp(a));
+        for idx in sorted_ids {
+            if idx > 0 && idx <= rules.len() {
+                rules.remove(idx - 1);
+            }
+        }
+        write_rules_file(&rules_path, &rules)?;
         Ok(KittyResponse::default())
     }
 }

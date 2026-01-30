@@ -210,6 +210,9 @@ pub struct GeoRoutingConfig {
     /// Path to GeoSite.dat file
     #[serde(skip_serializing_if = "Option::is_none")]
     pub geosite_file: Option<String>,
+    /// Path to custom rules JSON file
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub custom_rules_file: Option<String>,
 }
 
 impl GeoRoutingConfig {
@@ -222,7 +225,14 @@ impl GeoRoutingConfig {
         Self {
             geoip_file: Some(base_dir.join("kitty_geoip.dat").to_string_lossy().to_string()),
             geosite_file: Some(base_dir.join("kitty_geosite.dat").to_string_lossy().to_string()),
+            custom_rules_file: None, // 将在服务器启动时设置
         }
+    }
+
+    /// Set the custom rules file path
+    pub fn with_custom_rules_file(mut self, path: String) -> Self {
+        self.custom_rules_file = Some(path);
+        self
     }
 }
 
@@ -236,6 +246,7 @@ impl ShoesConfigConverter {
         http_port: u16,
         socks_port: u16,
         resource_dir: &std::path::Path,
+        custom_rules_path: Option<&std::path::Path>,
     ) -> Result<String> {
         // Build the Hysteria2 client protocol
         let client_protocol = ClientProtocol::Hysteria2 {
@@ -261,7 +272,11 @@ impl ShoesConfigConverter {
         };
 
         // Create geo routing config
-        let geo_routing = Some(GeoRoutingConfig::with_paths(resource_dir));
+        let mut geo_routing = GeoRoutingConfig::with_paths(resource_dir);
+        if let Some(path) = custom_rules_path {
+            geo_routing = geo_routing.with_custom_rules_file(path.to_string_lossy().to_string());
+        }
+        let geo_routing = Some(geo_routing);
 
         // Create HTTP proxy config
         let http_config = TcpServerConfig {
@@ -305,6 +320,7 @@ impl ShoesConfigConverter {
         tun_address: String,
         tun_netmask: String,
         resource_dir: &std::path::Path,
+        custom_rules_path: Option<&std::path::Path>,
     ) -> Result<String> {
         // Build the Hysteria2 client protocol
         let client_protocol = ClientProtocol::Hysteria2 {
@@ -343,7 +359,13 @@ impl ShoesConfigConverter {
                 action: "allow".to_string(),
                 client_chain: Some(client_chain),
             }],
-            geo_routing: Some(GeoRoutingConfig::with_paths(resource_dir)),
+            geo_routing: {
+                let mut geo_routing = GeoRoutingConfig::with_paths(resource_dir);
+                if let Some(path) = custom_rules_path {
+                    geo_routing = geo_routing.with_custom_rules_file(path.to_string_lossy().to_string());
+                }
+                Some(geo_routing)
+            },
         };
 
         // Serialize to YAML
@@ -357,6 +379,7 @@ impl ShoesConfigConverter {
         http_port: u16,
         socks_port: u16,
         resource_dir: &std::path::Path,
+        custom_rules_path: Option<&std::path::Path>,
     ) -> Result<String> {
         // Build the base client protocol from the xray config
         let stream_settings = model.stream_settings();
@@ -366,7 +389,11 @@ impl ShoesConfigConverter {
         let client_chain = Self::build_client_chain(model, stream_settings, client_protocol)?;
 
         // Create geo routing config
-        let geo_routing = Some(GeoRoutingConfig::with_paths(resource_dir));
+        let mut geo_routing = GeoRoutingConfig::with_paths(resource_dir);
+        if let Some(path) = custom_rules_path {
+            geo_routing = geo_routing.with_custom_rules_file(path.to_string_lossy().to_string());
+        }
+        let geo_routing = Some(geo_routing);
 
         // Create HTTP proxy config
         let http_config = TcpServerConfig {
@@ -410,6 +437,7 @@ impl ShoesConfigConverter {
         tun_address: String,
         tun_netmask: String,
         resource_dir: &std::path::Path,
+        custom_rules_path: Option<&std::path::Path>,
     ) -> Result<String> {
         // Build the base client protocol from the xray config
         let stream_settings = model.stream_settings();
@@ -432,7 +460,13 @@ impl ShoesConfigConverter {
                 action: "allow".to_string(),
                 client_chain: Some(client_chain),
             }],
-            geo_routing: Some(GeoRoutingConfig::with_paths(resource_dir)),
+            geo_routing: {
+                let mut geo_routing = GeoRoutingConfig::with_paths(resource_dir);
+                if let Some(path) = custom_rules_path {
+                    geo_routing = geo_routing.with_custom_rules_file(path.to_string_lossy().to_string());
+                }
+                Some(geo_routing)
+            },
         };
 
         // Serialize to YAML
@@ -446,6 +480,7 @@ impl ShoesConfigConverter {
         http_port: u16,
         socks_port: u16,
         resource_dir: &std::path::Path,
+        custom_rules_path: Option<&std::path::Path>,
     ) -> Result<String> {
         if models.is_empty() {
             return Err(anyhow!("No xray models provided"));
@@ -458,7 +493,11 @@ impl ShoesConfigConverter {
         let client_chain = Self::build_client_chain(first_model, stream_settings, client_protocol)?;
 
         // Create geo routing config
-        let geo_routing = Some(GeoRoutingConfig::with_paths(resource_dir));
+        let mut geo_routing = GeoRoutingConfig::with_paths(resource_dir);
+        if let Some(path) = custom_rules_path {
+            geo_routing = geo_routing.with_custom_rules_file(path.to_string_lossy().to_string());
+        }
+        let geo_routing = Some(geo_routing);
 
         // Create HTTP proxy config
         let http_config = TcpServerConfig {
