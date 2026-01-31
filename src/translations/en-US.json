@@ -9,7 +9,10 @@
     "createSuccess": "Create Success",
     "updateSuccess": "Update Success",
     "deleteSuccess": "Delete Success",
-    "import": "Import"
+    "import": "Import",
+    "speedTestComplete": "Speed test complete, tested {count} nodes",
+    "speedTestFailed": "Speed test failed: {error}",
+    "unknownError": "Unknown error"
   },
   "menubar": {
     "proxies": "Proxies",
@@ -79,6 +82,7 @@
     "editProxy": "Edit Proxy"
   },
   "rule": {
+    "noRules": "No rules yet",
     "invalidCIDR": "Invalid CIDR",
     "export": "Export",
     "exportSuccess": "Export successful",

@@ -126,7 +126,7 @@ pub async fn set_log_level<'a>(
     log_level: String,
 ) -> CommandResult<KittyResponse<()>> {
     // Validate log level
-    let valid_levels = vec!["trace", "debug", "info", "warn", "error"];
+    let valid_levels = vec!["debug", "info", "warn", "error"];
     if !valid_levels.contains(&log_level.as_str()) {
         return Err(anyhow::anyhow!("Invalid log level: {}", log_level).into());
     }

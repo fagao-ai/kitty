@@ -296,9 +296,6 @@ onBeforeUnmount(() => {
               name="logLevelGroup"
               @update:value="handleLogLevelChange"
             >
-              <n-radio-button value="trace">
-                Trace
-              </n-radio-button>
               <n-radio-button value="debug">
                 Debug
               </n-radio-button>

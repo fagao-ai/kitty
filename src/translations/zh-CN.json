@@ -9,7 +9,10 @@
     "createSuccess": "添加成功",
     "updateSuccess": "更新成功",
     "deleteSuccess": "删除成功",
-    "import": "导入"
+    "import": "导入",
+    "speedTestComplete": "测速完成，测试了 {count} 个节点",
+    "speedTestFailed": "测速失败: {error}",
+    "unknownError": "未知错误"
   },
   "menubar": {
     "proxies": "代理",
@@ -79,6 +82,7 @@
     "editProxy": "编辑代理"
   },
   "rule": {
+    "noRules": "暂无规则",
     "invalidCIDR": "无效的子网地址",
     "export": "导出",
     "exportSuccess": "导出成功",

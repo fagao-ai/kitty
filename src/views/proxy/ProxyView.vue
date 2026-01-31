@@ -196,10 +196,10 @@ async function testAllProxiesSpeed() {
     // Sort cards by delay in ascending order (smallest delay first)
     allCards.value.sort((a, b) => a.delay - b.delay)
 
-    message.success(`测速完成，测试了 ${delayInfos.length} 个节点`)
+    message.success(t('common.speedTestComplete', { count: delayInfos.length }))
   }
   catch (e: any) {
-    message.error(`测速失败: ${e?.message || '未知错误'}`)
+    message.error(t('common.speedTestFailed', { error: e?.message || t('common.unknownError') }))
   }
   finally {
     isTestingSpeed.value = false
@@ -222,8 +222,10 @@ watch(updateStatus, async (newStatus, oldStatus) => {
 onMounted(async () => {
   await initAllProxies()
   await fetchActiveProxy()
-  // Auto test speed on initial load
-  await testAllProxiesSpeed()
+  // Auto test speed on initial load only if there are proxies
+  if (allCards.value.length > 0) {
+    await testAllProxiesSpeed()
+  }
 })
 </script>
 
