@@ -378,13 +378,13 @@ initRules()
 
           <!-- Edit Mode -->
           <div v-else class="rule-card-edit">
-            <div class="flex flex-col md:flex-row gap-3 flex-1 items-center">
+            <div class="flex flex-col md:flex-row gap-3 flex-1 items-center w-full">
               <!-- Action Select -->
               <n-select
                 v-model:value="rule.action"
                 :options="actionOptions"
                 size="small"
-                style="min-width: 100px;"
+                class="flex-shrink-0 w-24"
               />
 
               <!-- Rule Type Select -->
@@ -392,7 +392,7 @@ initRules()
                 v-model:value="rule.ruleType"
                 :options="ruleTypeOptions"
                 size="small"
-                style="min-width: 130px;"
+                class="flex-shrink-0 w-40"
               />
 
               <!-- Pattern Input -->
@@ -400,13 +400,13 @@ initRules()
                 v-model:value="rule.pattern"
                 size="small"
                 placeholder="Enter pattern..."
-                class="flex-1"
+                class="flex-1 min-w-0"
                 @keyup.enter="handleUpdateRule(rule)"
               />
             </div>
 
             <!-- Edit Actions -->
-            <div class="flex gap-2 mt-3 md:mt-0">
+            <div class="flex gap-2 mt-3 md:mt-0 flex-shrink-0">
               <n-button size="small" secondary type="success" :loading="isLoading" @click="handleUpdateRule(rule)">
                 <template #icon>
                   <n-icon>
@@ -509,9 +509,14 @@ initRules()
 .rule-card-edit {
   @apply flex flex-col md:flex-row items-start md:items-center gap-3;
   @apply p-4;
+  @apply w-full;
 
   :deep(.n-select) {
     @apply flex-shrink-0;
+  }
+
+  :deep(.n-input) {
+    @apply min-w-0;
   }
 }
 
