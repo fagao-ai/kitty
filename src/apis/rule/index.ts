@@ -18,3 +18,12 @@ export async function createRule(rule: ProxyRule) {
 export async function deleteRule(id: number) {
   await invoke('delete_rules', { ids: [id] })
 }
+
+export async function exportRules() {
+  const res = await invoke<string>('export_rules')
+  return res.data
+}
+
+export async function importRules(jsonContent: string) {
+  await invoke('import_rules', { json_content: jsonContent })
+}

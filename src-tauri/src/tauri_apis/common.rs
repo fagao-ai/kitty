@@ -152,3 +152,53 @@ pub async fn set_log_level<'a>(
 
     Ok(KittyResponse::default())
 }
+
+/// Export rules as JSON string
+#[tauri::command(rename_all = "snake_case")]
+pub async fn export_rules<'a, R: Runtime>(
+    app_handle: AppHandle<R>,
+) -> CommandResult<KittyResponse<String>> {
+    let rules_path = get_rules_path(&app_handle);
+    let rules = crate::rules::read_rules_file(&rules_path)?;
+
+    // Convert to JSON string
+    let json = serde_json::to_string_pretty(&rules)
+        .map_err(|e| anyhow::anyhow!("Failed to serialize rules: {}", e))?;
+
+    Ok(KittyResponse::from_data(json))
+}
+
+/// Import rules from JSON string
+#[tauri::command(rename_all = "snake_case")]
+pub async fn import_rules<'a, R: Runtime>(
+    app_handle: AppHandle<R>,
+    json_content: String,
+) -> CommandResult<KittyResponse<()>> {
+    // Parse JSON content
+    let rules: Vec<Rule> = serde_json::from_str(&json_content)
+        .map_err(|e| anyhow::anyhow!("Failed to parse rules JSON: {}", e))?;
+
+    // Validate rules
+    for rule in &rules {
+        // Validate action
+        match rule.action {
+            crate::rules::RuleAction::Proxy | crate::rules::RuleAction::Direct | crate::rules::RuleAction::Reject => {},
+        }
+        // Validate rule type
+        match rule.rule_type {
+            crate::rules::RuleType::DomainSuffix | crate::rules::RuleType::DomainPrefix | crate::rules::RuleType::FullDomain | crate::rules::RuleType::Cidr | crate::rules::RuleType::DomainRoot => {},
+        }
+        // Validate pattern is not empty
+        if rule.pattern.trim().is_empty() {
+            return Err(anyhow::anyhow!("Rule pattern cannot be empty").into());
+        }
+    }
+
+    // Write to rules file
+    let rules_path = get_rules_path(&app_handle);
+    crate::rules::write_rules_file(&rules_path, &rules)?;
+
+    log::info!("Imported {} rules from JSON", rules.len());
+
+    Ok(KittyResponse::default())
+}

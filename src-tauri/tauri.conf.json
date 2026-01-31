@@ -10,7 +10,8 @@
   },
   "app": {
     "security": {
-      "csp": null
+      "csp": null,
+      "capabilities": ["main-capability", "desktop-capability", "dialog-access"]
     },
     "windows": [
       {
@@ -34,5 +35,10 @@
       "icons/icon.ico"
     ],
     "resources": ["static/*"]
+  },
+  "plugins": {
+    "fs": {
+      "requireLiteralLeadingDot": false
+    }
   }
 }

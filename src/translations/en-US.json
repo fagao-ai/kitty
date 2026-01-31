@@ -79,6 +79,12 @@
     "editProxy": "Edit Proxy"
   },
   "rule": {
-    "invalidCIDR": "Invalid CIDR"
+    "invalidCIDR": "Invalid CIDR",
+    "export": "Export",
+    "exportSuccess": "Export successful",
+    "exportFailed": "Export failed",
+    "importSuccess": "Import successful",
+    "importFailed": "Import failed",
+    "invalidFileFormat": "Invalid file format"
   }
 }

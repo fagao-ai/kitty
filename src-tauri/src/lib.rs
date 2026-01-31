@@ -140,6 +140,8 @@ pub fn run() {
     let builder = builder
         .plugin(tauri_plugin_notification::init())
         .plugin(tauri_plugin_clipboard_manager::init())
+        .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_fs::init())
         .setup(init_setup);
     let handler: fn(Invoke) -> bool = generate_handler![
         // Proxy commands
@@ -168,6 +170,8 @@ pub fn run() {
         common_api::delete_rules,
         common_api::add_rules,
         common_api::update_rules_item,
+        common_api::export_rules,
+        common_api::import_rules,
         common_api::test_current_proxy,
         common_api::get_log_level,
         common_api::set_log_level,

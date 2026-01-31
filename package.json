@@ -18,6 +18,8 @@
     "@tauri-apps/api": "^2.0.0",
     "@tauri-apps/plugin-autostart": "~2",
     "@tauri-apps/plugin-clipboard-manager": "^2.0.0",
+    "@tauri-apps/plugin-dialog": "^2.0.0",
+    "@tauri-apps/plugin-fs": "^2.0.0",
     "@tauri-apps/plugin-notification": "^2.0.0",
     "@tauri-apps/plugin-shell": "^2.0.0",
     "@vueuse/core": "^10.6.1",

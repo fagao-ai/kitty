@@ -4,10 +4,12 @@
 >
 import { reactive } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { NForm, NFormItem, useMessage } from 'naive-ui'
+import { NForm, NFormItem, useMessage, NButton } from 'naive-ui'
 import CIDR from 'ip-cidr'
 import type { ProxyRule } from '@/types/rule'
-import { createRule, deleteRule, getAllRules, updateRule } from '@/apis/rule'
+import { createRule, deleteRule, getAllRules, updateRule, exportRules, importRules } from '@/apis/rule'
+import { save, open } from '@tauri-apps/plugin-dialog'
+import { writeTextFile, readTextFile } from '@tauri-apps/plugin-fs'
 import HeaderBar from '@/components/HeaderBar.vue'
 
 const { t } = useI18n()
@@ -62,6 +64,54 @@ async function initRules() {
   const rules = await getAllRules()
   Object.assign(rulesForm.rules, rules.length === 0 ? defaultRulesFrom : rules)
 }
+
+async function handleExport() {
+  try {
+    const jsonContent = await exportRules()
+
+    const filePath = await save({
+      filters: [{
+        name: 'JSON',
+        extensions: ['json']
+      }],
+      defaultPath: 'custom_rules.json'
+    })
+
+    if (filePath) {
+      await writeTextFile(filePath, jsonContent)
+      message.success(t('rule.exportSuccess'))
+    }
+  }
+  catch (e) {
+    message.error(`${t('rule.exportFailed')}: ${e}`)
+    console.error('Export error:', e)
+  }
+}
+
+async function handleImport() {
+  try {
+    const filePath = await open({
+      multiple: false,
+      filters: [{
+        name: 'JSON',
+        extensions: ['json']
+      }]
+    })
+
+    if (filePath) {
+      const content = await readTextFile(filePath)
+      await importRules(content)
+      message.success(t('rule.importSuccess'))
+      // Reload rules after import
+      await initRules()
+    }
+  }
+  catch (e) {
+    message.error(`${t('rule.importFailed')}: ${e}`)
+    console.error('Import error:', e)
+  }
+}
+
 initRules()
 </script>
 
@@ -89,6 +139,30 @@ initRules()
             </svg>
           </n-icon>
         </n-button>
+        <n-button
+          size="small"
+          @click="handleImport"
+        >
+          <n-icon>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" stroke-linecap="round" stroke-linejoin="round"/>
+              <polyline points="7 10 12 15 17 10" stroke-linecap="round" stroke-linejoin="round"/>
+              <line x1="12" y1="15" x2="12" y2="3" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </n-icon>
+        </n-button>
+        <n-button
+          size="small"
+          @click="handleExport"
+        >
+          <n-icon>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" stroke-linecap="round" stroke-linejoin="round"/>
+              <polyline points="17 8 12 3 7 8" stroke-linecap="round" stroke-linejoin="round"/>
+              <line x1="12" y1="3" x2="12" y2="15" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </n-icon>
+        </n-button>
       </template>
       <template #default>
         <n-button
@@ -106,6 +180,34 @@ initRules()
                 d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10s10-4.48 10-10S17.52 2 12 2zm4 11h-3v3c0 .55-.45 1-1 1s-1-.45-1-1v-3H8c-.55 0-1-.45-1-1s.45-1 1-1h3V8c0-.55.45-1 1-1s1 .45 1 1v3h3c.55 0 1 .45 1 1s-.45 1-1 1z"
                 fill="currentColor"
               />
+            </svg>
+          </n-icon>
+        </n-button>
+        <n-button
+          text
+          class="text-4xl"
+          @click="handleImport"
+          :title="t('common.import')"
+        >
+          <n-icon>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" stroke-linecap="round" stroke-linejoin="round"/>
+              <polyline points="7 10 12 15 17 10" stroke-linecap="round" stroke-linejoin="round"/>
+              <line x1="12" y1="15" x2="12" y2="3" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </n-icon>
+        </n-button>
+        <n-button
+          text
+          class="text-4xl"
+          @click="handleExport"
+          :title="t('rule.export')"
+        >
+          <n-icon>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" stroke-linecap="round" stroke-linejoin="round"/>
+              <polyline points="17 8 12 3 7 8" stroke-linecap="round" stroke-linejoin="round"/>
+              <line x1="12" y1="3" x2="12" y2="15" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
           </n-icon>
         </n-button>

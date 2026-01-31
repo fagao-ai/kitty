@@ -1,0 +1,16 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "dialog-access",
+  "description": "Capability for dialog and fs access",
+  "windows": [
+    "main"
+  ],
+  "permissions": [
+    "dialog:allow-save",
+    "dialog:allow-open",
+    "fs:allow-write-text-file",
+    "fs:allow-read-text-file",
+    "notification:default",
+    "notification:allow-is-permission-granted"
+  ]
+}

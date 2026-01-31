@@ -79,6 +79,12 @@
     "editProxy": "编辑代理"
   },
   "rule": {
-    "invalidCIDR": "无效的子网地址"
+    "invalidCIDR": "无效的子网地址",
+    "export": "导出",
+    "exportSuccess": "导出成功",
+    "exportFailed": "导出失败",
+    "importSuccess": "导入成功",
+    "importFailed": "导入失败",
+    "invalidFileFormat": "无效的文件格式"
   }
 }
