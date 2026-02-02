@@ -162,6 +162,13 @@ pub fn run() {
         proxy_api::refresh_xray_subscription,
         proxy_api::import_xray_subscribe,
         proxy_api::proxies_delay_test,
+        // Subscription commands
+        crate::tauri_apis::subscription::get_all_subscriptions,
+        crate::tauri_apis::subscription::create_subscription,
+        crate::tauri_apis::subscription::update_subscription,
+        crate::tauri_apis::subscription::delete_subscription,
+        crate::tauri_apis::subscription::switch_subscription,
+        crate::tauri_apis::subscription::refresh_subscription,
         // Common commands
         common_api::query_base_config,
         common_api::update_base_config,
