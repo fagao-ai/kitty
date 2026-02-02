@@ -175,14 +175,19 @@ pub async fn delete_subscription<'a>(
         .await?
         .ok_or_else(|| anyhow!("Subscription not found"))?;
 
+    // Use transaction for atomic delete
+    let txn = db.begin().await?;
+
     // Delete associated xray nodes
     xray::Entity::delete_many()
         .filter(xray::Column::SubscribeId.eq(id))
-        .exec(&db)
+        .exec(&txn)
         .await?;
 
     // Delete subscription
-    subscribe::Model::delete_by_id(&db, id).await?;
+    subscribe::Model::delete_by_id(&txn, id).await?;
+
+    txn.commit().await?;
 
     Ok(KittyResponse::default())
 }
@@ -200,7 +205,27 @@ pub async fn switch_subscription<'a>(
         .await?
         .ok_or_else(|| anyhow!("Subscription not found"))?;
 
-    // Start transaction
+    // Download and parse new subscription BEFORE transaction
+    let subscriptions = crate::apis::parse_subscription::download_subcriptions(&target_sub.url)
+        .await?;
+
+    // Parse xray records BEFORE transaction
+    let mut xray_models = Vec::new();
+    for line in subscriptions {
+        if !line.is_xray() {
+            continue;
+        }
+        if let Ok(mut xray_model) = xray::Model::from_str(&line.line.trim()) {
+            xray_model.subscribe_id = Some(id);
+            xray_models.push(xray_model);
+        }
+    }
+
+    if xray_models.is_empty() {
+        return Err(anyhow!("No valid xray proxies found in subscription").into());
+    }
+
+    // NOW start transaction (after validation passes)
     let txn = db.begin().await?;
 
     // Find old active subscription
@@ -221,26 +246,6 @@ pub async fn switch_subscription<'a>(
         let mut old_active_model: subscribe::ActiveModel = old_active.into();
         old_active_model.is_active = Set(false);
         old_active_model.update(&txn).await?;
-    }
-
-    // Download and parse new subscription
-    let subscriptions = crate::apis::parse_subscription::download_subcriptions(&target_sub.url)
-        .await?;
-
-    // Parse xray records
-    let mut xray_models = Vec::new();
-    for line in subscriptions {
-        if !line.is_xray() {
-            continue;
-        }
-        if let Ok(mut xray_model) = xray::Model::from_str(&line.line.trim()) {
-            xray_model.subscribe_id = Some(id);
-            xray_models.push(xray_model);
-        }
-    }
-
-    if xray_models.is_empty() {
-        return Err(anyhow!("No valid xray proxies found in subscription").into());
     }
 
     // Insert new nodes
@@ -273,20 +278,11 @@ pub async fn refresh_subscription<'a>(
         .await?
         .ok_or_else(|| anyhow!("Subscription not found"))?;
 
-    // Start transaction
-    let txn = db.begin().await?;
-
-    // Delete old nodes
-    xray::Entity::delete_many()
-        .filter(xray::Column::SubscribeId.eq(id))
-        .exec(&txn)
-        .await?;
-
-    // Download and parse
+    // Download and parse BEFORE transaction
     let subscriptions = crate::apis::parse_subscription::download_subcriptions(&sub.url)
         .await?;
 
-    // Parse xray records
+    // Parse xray records BEFORE transaction
     let mut xray_models = Vec::new();
     for line in subscriptions {
         if !line.is_xray() {
@@ -298,6 +294,16 @@ pub async fn refresh_subscription<'a>(
         }
     }
 
+    // NOW start transaction
+    let txn = db.begin().await?;
+
+    // Delete old nodes
+    xray::Entity::delete_many()
+        .filter(xray::Column::SubscribeId.eq(id))
+        .exec(&txn)
+        .await?;
+
+    // Insert new nodes (if any)
     if !xray_models.is_empty() {
         xray::Model::insert_many(&txn, xray_models).await?;
     }
