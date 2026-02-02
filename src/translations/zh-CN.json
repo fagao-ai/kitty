@@ -16,6 +16,7 @@
   },
   "menubar": {
     "proxies": "代理",
+    "subscriptions": "订阅",
     "settings": "设置",
     "version": "版本",
     "rules": "规则",

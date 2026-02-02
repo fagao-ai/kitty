@@ -16,6 +16,7 @@
   },
   "menubar": {
     "proxies": "Proxies",
+    "subscriptions": "Subscriptions",
     "settings": "Settings",
     "version": "version",
     "rules": "Rules",

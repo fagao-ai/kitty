@@ -30,6 +30,19 @@ const menuOptions: MenuOption[] = [
         RouterLink,
         {
           to: {
+            name: 'subscription',
+          },
+        },
+        { default: () => t('menubar.subscriptions') },
+      ),
+    key: 'subscription',
+  },
+  {
+    label: () =>
+      h(
+        RouterLink,
+        {
+          to: {
             name: 'rule',
           },
         },

@@ -5,6 +5,11 @@ export const routes = [
     component: () => import('@/views/proxy/ProxyView.vue'),
   },
   {
+    path: '/subscription',
+    name: 'subscription',
+    component: () => import('@/views/subscription/SubscriptionView.vue'),
+  },
+  {
     path: '/setting',
     name: 'setting',
     component: () => import('@/views/setting/SettingView.vue'),
