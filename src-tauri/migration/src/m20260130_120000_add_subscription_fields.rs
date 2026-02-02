@@ -1,4 +1,5 @@
 use sea_orm_migration::prelude::*;
+use sea_orm::Statement;
 
 #[derive(DeriveMigrationName)]
 pub struct Migration;
@@ -6,90 +7,59 @@ pub struct Migration;
 #[async_trait::async_trait]
 impl MigrationTrait for Migration {
     async fn up(&self, manager: &SchemaManager) -> Result<(), DbErr> {
-        // SQLite doesn't support multiple ALTER TABLE operations in one statement
-        // Add each column separately
-        manager
-            .alter_table(
-                Table::alter()
-                    .table(Subscribe::Table)
-                    .add_column_if_not_exists(
-                        ColumnDef::new(Subscribe::Name)
-                            .string()
-                            .not_null()
-                            .default(""),
-                    )
-                    .to_owned(),
-            )
-            .await?;
+        // SQLite doesn't support IF NOT EXISTS in ALTER TABLE ADD COLUMN
+        // Use raw SQL and ignore errors if columns already exist
+        let conn = manager.get_connection();
 
-        manager
-            .alter_table(
-                Table::alter()
-                    .table(Subscribe::Table)
-                    .add_column_if_not_exists(
-                        ColumnDef::new(Subscribe::IsActive)
-                            .boolean()
-                            .not_null()
-                            .default(false),
-                    )
-                    .to_owned(),
-            )
-            .await?;
+        // Add name column if not exists
+        let _ = conn
+            .execute(Statement::from_string(
+                manager.get_database_backend(),
+                "ALTER TABLE subscribe ADD COLUMN name TEXT NOT NULL DEFAULT ''".to_string(),
+            ))
+            .await;
 
-        // SQLite doesn't support CURRENT_TIMESTAMP in ALTER TABLE ADD COLUMN
-        // Use a fixed timestamp as default for existing rows
-        manager
-            .alter_table(
-                Table::alter()
-                    .table(Subscribe::Table)
-                    .add_column_if_not_exists(
-                        ColumnDef::new(Subscribe::CreatedAt)
-                            .date_time()
-                            .not_null()
-                            .default("2026-01-30 00:00:00"),
-                    )
-                    .to_owned(),
-            )
-            .await?;
+        // Add is_active column if not exists
+        let _ = conn
+            .execute(Statement::from_string(
+                manager.get_database_backend(),
+                "ALTER TABLE subscribe ADD COLUMN is_active BOOLEAN NOT NULL DEFAULT FALSE"
+                    .to_string(),
+            ))
+            .await;
 
-        manager
-            .alter_table(
-                Table::alter()
-                    .table(Subscribe::Table)
-                    .add_column_if_not_exists(
-                        ColumnDef::new(Subscribe::UpdatedAt)
-                            .date_time()
-                            .not_null()
-                            .default("2026-01-30 00:00:00"),
-                    )
-                    .to_owned(),
-            )
-            .await?;
+        // Add created_at column if not exists
+        let _ = conn
+            .execute(Statement::from_string(
+                manager.get_database_backend(),
+                "ALTER TABLE subscribe ADD COLUMN created_at TEXT NOT NULL DEFAULT '2026-01-30 00:00:00'".to_string(),
+            ))
+            .await;
 
-        manager
-            .alter_table(
-                Table::alter()
-                    .table(Subscribe::Table)
-                    .add_column_if_not_exists(
-                        ColumnDef::new(Subscribe::LastSyncAt)
-                            .date_time()
-                            .null(),
-                    )
-                    .to_owned(),
-            )
-            .await?;
+        // Add updated_at column if not exists
+        let _ = conn
+            .execute(Statement::from_string(
+                manager.get_database_backend(),
+                "ALTER TABLE subscribe ADD COLUMN updated_at TEXT NOT NULL DEFAULT '2026-01-30 00:00:00'".to_string(),
+            ))
+            .await;
 
-        // Add index on is_active for faster queries
-        manager
-            .create_index(
-                Index::create()
-                    .if_not_exists()
-                    .name("idx_subscribe_is_active")
-                    .table(Subscribe::Table)
-                    .col(Subscribe::IsActive)
-                    .to_owned(),
-            )
-            .await?;
+        // Add last_sync_at column if not exists
+        let _ = conn
+            .execute(Statement::from_string(
+                manager.get_database_backend(),
+                "ALTER TABLE subscribe ADD COLUMN last_sync_at TEXT".to_string(),
+            ))
+            .await;
+
+        // Add index on is_active for faster queries (if not exists)
+        let _ = conn
+            .execute(Statement::from_string(
+                manager.get_database_backend(),
+                "CREATE INDEX IF NOT EXISTS idx_subscribe_is_active ON subscribe(is_active)"
+                    .to_string(),
+            ))
+            .await;
 
         Ok(())
     }
@@ -97,71 +67,52 @@ impl MigrationTrait for Migration {
     async fn down(&self, manager: &SchemaManager) -> Result<(), DbErr> {
         // SQLite doesn't support multiple ALTER TABLE operations in one statement
         // Drop each column separately
-        manager
-            .alter_table(
-                Table::alter()
-                    .table(Subscribe::Table)
-                    .drop_column(Subscribe::Name)
-                    .to_owned(),
-            )
-            .await?;
+        let conn = manager.get_connection();
 
-        manager
-            .alter_table(
-                Table::alter()
-                    .table(Subscribe::Table)
-                    .drop_column(Subscribe::IsActive)
-                    .to_owned(),
-            )
-            .await?;
+        // Drop columns (ignore errors if not exist)
+        let _ = conn
+            .execute(Statement::from_string(
+                manager.get_database_backend(),
+                "ALTER TABLE subscribe DROP COLUMN name".to_string(),
+            ))
+            .await;
 
-        manager
-            .alter_table(
-                Table::alter()
-                    .table(Subscribe::Table)
-                    .drop_column(Subscribe::CreatedAt)
-                    .to_owned(),
-            )
-            .await?;
+        let _ = conn
+            .execute(Statement::from_string(
+                manager.get_database_backend(),
+                "ALTER TABLE subscribe DROP COLUMN is_active".to_string(),
+            ))
+            .await;
 
-        manager
-            .alter_table(
-                Table::alter()
-                    .table(Subscribe::Table)
-                    .drop_column(Subscribe::UpdatedAt)
-                    .to_owned(),
-            )
-            .await?;
+        let _ = conn
+            .execute(Statement::from_string(
+                manager.get_database_backend(),
+                "ALTER TABLE subscribe DROP COLUMN created_at".to_string(),
+            ))
+            .await;
 
-        manager
-            .alter_table(
-                Table::alter()
-                    .table(Subscribe::Table)
-                    .drop_column(Subscribe::LastSyncAt)
-                    .to_owned(),
-            )
-            .await?;
+        let _ = conn
+            .execute(Statement::from_string(
+                manager.get_database_backend(),
+                "ALTER TABLE subscribe DROP COLUMN updated_at".to_string(),
+            ))
+            .await;
 
-        manager
-            .drop_index(
-                Index::drop()
-                    .if_exists()
-                    .name("idx_subscribe_is_active")
-                    .table(Subscribe::Table)
-                    .to_owned(),
-            )
-            .await?;
+        let _ = conn
+            .execute(Statement::from_string(
+                manager.get_database_backend(),
+                "ALTER TABLE subscribe DROP COLUMN last_sync_at".to_string(),
+            ))
+            .await;
+
+        // Drop index
+        let _ = conn
+            .execute(Statement::from_string(
+                manager.get_database_backend(),
+                "DROP INDEX IF EXISTS idx_subscribe_is_active".to_string(),
+            ))
+            .await;
 
         Ok(())
     }
-}
-
-#[derive(DeriveIden)]
-enum Subscribe {
-    Table,
-    Name,
-    IsActive,
-    CreatedAt,
-    UpdatedAt,
-    LastSyncAt,
 }
