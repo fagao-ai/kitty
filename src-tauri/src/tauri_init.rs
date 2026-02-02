@@ -21,6 +21,11 @@ pub async fn init_db(app_dir: PathBuf) -> Result<DatabaseConnection, DbErr> {
         .sqlx_logging(false)
         .to_owned();
     let db: DatabaseConnection = Database::connect(connect_options).await?;
+
+    // Enable WAL mode for better concurrency - allows reads during writes
+    use sea_orm::ConnectionTrait;
+    db.execute_unprepared("PRAGMA journal_mode=WAL;").await?;
+
     Migrator::up(&db, None).await?;
     base_config::Model::update_sysproxy_flag(&db, false).await?;
     trace!("Migrator");
