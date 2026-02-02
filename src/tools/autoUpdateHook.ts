@@ -1,13 +1,13 @@
 import { onUnmounted, unref, watch } from 'vue'
-import { autoUpdateSubscription, batchGetSubscriptions } from '@/apis/proxy'
+import { autoRefreshActiveSubscription } from '@/apis/proxy'
 import { useTask } from '@/tools/useTask'
 import { settingStore } from '@/views/setting/store'
 
 export function useSubscriptionAutoUpdate() {
   const hour = unref(settingStore).autoUpdate || 3
   const { startTask, stopTask, taskStatus } = useTask(hour, async () => {
-    const subscriptions = await batchGetSubscriptions()
-    await autoUpdateSubscription(subscriptions.map(item => item.id))
+    // Auto-refresh active subscription with smart checking
+    await autoRefreshActiveSubscription()
   })
 
   function autoUpdate() {

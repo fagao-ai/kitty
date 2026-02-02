@@ -158,6 +158,7 @@ pub fn run() {
         proxy_api::get_xray_by_id,
         proxy_api::batch_get_subscriptions,
         proxy_api::refresh_subscriptions,
+        proxy_api::auto_refresh_active_subscription,
         proxy_api::import_subscription,
         proxy_api::refresh_xray_subscription,
         proxy_api::import_xray_subscribe,

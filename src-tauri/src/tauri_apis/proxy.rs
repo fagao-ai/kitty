@@ -317,6 +317,21 @@ pub async fn refresh_subscriptions<'a>(
                 subscribe_item.id,
                 e
             );
+            continue;
+        }
+
+        // Update last_sync_at and updated_at after successful refresh
+        use chrono::Utc;
+        use sea_orm::{ActiveModelTrait, Set};
+        let mut active_model: entity::subscribe::ActiveModel = subscribe_item.into();
+        active_model.last_sync_at = Set(Some(Utc::now()));
+        active_model.updated_at = Set(Utc::now());
+        if let Err(e) = active_model.update(&db).await {
+            log::error!(
+                "Failed to update subscription timestamps (id: {}): {}",
+                active_model.id.unwrap(),
+                e
+            );
         }
 
         // Explicitly drop db connection to release it immediately
@@ -388,6 +403,93 @@ pub async fn import_subscription<'a>(
 
     // Commit transaction
     txn.commit().await?;
+
+    Ok(KittyResponse::default())
+}
+
+/// Auto-refresh active subscription if needed (based on update_interval).
+/// This is the smart refresh logic that checks last_sync_at before refreshing.
+#[tauri::command(rename_all = "snake_case")]
+pub async fn auto_refresh_active_subscription<'a>(
+    db_state: State<'a, DatabaseState>,
+) -> CommandResult<KittyResponse<()>> {
+    use chrono::Utc;
+    use sea_orm::{ColumnTrait, EntityTrait, QueryFilter};
+
+    // Get update interval from base_config
+    let update_interval_hours = {
+        let db = db_state.get_db();
+        let config = entity::base_config::Model::first(&db).await?;
+        match config {
+            Some(c) => c.update_interval,
+            None => 3, // Default to 3 hours if no config
+        }
+    };
+
+    // Find active subscription
+    let active_subscription = {
+        let db = db_state.get_db();
+        entity::subscribe::Entity::find()
+            .filter(entity::subscribe::Column::IsActive.eq(true))
+            .one(&db)
+            .await?
+    };
+
+    let subscription = match active_subscription {
+        Some(sub) => sub,
+        None => {
+            log::info!("No active subscription found, skipping auto-refresh");
+            return Ok(KittyResponse::default());
+        }
+    };
+
+    // Check if refresh is needed
+    let should_refresh = match subscription.last_sync_at {
+        None => {
+            log::info!("Subscription {} has never been synced, will refresh", subscription.id);
+            true
+        }
+        Some(last_sync) => {
+            let now = Utc::now();
+            let duration_since_sync = now.signed_duration_since(last_sync);
+            let hours_since_sync = duration_since_sync.num_hours();
+
+            if hours_since_sync >= update_interval_hours as i64 {
+                log::info!(
+                    "Subscription {} last synced {} hours ago (threshold: {} hours), will refresh",
+                    subscription.id,
+                    hours_since_sync,
+                    update_interval_hours
+                );
+                true
+            } else {
+                log::info!(
+                    "Subscription {} last synced {} hours ago (threshold: {} hours), skipping refresh",
+                    subscription.id,
+                    hours_since_sync,
+                    update_interval_hours
+                );
+                false
+            }
+        }
+    };
+
+    if !should_refresh {
+        return Ok(KittyResponse::default());
+    }
+
+    // Refresh the subscription using existing logic
+    refresh_subscriptions(db_state, Some(vec![subscription.id])).await?;
+
+    // Update last_sync_at
+    {
+        let db = db_state.get_db();
+        use sea_orm::{ActiveModelTrait, Set};
+        let mut active_model: entity::subscribe::ActiveModel = subscription.into();
+        active_model.last_sync_at = Set(Some(Utc::now()));
+        active_model.updated_at = Set(Utc::now());
+        active_model.update(&db).await?;
+    }
 
     Ok(KittyResponse::default())
 }

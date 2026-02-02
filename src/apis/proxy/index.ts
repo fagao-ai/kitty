@@ -72,6 +72,10 @@ export async function autoUpdateSubscription(subscriptionIds: number[]) {
   await invoke('refresh_xray_subscription', { record_ids: subscriptionIds })
 }
 
+export async function autoRefreshActiveSubscription() {
+  await invoke('auto_refresh_active_subscription')
+}
+
 export async function batchGetSubscriptions(): Promise<Subscription[]> {
   const res = await invoke<Subscription[]>('batch_get_subscriptions')
   return res.data
