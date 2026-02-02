@@ -36,6 +36,8 @@ impl MigrationTrait for Migration {
             )
             .await?;
 
+        // SQLite doesn't support CURRENT_TIMESTAMP in ALTER TABLE ADD COLUMN
+        // Use a fixed timestamp as default for existing rows
         manager
             .alter_table(
                 Table::alter()
@@ -44,7 +46,7 @@ impl MigrationTrait for Migration {
                         ColumnDef::new(Subscribe::CreatedAt)
                             .date_time()
                             .not_null()
-                            .default(Expr::current_timestamp()),
+                            .default("2026-01-30 00:00:00"),
                     )
                     .to_owned(),
             )
@@ -58,7 +60,7 @@ impl MigrationTrait for Migration {
                         ColumnDef::new(Subscribe::UpdatedAt)
                             .date_time()
                             .not_null()
-                            .default(Expr::current_timestamp()),
+                            .default("2026-01-30 00:00:00"),
                     )
                     .to_owned(),
             )
