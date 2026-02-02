@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { NButton, NIcon, useMessage } from 'naive-ui'
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { type UnlistenFn, listen } from '@tauri-apps/api/event'
 import { ProxyType } from '@/types/proxy'
 import AddProxy from '@/views/proxy/modal/AddProxy.vue'
 import type { ProxyCard as Card, HysteriaProxy, ProxyDelayInfo, XrayProxy } from '@/types/proxy'
@@ -218,6 +219,9 @@ watch(updateStatus, async (newStatus, oldStatus) => {
   }
 }, { immediate: true })
 
+// Listen to subscription changes from subscription page
+let unlistenSubscription: UnlistenFn | undefined
+
 // Initialize on mount
 onMounted(async () => {
   await initAllProxies()
@@ -226,6 +230,17 @@ onMounted(async () => {
   if (allCards.value.length > 0) {
     await testAllProxiesSpeed()
   }
+
+  // Listen for subscription changes
+  unlistenSubscription = await listen<{ action: string, id?: number }>('subscription-changed', async (_event) => {
+    // Refresh proxy list when subscription changes
+    await initAllProxies()
+    await fetchActiveProxy()
+  })
+})
+
+onUnmounted(() => {
+  unlistenSubscription?.()
 })
 </script>
 

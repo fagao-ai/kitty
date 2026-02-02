@@ -2,6 +2,7 @@
 import { computed, onMounted, ref } from 'vue'
 import { NBadge, NButton, NCard, NEmpty, NIcon, NPopconfirm, NSpin, useMessage } from 'naive-ui'
 import { useI18n } from 'vue-i18n'
+import { emit } from '@tauri-apps/api/event'
 import { subscriptionStore } from './store'
 import AddSubscription from './modal/AddSubscription.vue'
 import EditSubscription from './modal/EditSubscription.vue'
@@ -45,6 +46,8 @@ async function handleDelete(id: number) {
     await deleteSubscription(id)
     message.success('Subscription deleted')
     await loadSubscriptions()
+    // Notify proxy page to refresh
+    await emit('subscription-changed', { action: 'delete', id })
   }
   catch (e: any) {
     message.error(e?.message || 'Failed to delete subscription')
@@ -61,6 +64,8 @@ async function handleSwitch(subscription: SubscriptionInfo) {
     await switchSubscription(subscription.id)
     message.success('Subscription switched')
     await loadSubscriptions()
+    // Notify proxy page to refresh
+    await emit('subscription-changed', { action: 'switch', id: subscription.id })
   }
   catch (e: any) {
     message.error(e?.message || 'Failed to switch subscription')
@@ -77,6 +82,8 @@ async function handleRefresh(id: number) {
     await refreshSubscription(id)
     message.success('Subscription refreshed')
     await loadSubscriptions()
+    // Notify proxy page to refresh
+    await emit('subscription-changed', { action: 'refresh', id })
   }
   catch (e: any) {
     message.error(e?.message || 'Failed to refresh subscription')
@@ -96,6 +103,8 @@ function handleEdit(subscription: SubscriptionInfo) {
 async function handleAddSuccess() {
   showAddModal.value = false
   await loadSubscriptions()
+  // Notify proxy page to refresh
+  await emit('subscription-changed', { action: 'add' })
 }
 
 // Handle edit success
@@ -103,6 +112,8 @@ async function handleEditSuccess() {
   showEditModal.value = false
   editingSubscription.value = null
   await loadSubscriptions()
+  // Notify proxy page to refresh (edit doesn't affect proxy nodes, but update list anyway)
+  await emit('subscription-changed', { action: 'edit' })
 }
 
 // Format date
