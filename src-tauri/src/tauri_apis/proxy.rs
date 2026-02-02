@@ -47,7 +47,12 @@ impl From<xray::Model> for Proxy {
             id: x.id,
             name: x.name,
             proxy_type: "xray".to_string(),
-            protocol: Some(serde_json::to_string(&x.protocol).unwrap().trim_matches('"').to_string()),
+            protocol: Some(
+                serde_json::to_string(&x.protocol)
+                    .unwrap()
+                    .trim_matches('"')
+                    .to_string(),
+            ),
             server: Some(x.address),
             port: Some(x.port),
         }
@@ -215,14 +220,15 @@ pub async fn refresh_subscriptions<'a>(
     db_state: State<'a, DatabaseState>,
     record_ids: Option<Vec<i32>>,
 ) -> CommandResult<KittyResponse<()>> {
-    let db = db_state.get_db();
-
-    // Fetch subscriptions to refresh
-    let subscriptions = if let Some(ids) = record_ids {
-        entity::subscribe::Model::fetch_by_ids(&db, ids).await?
-    } else {
-        entity::subscribe::Model::fetch_all(&db).await?
-    };
+    // Fetch subscriptions to refresh (release connection immediately after)
+    let subscriptions = {
+        let db = db_state.get_db();
+        if let Some(ids) = record_ids {
+            entity::subscribe::Model::fetch_by_ids(&db, ids).await?
+        } else {
+            entity::subscribe::Model::fetch_all(&db).await?
+        }
+    }; // db connection released here
 
     if subscriptions.is_empty() {
         return Ok(KittyResponse::default());
@@ -231,7 +237,7 @@ pub async fn refresh_subscriptions<'a>(
     // Refresh each subscription
     use sea_orm::{ModelTrait, TransactionTrait};
     for subscribe_item in subscriptions {
-        // Download new subscription content
+        // Download new subscription content (NO db connection held during network IO)
         let subscriptions_result =
             crate::apis::parse_subscription::download_subcriptions(&subscribe_item.url).await;
 
@@ -247,6 +253,8 @@ pub async fn refresh_subscriptions<'a>(
             }
         };
 
+        // Only get db connection after network download completes
+        let db = db_state.get_db();
         // Start transaction for this subscription
         let txn = match db.begin().await {
             Ok(t) => t,
@@ -310,7 +318,10 @@ pub async fn refresh_subscriptions<'a>(
                 e
             );
         }
-    }
+
+        // Explicitly drop db connection to release it immediately
+        drop(db);
+    } // End of for loop
 
     Ok(KittyResponse::default())
 }
@@ -329,8 +340,8 @@ pub async fn import_subscription<'a>(
     }
 
     // Check if subscription URL already exists
-    use sea_orm::EntityTrait;
     use sea_orm::ColumnTrait;
+    use sea_orm::EntityTrait;
     use sea_orm::QueryFilter;
     let existing = entity::subscribe::Entity::find()
         .filter(entity::subscribe::Column::Url.eq(&url))
