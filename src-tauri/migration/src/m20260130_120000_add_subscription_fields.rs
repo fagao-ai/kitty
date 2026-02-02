@@ -6,6 +6,8 @@ pub struct Migration;
 #[async_trait::async_trait]
 impl MigrationTrait for Migration {
     async fn up(&self, manager: &SchemaManager) -> Result<(), DbErr> {
+        // SQLite doesn't support multiple ALTER TABLE operations in one statement
+        // Add each column separately
         manager
             .alter_table(
                 Table::alter()
@@ -16,24 +18,56 @@ impl MigrationTrait for Migration {
                             .not_null()
                             .default(""),
                     )
+                    .to_owned(),
+            )
+            .await?;
+
+        manager
+            .alter_table(
+                Table::alter()
+                    .table(Subscribe::Table)
                     .add_column_if_not_exists(
                         ColumnDef::new(Subscribe::IsActive)
                             .boolean()
                             .not_null()
                             .default(false),
                     )
+                    .to_owned(),
+            )
+            .await?;
+
+        manager
+            .alter_table(
+                Table::alter()
+                    .table(Subscribe::Table)
                     .add_column_if_not_exists(
                         ColumnDef::new(Subscribe::CreatedAt)
                             .date_time()
                             .not_null()
                             .default(Expr::current_timestamp()),
                     )
+                    .to_owned(),
+            )
+            .await?;
+
+        manager
+            .alter_table(
+                Table::alter()
+                    .table(Subscribe::Table)
                     .add_column_if_not_exists(
                         ColumnDef::new(Subscribe::UpdatedAt)
                             .date_time()
                             .not_null()
                             .default(Expr::current_timestamp()),
                     )
+                    .to_owned(),
+            )
+            .await?;
+
+        manager
+            .alter_table(
+                Table::alter()
+                    .table(Subscribe::Table)
                     .add_column_if_not_exists(
                         ColumnDef::new(Subscribe::LastSyncAt)
                             .date_time()
@@ -59,14 +93,48 @@ impl MigrationTrait for Migration {
     }
 
     async fn down(&self, manager: &SchemaManager) -> Result<(), DbErr> {
+        // SQLite doesn't support multiple ALTER TABLE operations in one statement
+        // Drop each column separately
         manager
             .alter_table(
                 Table::alter()
                     .table(Subscribe::Table)
                     .drop_column(Subscribe::Name)
+                    .to_owned(),
+            )
+            .await?;
+
+        manager
+            .alter_table(
+                Table::alter()
+                    .table(Subscribe::Table)
                     .drop_column(Subscribe::IsActive)
+                    .to_owned(),
+            )
+            .await?;
+
+        manager
+            .alter_table(
+                Table::alter()
+                    .table(Subscribe::Table)
                     .drop_column(Subscribe::CreatedAt)
+                    .to_owned(),
+            )
+            .await?;
+
+        manager
+            .alter_table(
+                Table::alter()
+                    .table(Subscribe::Table)
                     .drop_column(Subscribe::UpdatedAt)
+                    .to_owned(),
+            )
+            .await?;
+
+        manager
+            .alter_table(
+                Table::alter()
+                    .table(Subscribe::Table)
                     .drop_column(Subscribe::LastSyncAt)
                     .to_owned(),
             )
