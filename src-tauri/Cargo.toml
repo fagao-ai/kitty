@@ -48,6 +48,7 @@ sea-orm = { version = "0.12", features = [
   "runtime-tokio-rustls",
   "macros",
 ] }
+chrono = "0.4"
 entity = { path = "./entity" }
 protocols = { path = "./protocols" }
 migration = { path = "./migration" }

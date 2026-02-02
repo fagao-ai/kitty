@@ -207,11 +207,11 @@ pub async fn batch_get_subscriptions<'a>(
     Ok(KittyResponse::from_data(records))
 }
 
-/// Refresh subscriptions.
+/// Refresh subscriptions (legacy).
 /// If record_ids is provided, refresh only those subscriptions.
 /// Otherwise, refresh all subscriptions.
 #[tauri::command(rename_all = "snake_case")]
-pub async fn refresh_subscription<'a>(
+pub async fn refresh_subscriptions<'a>(
     db_state: State<'a, DatabaseState>,
     record_ids: Option<Vec<i32>>,
 ) -> CommandResult<KittyResponse<()>> {
@@ -387,7 +387,7 @@ pub async fn refresh_xray_subscription<'a>(
     db_state: State<'a, DatabaseState>,
     record_ids: Option<Vec<i32>>,
 ) -> CommandResult<KittyResponse<()>> {
-    refresh_subscription(db_state, record_ids).await
+    refresh_subscriptions(db_state, record_ids).await
 }
 
 /// Legacy alias for compatibility.

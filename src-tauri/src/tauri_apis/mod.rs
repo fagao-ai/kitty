@@ -25,6 +25,7 @@ pub mod common;
 pub mod proxy;
 pub mod utils;
 pub mod server;
+pub mod subscription;
 
 // ============================================================================
 // System Proxy Commands (moved from tauri_apis.rs)
