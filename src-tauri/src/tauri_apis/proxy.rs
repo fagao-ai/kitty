@@ -323,13 +323,14 @@ pub async fn refresh_subscriptions<'a>(
         // Update last_sync_at and updated_at after successful refresh
         use chrono::Utc;
         use sea_orm::{ActiveModelTrait, Set};
+        let subscription_id = subscribe_item.id;
         let mut active_model: entity::subscribe::ActiveModel = subscribe_item.into();
         active_model.last_sync_at = Set(Some(Utc::now()));
         active_model.updated_at = Set(Utc::now());
         if let Err(e) = active_model.update(&db).await {
             log::error!(
                 "Failed to update subscription timestamps (id: {}): {}",
-                active_model.id.unwrap(),
+                subscription_id,
                 e
             );
         }
@@ -479,17 +480,8 @@ pub async fn auto_refresh_active_subscription<'a>(
     }
 
     // Refresh the subscription using existing logic
+    // Note: refresh_subscriptions will automatically update last_sync_at and updated_at
     refresh_subscriptions(db_state, Some(vec![subscription.id])).await?;
-
-    // Update last_sync_at
-    {
-        let db = db_state.get_db();
-        use sea_orm::{ActiveModelTrait, Set};
-        let mut active_model: entity::subscribe::ActiveModel = subscription.into();
-        active_model.last_sync_at = Set(Some(Utc::now()));
-        active_model.updated_at = Set(Utc::now());
-        active_model.update(&db).await?;
-    }
 
     Ok(KittyResponse::default())
 }
