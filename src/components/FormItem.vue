@@ -1,5 +1,7 @@
 <script setup lang="ts">
-import { NFormItem, NInput, NSelect } from 'naive-ui'
+import PrimeInputText from 'primevue/inputtext'
+import PrimeSelect from 'primevue/select'
+import PrimeTextarea from 'primevue/textarea'
 import { useVModel } from '@vueuse/core'
 import { FormItem } from '@/composables/useFormItem'
 
@@ -29,23 +31,23 @@ function getNext(): FormItem | null {
 
 <template>
   <template v-if="formState">
-    <n-form-item :label="formState.payload.label">
+    <div class="flex flex-col gap-2">
+      <span class="text-sm font-medium">{{ formState.payload.label }}</span>
       <template v-if="formState.payload.type === 'input'">
-        <n-input v-model:value="formState.payload.value" />
+        <prime-input-text v-model="formState.payload.value" />
       </template>
       <template v-else-if="formState.payload.type === 'textarea'">
-        <n-input
-          v-model:value="formState.payload.value"
-          type="textarea"
-        />
+        <prime-textarea v-model="formState.payload.value" />
       </template>
       <template v-else-if="formState.payload.type === 'select'">
-        <n-select
-          v-model:value="formState.payload.value"
+        <prime-select
+          v-model="formState.payload.value"
           :options="formState.payload.options"
+          option-label="label"
+          option-value="value"
         />
       </template>
-    </n-form-item>
-    <form-item :form-state="getNext()" />
+    </div>
+    <form-item :form="getNext()" />
   </template>
 </template>

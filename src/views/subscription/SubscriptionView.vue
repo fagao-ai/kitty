@@ -1,14 +1,19 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
-import { NBadge, NButton, NCard, NEmpty, NIcon, NPopconfirm, NSpin, useMessage } from 'naive-ui'
+import PrimeButton from 'primevue/button'
+import PrimeCard from 'primevue/card'
+import PrimeDialog from 'primevue/dialog'
+import PrimeProgressSpinner from 'primevue/progressspinner'
+import { onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { emit } from '@tauri-apps/api/event'
 import { subscriptionStore } from './store'
 import AddSubscription from './modal/AddSubscription.vue'
 import EditSubscription from './modal/EditSubscription.vue'
+import Empty from '@/components/Empty.vue'
 import HeaderBar from '@/components/HeaderBar.vue'
 import { deleteSubscription, getAllSubscriptions, refreshSubscription, switchSubscription } from '@/apis/subscription'
 import type { SubscriptionInfo } from '@/types/subscription'
+import { useMessage } from '@/utils/message'
 
 defineEmits<{
   toggleMobileMenu: []
@@ -20,6 +25,7 @@ const message = useMessage()
 const showAddModal = ref(false)
 const showEditModal = ref(false)
 const editingSubscription = ref<SubscriptionInfo | null>(null)
+const pendingDeleteSubscription = ref<SubscriptionInfo | null>(null)
 
 const isLoading = ref(false)
 const operatingId = ref<number | null>(null)
@@ -99,6 +105,33 @@ function handleEdit(subscription: SubscriptionInfo) {
   showEditModal.value = true
 }
 
+function requestDelete(subscription: SubscriptionInfo) {
+  pendingDeleteSubscription.value = subscription
+}
+
+function closeDeleteDialog() {
+  pendingDeleteSubscription.value = null
+}
+
+function handleDeleteDialogVisibility(visible: boolean) {
+  if (!visible) {
+    closeDeleteDialog()
+  }
+}
+
+async function confirmDelete() {
+  if (!pendingDeleteSubscription.value)
+    return
+
+  const { id } = pendingDeleteSubscription.value
+  try {
+    await handleDelete(id)
+  }
+  finally {
+    closeDeleteDialog()
+  }
+}
+
 // Handle add success
 async function handleAddSuccess() {
   showAddModal.value = false
@@ -133,102 +166,85 @@ onMounted(() => {
   <div class="flex flex-col w-full h-full gap-y-4">
     <header-bar @toggle-mobile-menu="$emit('toggleMobileMenu')">
       <template #mobile-menu-button>
-        <n-icon size="24">
+        <span class="inline-flex h-6 w-6 items-center justify-center">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M3 12h18M3 6h18M3 18h18" stroke-linecap="round" stroke-linejoin="round" />
           </svg>
-        </n-icon>
+        </span>
       </template>
       <template #title>
         {{ t('menubar.subscriptions') }}
       </template>
       <template #default>
-        <n-button
-          size="small"
-          @click="showAddModal = true"
-        >
-          {{ t('common.add') }}
-        </n-button>
+        <prime-button size="small" :label="t('common.add')" @click="showAddModal = true" />
       </template>
     </header-bar>
 
     <div class="flex-1 w-full overflow-y-auto px-4">
-      <n-spin :show="isLoading">
-        <div v-if="subscriptionStore.subscriptions.length === 0 && !isLoading" class="h-full flex items-center justify-center">
-          <n-empty description="No subscriptions yet" />
-        </div>
+      <div v-if="isLoading" class="flex h-full items-center justify-center py-10">
+        <prime-progress-spinner style="width: 40px; height: 40px" stroke-width="6" />
+      </div>
 
-        <div v-else class="grid grid-cols-1 gap-4 pb-4">
-          <n-card
-            v-for="sub in subscriptionStore.subscriptions"
-            :key="sub.id"
-            :bordered="false"
-            size="small"
-            class="hover:shadow-md transition-shadow"
-          >
-            <template #header>
-              <div class="flex items-center gap-2">
-                <n-badge
-                  :type="sub.isActive ? 'success' : 'default'"
-                  :dot="sub.isActive"
-                />
-                <span class="font-medium">{{ sub.name }}</span>
-                <span v-if="sub.isActive" class="text-xs text-success ml-auto">(Active)</span>
-              </div>
-            </template>
+      <div v-else-if="subscriptionStore.subscriptions.length === 0" class="h-full flex items-center justify-center">
+        <empty description="No subscriptions yet" />
+      </div>
 
-            <div class="space-y-2">
-              <div class="text-sm text-gray-600 dark:text-gray-400 break-all">
-                {{ sub.url }}
-              </div>
-              <div class="text-xs text-gray-500 dark:text-gray-500">
-                Nodes: {{ sub.nodeCount }} | Updated: {{ formatDate(sub.updatedAt) }}
-              </div>
+      <div v-else class="grid grid-cols-1 gap-4 pb-4">
+        <prime-card
+          v-for="sub in subscriptionStore.subscriptions"
+          :key="sub.id"
+          class="subscription-card"
+        >
+          <template #header>
+            <div class="flex items-center gap-2">
+              <span class="h-2.5 w-2.5 rounded-full" :class="sub.isActive ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-slate-600'" />
+              <span class="font-medium">{{ sub.name }}</span>
+              <span v-if="sub.isActive" class="text-xs text-success ml-auto">(Active)</span>
             </div>
+          </template>
 
-            <template #footer>
-              <div class="flex gap-2 justify-end">
-                <n-button
-                  v-if="!sub.isActive"
-                  size="small"
-                  type="primary"
-                  :loading="operatingId === sub.id"
-                  @click="handleSwitch(sub)"
-                >
-                  Switch
-                </n-button>
+          <div class="space-y-2">
+            <div class="text-sm text-gray-600 dark:text-gray-400 break-all">
+              {{ sub.url }}
+            </div>
+            <div class="text-xs text-gray-500 dark:text-gray-500">
+              Nodes: {{ sub.nodeCount }} | Updated: {{ formatDate(sub.updatedAt) }}
+            </div>
+          </div>
 
-                <n-button
-                  v-if="sub.isActive"
-                  size="small"
-                  :loading="operatingId === sub.id"
-                  @click="handleRefresh(sub.id)"
-                >
-                  Refresh
-                </n-button>
+          <template #footer>
+            <div class="flex gap-2 justify-end">
+              <prime-button
+                v-if="!sub.isActive"
+                size="small"
+                label="Switch"
+                :loading="operatingId === sub.id"
+                @click="handleSwitch(sub)"
+              />
 
-                <n-button
-                  size="small"
-                  @click="handleEdit(sub)"
-                >
-                  Edit
-                </n-button>
+              <prime-button
+                v-if="sub.isActive"
+                size="small"
+                severity="secondary"
+                variant="outlined"
+                label="Refresh"
+                :loading="operatingId === sub.id"
+                @click="handleRefresh(sub.id)"
+              />
 
-                <n-popconfirm
-                  @positive-click="handleDelete(sub.id)"
-                >
-                  <template #trigger>
-                    <n-button size="small" type="error">
-                      Delete
-                    </n-button>
-                  </template>
-                  Delete subscription and its {{ sub.nodeCount }} nodes?
-                </n-popconfirm>
-              </div>
-            </template>
-          </n-card>
-        </div>
-      </n-spin>
+              <prime-button
+                size="small"
+                severity="secondary"
+                variant="outlined"
+                label="Edit"
+                @click="handleEdit(sub)"
+              />
+
+              <prime-button size="small" severity="danger" variant="outlined" label="Delete" @click="requestDelete(sub)" />
+            </div>
+          </template>
+        </prime-card>
+      </div>
     </div>
 
     <add-subscription
@@ -242,11 +258,34 @@ onMounted(() => {
       :subscription="editingSubscription"
       @on-edit-success="handleEditSuccess"
     />
+
+    <prime-dialog
+      :visible="pendingDeleteSubscription !== null"
+      modal
+      header="Delete Subscription"
+      :style="{ width: '28rem', maxWidth: '92vw' }"
+      @update:visible="handleDeleteDialogVisibility"
+    >
+      <p class="m-0 text-sm text-slate-600 dark:text-slate-300">
+        Delete subscription and its {{ pendingDeleteSubscription?.nodeCount ?? 0 }} nodes?
+      </p>
+      <template #footer>
+        <div class="flex justify-end gap-3">
+          <prime-button label="Cancel" severity="secondary" variant="outlined" @click="closeDeleteDialog" />
+          <prime-button
+            label="Delete"
+            severity="danger"
+            :loading="operatingId === pendingDeleteSubscription?.id"
+            @click="confirmDelete"
+          />
+        </div>
+      </template>
+    </prime-dialog>
   </div>
 </template>
 
 <style scoped lang="scss">
-:deep(.n-card) {
-  border-radius: 8px;
+:deep(.subscription-card .p-card) {
+  border-radius: 12px;
 }
 </style>

@@ -1,6 +1,6 @@
 /* eslint-disable */
 /// <reference types="vite/client" />
-// import type { MessageApiInjection } from "naive-ui/lib/message/src/MessageProvider"
+import type { MessageApiInjection } from '@/utils/message'
 
 declare module '*.vue' {
   import type { DefineComponent } from 'vue'
@@ -13,6 +13,10 @@ declare module '@tauri-apps/api/primitives' {
   export { transformCallback, Channel, PluginListener, addPluginListener, invoke, convertFileSrc }
 }
 
-declare interface Window {
-  $message: MessageApiInjection
+declare global {
+  interface Window {
+    $message: MessageApiInjection
+  }
 }
+
+export {}

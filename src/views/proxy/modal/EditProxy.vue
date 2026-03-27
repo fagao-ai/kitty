@@ -1,5 +1,7 @@
 <script setup lang="ts">
-import { reactive, watch } from 'vue'
+import PrimeButton from 'primevue/button'
+import PrimeDialog from 'primevue/dialog'
+import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useVModel } from '@vueuse/core'
 import type { HysteriaProxy, XrayProxy } from '@/types/proxy'
@@ -27,74 +29,54 @@ interface Emits {
 
 const showEditModal = useVModel(props, 'showModal')
 
-const formState = reactive({ ...props.form })
+function cloneProxy<T extends HysteriaProxy | XrayProxy>(proxy: T): T {
+  return structuredClone(proxy)
+}
+
+const formState = ref<HysteriaProxy | XrayProxy>(cloneProxy(props.form))
+
+const hysteriaFormState = computed({
+  get: () => formState.value as HysteriaProxy,
+  set: (value) => { formState.value = value },
+})
+
+const xrayFormState = computed({
+  get: () => formState.value as XrayProxy,
+  set: (value) => { formState.value = value },
+})
 
 watch(() => props.form, (val) => {
-  Object.assign(formState, val)
+  formState.value = cloneProxy(val)
 })
 
 async function handleUpdateProxy() {
   if (props.proxyType === ProxyType.Hysteria)
-    await updateHysteriaProxy(formState as HysteriaProxy)
+    await updateHysteriaProxy(formState.value as HysteriaProxy)
   else
-    await updateXrayProxy(formState as XrayProxy)
+    await updateXrayProxy(formState.value as XrayProxy)
 
   emits('onProxyUpdated', props.proxyType)
 }
 </script>
 
 <template>
-  <n-modal
-    v-model:show="showEditModal"
-    class="w-full h-full sm:w-[90%] sm:h-auto md:w-3/4 lg:w-1/2"
-    :mask-closable="false"
-    transform-origin="center"
-    preset="card"
-    :title="t('proxy.editProxy')"
-    size="huge"
-    :bordered="false"
-    :segmented="true"
+  <prime-dialog
+    v-model:visible="showEditModal"
+    modal
+    :style="{ width: 'min(56rem, 92vw)' }"
+    :header="t('proxy.editProxy')"
   >
     <template v-if="proxyType === ProxyType.Hysteria">
-      <hysteria-form v-model:form="(formState as HysteriaProxy)" />
+      <hysteria-form v-model:form="hysteriaFormState" />
     </template>
     <template v-if="proxyType === ProxyType.Xray && Object.keys(formState).length > 0">
-      <xray-form v-model:form="(formState as XrayProxy)" />
+      <xray-form v-model:form="xrayFormState" />
     </template>
     <template #footer>
       <div class="w-full flex flex-center gap-3">
-        <n-button
-          @click="emits('onCancelEdit')"
-        >
-          {{ t('common.cancel') }}
-        </n-button>
-        <n-button
-          type="primary"
-          @click="handleUpdateProxy"
-        >
-          {{ t('common.update') }}
-        </n-button>
+        <prime-button :label="t('common.cancel')" severity="secondary" variant="outlined" @click="emits('onCancelEdit')" />
+        <prime-button :label="t('common.update')" @click="handleUpdateProxy" />
       </div>
     </template>
-  </n-modal>
+  </prime-dialog>
 </template>
-
-<style>
-.n-modal {
-  border-radius: 12px;
-}
-
-.n-card-header {
-  padding: 20px 24px !important;
-  border-bottom: 1px solid var(--n-border-color);
-}
-
-.n-card__content {
-  padding: 24px !important;
-}
-
-.n-card__footer {
-  padding: 16px 24px !important;
-  border-top: 1px solid var(--n-border-color);
-}
-</style>

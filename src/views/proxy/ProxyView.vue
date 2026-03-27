@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { NButton, NIcon, useMessage } from 'naive-ui'
+import PrimeButton from 'primevue/button'
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { type UnlistenFn, listen } from '@tauri-apps/api/event'
@@ -20,6 +20,7 @@ import ImportProxy from '@/views/proxy/modal/ImportProxy.vue'
 import EditProxy from '@/views/proxy/modal/EditProxy.vue'
 import HeaderBar from '@/components/HeaderBar.vue'
 import { useSubscriptionAutoUpdate } from '@/tools/autoUpdateHook'
+import { useMessage } from '@/utils/message'
 
 defineEmits<{
   toggleMobileMenu: []
@@ -190,7 +191,7 @@ async function testAllProxiesSpeed() {
     const delayResults = await xrayProxiedDelay(delayInfos)
 
     allCards.value = allCards.value.map((card) => {
-      const delay = delayResults[card.id] ?? delayResults[String(card.id)] ?? 9999
+      const delay = delayResults[card.id] ?? 9999
       return { ...card, delay }
     })
 
@@ -248,40 +249,27 @@ onUnmounted(() => {
   <div class="flex flex-col w-full h-full gap-y-4">
     <header-bar @toggle-mobile-menu="$emit('toggleMobileMenu')">
       <template #mobile-menu-button>
-        <n-icon size="24">
+        <span class="inline-flex h-6 w-6 items-center justify-center">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M3 12h18M3 6h18M3 18h18" stroke-linecap="round" stroke-linejoin="round" />
           </svg>
-        </n-icon>
+        </span>
       </template>
       <template #title>
         {{ t('menubar.proxies') }}
       </template>
       <template #default>
-        <n-button
-          size="small"
-          @click="showInsertModal = true"
-        >
-          {{ t('common.add') }}
-        </n-button>
-        <n-button
-          size="small"
-          @click="showImportModal = true"
-        >
-          {{ t('common.import') }}
-        </n-button>
+        <prime-button size="small" :label="t('common.add')" @click="showInsertModal = true" />
+        <prime-button size="small" severity="secondary" variant="outlined" :label="t('common.import')" @click="showImportModal = true" />
       </template>
       <template #mobile-actions>
-        <n-button
-          size="small"
-          @click="showInsertModal = true"
-        >
-          <n-icon>
+        <prime-button size="small" @click="showInsertModal = true">
+          <template #icon>
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M12 5v14M5 12h14" stroke-linecap="round" stroke-linejoin="round" />
             </svg>
-          </n-icon>
-        </n-button>
+          </template>
+        </prime-button>
       </template>
     </header-bar>
 
@@ -318,23 +306,18 @@ onUnmounted(() => {
     />
 
     <!-- Float button for speed test -->
-    <n-float-button
-      :right="24"
-      :bottom="24"
-      :top="undefined"
-      :width="48"
-      :height="48"
-      class="z-50"
+    <button
+      type="button"
+      class="speed-test-button z-50"
+      :disabled="isTestingSpeed"
       @click="testAllProxiesSpeed"
     >
-      <!-- Loading spinner icon -->
-      <n-icon v-if="isTestingSpeed" class="text-accent text-2xl speed-test-loading">
+      <span v-if="isTestingSpeed" class="text-accent text-2xl speed-test-loading">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83" stroke-linecap="round" stroke-linejoin="round" />
         </svg>
-      </n-icon>
-      <!-- Lightning bolt icon -->
-      <n-icon v-else class="text-accent text-2xl">
+      </span>
+      <span v-else class="text-accent text-2xl">
         <svg
           xmlns="http://www.w3.org/2000/svg"
           xmlns:xlink="http://www.w3.org/1999/xlink"
@@ -347,15 +330,25 @@ onUnmounted(() => {
             />
           </g>
         </svg>
-      </n-icon>
-    </n-float-button>
+      </span>
+    </button>
   </div>
 </template>
 
 <style lang="scss" scoped>
-/* Removed radio button styles */
+.speed-test-button {
+  @apply fixed right-6 bottom-6 flex h-12 w-12 items-center justify-center rounded-full bg-white shadow-card transition-transform;
+  @apply dark:bg-slate-800;
 
-/* Speed test loading animation */
+  &:hover {
+    @apply -translate-y-0.5 shadow-card-hover;
+  }
+
+  &:disabled {
+    @apply cursor-not-allowed opacity-80;
+  }
+}
+
 .speed-test-loading {
   animation: spin 1s linear infinite;
 }

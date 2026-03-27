@@ -4,7 +4,7 @@ interface Props {
 }
 
 interface Emits {
-  (e: 'toggle-mobile-menu'): void
+  (e: 'toggleMobileMenu'): void
 }
 
 defineProps<Props>()
@@ -21,8 +21,8 @@ defineEmits<Emits>()
       <button
         v-if="$slots['mobile-menu-button']"
         class="p-2 -ml-2 text-text-primary dark:text-text-primary"
-        @click="$emit('toggle-mobile-menu')"
         aria-label="Toggle menu"
+        @click="$emit('toggleMobileMenu')"
       >
         <slot name="mobile-menu-button" />
       </button>

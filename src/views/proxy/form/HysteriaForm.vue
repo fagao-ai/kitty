@@ -1,10 +1,12 @@
 <script setup lang="ts">
+import PrimeInputText from 'primevue/inputtext'
+import PrimeToggleSwitch from 'primevue/toggleswitch'
 import { useI18n } from 'vue-i18n'
-import { NForm, NFormItem, NInput } from 'naive-ui'
 import { useVModel } from '@vueuse/core'
 import type { HysteriaProxy } from '@/types/proxy'
 
 const props = defineProps<Props>()
+const emits = defineEmits<Emits>()
 
 const { t } = useI18n()
 
@@ -12,66 +14,51 @@ interface Props {
   form: HysteriaProxy
 }
 
-const hysteriaFormState = useVModel(props, 'form')
+interface Emits {
+  (e: 'update:form', value: HysteriaProxy): void
+}
+
+const formState = useVModel(props, 'form', emits)
 </script>
 
 <template>
-  <n-form
-    :model="hysteriaFormState"
-    size="medium"
-    label-placement="left"
-    label-width="auto"
-  >
-    <n-form-item
-      :label="t('proxy.hysteria.proxyName')"
-      path="name"
-    >
-      <n-input v-model:value="hysteriaFormState.name" />
-    </n-form-item>
-    <n-form-item
-      :label="t('proxy.hysteria.server')"
-      path="server"
-    >
-      <n-input
-        v-model:value="hysteriaFormState.server"
+  <div class="grid gap-4">
+    <label class="flex flex-col gap-2">
+      <span class="text-sm font-medium">{{ t('proxy.hysteria.proxyName') }}</span>
+      <prime-input-text v-model="formState.name" />
+    </label>
+    <label class="flex flex-col gap-2">
+      <span class="text-sm font-medium">{{ t('proxy.hysteria.server') }}</span>
+      <prime-input-text
+        v-model="formState.server"
         placeholder="ip:port"
       />
-    </n-form-item>
-    <n-form-item
-      :label="t('proxy.hysteria.auth')"
-      path="auth"
-    >
-      <n-input
-        v-model:value="hysteriaFormState.auth"
+    </label>
+    <label class="flex flex-col gap-2">
+      <span class="text-sm font-medium">{{ t('proxy.hysteria.auth') }}</span>
+      <prime-input-text
+        v-model="formState.auth"
         :placeholder="t('proxy.hysteria.authPlaceholder')"
       />
-    </n-form-item>
-    <n-form-item
-      :label="t('proxy.hysteria.bandwidth.uplink')"
-      path="bandwidth.up"
-    >
-      <n-input v-model:value="hysteriaFormState.bandwidth.up" />
-    </n-form-item>
-    <n-form-item
-      :label="t('proxy.hysteria.bandwidth.downlink')"
-      path="bandwidth.down"
-    >
-      <n-input v-model:value="hysteriaFormState.bandwidth.down" />
-    </n-form-item>
-    <n-form-item
-      label="sni"
-      path="tls.sni"
-    >
-      <n-input
-        v-model:value="hysteriaFormState.tls.sni"
+    </label>
+    <label class="flex flex-col gap-2">
+      <span class="text-sm font-medium">{{ t('proxy.hysteria.bandwidth.uplink') }}</span>
+      <prime-input-text v-model="formState.bandwidth.up" />
+    </label>
+    <label class="flex flex-col gap-2">
+      <span class="text-sm font-medium">{{ t('proxy.hysteria.bandwidth.downlink') }}</span>
+      <prime-input-text v-model="formState.bandwidth.down" />
+    </label>
+    <label class="flex flex-col gap-2">
+      <span class="text-sm font-medium">sni</span>
+      <prime-input-text
+        v-model="formState.tls.sni"
         placeholder="bing.com"
       />
-    </n-form-item>
-    <n-form-item
-      :label="t('proxy.hysteria.tls.insecure')"
-      path="tls.insecure"
-    >
-      <n-switch v-model:value="hysteriaFormState.tls.insecure" />
-    </n-form-item>
-  </n-form>
+    </label>
+    <div class="flex items-center justify-between gap-4 rounded-xl border border-slate-200 px-4 py-3 dark:border-slate-700">
+      <span class="text-sm font-medium">{{ t('proxy.hysteria.tls.insecure') }}</span>
+      <prime-toggle-switch v-model="formState.tls.insecure" />
+    </div>
+  </div>
 </template>

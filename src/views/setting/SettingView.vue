@@ -1,16 +1,26 @@
 <script setup lang="ts">
 import { onBeforeUnmount, watch } from 'vue'
 import { watchOnce } from '@vueuse/core'
-import { NRadioGroup, NSkeleton, NSwitch } from 'naive-ui'
+import PrimeInputNumber from 'primevue/inputnumber'
+import PrimeInputText from 'primevue/inputtext'
+import PrimeSkeleton from 'primevue/skeleton'
+import PrimeToggleSwitch from 'primevue/toggleswitch'
 import { isEnabled } from '@tauri-apps/plugin-autostart'
 import { useI18n } from 'vue-i18n'
 import HeaderBar from '@/components/HeaderBar.vue'
 import { settingStore } from '@/views/setting/store'
 import { useConfig } from '@/views/setting/hook'
 
+defineEmits<{
+  toggleMobileMenu: []
+}>()
+
 const { t, locale } = useI18n()
 const { baseConfig, handleSwitchAutoStart, handleBaseConfigUpdate, handleSwitchProxy, handleLogLevelChange, loading, proxyLoading, initConfig } = useConfig()
 initConfig()
+
+const languageOptions = ['zh-CN', 'en-US']
+const logLevelOptions = ['debug', 'info', 'warn', 'error']
 
 async function handleLanguageChange(lang: string) {
   locale.value = lang
@@ -56,13 +66,13 @@ onBeforeUnmount(() => {
 
 <template>
   <div class="w-full h-full flex flex-col gap-y-4">
-    <header-bar @toggle-mobile-menu="$emit('toggle-mobile-menu')">
+    <header-bar @toggle-mobile-menu="$emit('toggleMobileMenu')">
       <template #mobile-menu-button>
-        <n-icon size="24">
+        <span class="inline-flex h-6 w-6 items-center justify-center">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M3 12h18M3 6h18M3 18h18" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M3 12h18M3 6h18M3 18h18" stroke-linecap="round" stroke-linejoin="round" />
           </svg>
-        </n-icon>
+        </span>
       </template>
       <template #title>
         {{ t('setting.title') }}
@@ -72,11 +82,11 @@ onBeforeUnmount(() => {
       <div
         class="grid grid-cols-2 grid-rows-2 gap-x-16 gap-y-4 p-6 bg-bg-card dark:bg-dark-bg-card shadow-card rounded-lg text-text-secondary dark:text-text-secondary"
       >
-        <n-skeleton
+        <prime-skeleton
           v-if="loading"
           width="100%"
-          :height="34"
-          round
+          height="34px"
+          border-radius="999px"
         />
         <div
           v-else
@@ -86,18 +96,17 @@ onBeforeUnmount(() => {
             {{ t('setting.autoStart') }}
           </div>
           <div class="font-medium">
-            <n-switch
-              v-model:value="baseConfig.autoStart"
-              size="medium"
-              @update:value="handleAutoStart"
+            <prime-toggle-switch
+              v-model="baseConfig.autoStart"
+              @update:model-value="handleAutoStart"
             />
           </div>
         </div>
-        <n-skeleton
+        <prime-skeleton
           v-if="loading"
           width="100%"
-          :height="34"
-          round
+          height="34px"
+          border-radius="999px"
         />
         <div
           v-else
@@ -106,26 +115,24 @@ onBeforeUnmount(() => {
           <div class="font-semibold text-text-primary dark:text-text-primary">
             {{ t('setting.language') }}
           </div>
-          <div class="font-medium">
-            <n-radio-group
-              v-model:value="baseConfig.language"
-              name="langGroup"
-              @update:value="handleLanguageChange"
+          <div class="font-medium flex rounded-xl bg-slate-100 p-1 dark:bg-slate-800">
+            <button
+              v-for="lang in languageOptions"
+              :key="lang"
+              type="button"
+              class="settings-pill"
+              :class="{ 'settings-pill-active': baseConfig.language === lang }"
+              @click="handleLanguageChange(lang)"
             >
-              <n-radio-button value="zh-CN">
-                文
-              </n-radio-button>
-              <n-radio-button value="en-US">
-                En
-              </n-radio-button>
-            </n-radio-group>
+              {{ lang === 'zh-CN' ? '文' : 'En' }}
+            </button>
           </div>
         </div>
-        <n-skeleton
+        <prime-skeleton
           v-if="loading"
           width="100%"
-          :height="34"
-          round
+          height="34px"
+          border-radius="999px"
         />
         <div
           v-else
@@ -135,19 +142,18 @@ onBeforeUnmount(() => {
             {{ t('setting.systemProxy') }}
           </div>
           <div class="font-medium">
-            <n-switch
-              v-model:value="baseConfig.sysproxyFlag"
-              :loading="proxyLoading"
-              size="medium"
-              @update:value="handleProxy"
+            <prime-toggle-switch
+              v-model="baseConfig.sysproxyFlag"
+              :disabled="proxyLoading"
+              @update:model-value="handleProxy"
             />
           </div>
         </div>
-        <n-skeleton
+        <prime-skeleton
           v-if="loading"
           width="100%"
-          :height="34"
-          round
+          height="34px"
+          border-radius="999px"
         />
         <div
           v-else
@@ -164,11 +170,11 @@ onBeforeUnmount(() => {
       <div
         class="grid grid-cols-2 grid-rows-2 gap-x-16 gap-y-4 p-6 bg-bg-card dark:bg-dark-bg-card shadow-card rounded-lg text-text-secondary dark:text-text-secondary"
       >
-        <n-skeleton
+        <prime-skeleton
           v-if="loading"
           width="100%"
-          :height="34"
-          round
+          height="34px"
+          border-radius="999px"
         />
         <div
           v-else
@@ -181,11 +187,11 @@ onBeforeUnmount(() => {
             {{ t('common.rules') }}
           </div>
         </div>
-        <n-skeleton
+        <prime-skeleton
           v-if="loading"
           width="100%"
-          :height="34"
-          round
+          height="34px"
+          border-radius="999px"
         />
         <div
           v-else
@@ -195,21 +201,20 @@ onBeforeUnmount(() => {
             {{ t('setting.socks5Port') }}
           </div>
           <div class="font-medium w-20">
-            <n-input-number
-              v-model:value="baseConfig.socksPort"
-              type="text"
-              :show-button="false"
+            <prime-input-number
+              v-model="baseConfig.socksPort"
               :max="65535"
               :min="1"
+              input-class="w-full"
               @blur="handleBaseConfigUpdate"
             />
           </div>
         </div>
-        <n-skeleton
+        <prime-skeleton
           v-if="loading"
           width="100%"
-          :height="34"
-          round
+          height="34px"
+          border-radius="999px"
         />
         <div
           v-else
@@ -219,21 +224,20 @@ onBeforeUnmount(() => {
             {{ t('setting.httpPort') }}
           </div>
           <div class="font-medium w-20">
-            <n-input-number
-              v-model:value="baseConfig.httpPort"
-              type="text"
-              :show-button="false"
+            <prime-input-number
+              v-model="baseConfig.httpPort"
               :max="65535"
               :min="1"
+              input-class="w-full"
               @blur="handleBaseConfigUpdate"
             />
           </div>
         </div>
-        <n-skeleton
+        <prime-skeleton
           v-if="loading"
           width="100%"
-          :height="34"
-          round
+          height="34px"
+          border-radius="999px"
         />
         <div
           v-else
@@ -243,18 +247,18 @@ onBeforeUnmount(() => {
             {{ t('setting.delayTestUrl') }}
           </div>
           <div class="font-medium w-60">
-            <n-input
-              v-model:value="baseConfig.delayTestUrl"
-              type="text"
+            <prime-input-text
+              v-model="baseConfig.delayTestUrl"
+              class="w-full"
               @blur="handleBaseConfigUpdate"
             />
           </div>
         </div>
-        <n-skeleton
+        <prime-skeleton
           v-if="loading"
           width="100%"
-          :height="34"
-          round
+          height="34px"
+          border-radius="999px"
         />
         <div
           v-else
@@ -264,11 +268,11 @@ onBeforeUnmount(() => {
             {{ t('setting.subscriptionAutoUpdate') }}
           </div>
           <div class="font-medium w-20">
-            <n-input-number
-              v-model:value="baseConfig.updateInterval"
-              :show-button="false"
+            <prime-input-number
+              v-model="baseConfig.updateInterval"
               :max="48"
               :min="1"
+              input-class="w-full"
               @blur="handleUpdateInterval"
             />
           </div>
@@ -277,11 +281,11 @@ onBeforeUnmount(() => {
       <div
         class="grid grid-cols-2 grid-rows-2 gap-x-16 gap-y-4 p-6 bg-bg-card dark:bg-dark-bg-card shadow-card rounded-lg text-text-secondary dark:text-text-secondary"
       >
-        <n-skeleton
+        <prime-skeleton
           v-if="loading"
           width="100%"
-          :height="34"
-          round
+          height="34px"
+          border-radius="999px"
         />
         <div
           v-else
@@ -290,28 +294,31 @@ onBeforeUnmount(() => {
           <div class="font-semibold text-text-primary dark:text-text-primary">
             {{ t('setting.logLevel') }}
           </div>
-          <div class="font-medium">
-            <n-radio-group
-              v-model:value="baseConfig.logLevel"
-              name="logLevelGroup"
-              @update:value="handleLogLevelChange"
+          <div class="font-medium flex rounded-xl bg-slate-100 p-1 dark:bg-slate-800">
+            <button
+              v-for="level in logLevelOptions"
+              :key="level"
+              type="button"
+              class="settings-pill"
+              :class="{ 'settings-pill-active': baseConfig.logLevel === level }"
+              @click="handleLogLevelChange(level)"
             >
-              <n-radio-button value="debug">
-                Debug
-              </n-radio-button>
-              <n-radio-button value="info">
-                Info
-              </n-radio-button>
-              <n-radio-button value="warn">
-                Warn
-              </n-radio-button>
-              <n-radio-button value="error">
-                Error
-              </n-radio-button>
-            </n-radio-group>
+              {{ level.charAt(0).toUpperCase() + level.slice(1) }}
+            </button>
           </div>
         </div>
       </div>
     </div>
   </div>
 </template>
+
+<style scoped lang="scss">
+.settings-pill {
+  @apply rounded-lg px-3 py-2 text-sm font-medium transition-colors;
+  @apply text-text-secondary dark:text-text-secondary;
+}
+
+.settings-pill-active {
+  @apply bg-white text-text-primary shadow-sm dark:bg-slate-700 dark:text-white;
+}
+</style>

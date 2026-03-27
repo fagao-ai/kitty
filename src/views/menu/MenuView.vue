@@ -1,82 +1,23 @@
 <script setup lang="ts">
-import { h } from 'vue'
-import { NMenu, useMessage } from 'naive-ui'
-import type { MenuOption } from 'naive-ui'
-import { RouterLink, useRoute } from 'vue-router'
+import { computed } from 'vue'
+import { RouterLink as AppRouterLink, useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
+import { useMessage } from '@/utils/message'
 
+const emits = defineEmits<{
+  menuItemClick: []
+}>()
 const { t } = useI18n()
-
-// @ts-expect-error @ts-expect-error
+// @ts-expect-error injected by Vite define
 const version = __APP_VERSION__ as string
 
-const menuOptions: MenuOption[] = [
-  {
-    label: () =>
-      h(
-        RouterLink,
-        {
-          to: {
-            name: 'proxy',
-          },
-        },
-        { default: () => t('menubar.proxies') },
-      ),
-    key: 'proxy',
-  },
-  {
-    label: () =>
-      h(
-        RouterLink,
-        {
-          to: {
-            name: 'subscription',
-          },
-        },
-        { default: () => t('menubar.subscriptions') },
-      ),
-    key: 'subscription',
-  },
-  {
-    label: () =>
-      h(
-        RouterLink,
-        {
-          to: {
-            name: 'rule',
-          },
-        },
-        { default: () => t('menubar.rules') },
-      ),
-    key: 'rule',
-  },
-  {
-    label: () =>
-      h(
-        RouterLink,
-        {
-          to: {
-            name: 'log',
-          },
-        },
-        { default: () => t('menubar.logs') },
-      ),
-    key: 'log',
-  },
-  {
-    label: () =>
-      h(
-        RouterLink,
-        {
-          to: {
-            name: 'setting',
-          },
-        },
-        { default: () => t('menubar.settings') },
-      ),
-    key: 'setting',
-  },
-]
+const menuOptions = computed(() => [
+  { key: 'proxy', label: t('menubar.proxies') },
+  { key: 'subscription', label: t('menubar.subscriptions') },
+  { key: 'rule', label: t('menubar.rules') },
+  { key: 'log', label: t('menubar.logs') },
+  { key: 'setting', label: t('menubar.settings') },
+])
 
 const route = useRoute()
 window.$message = useMessage()
@@ -98,11 +39,18 @@ window.$message = useMessage()
         class="flex-1 text-lg"
         data-tauri-drag-region
       >
-        <n-menu
-          :value="route.name as string ?? 'proxy'"
-          :default-value="route.name as string ?? 'proxy'"
-          :options="menuOptions"
-        />
+        <nav class="flex flex-col gap-2">
+          <app-router-link
+            v-for="option in menuOptions"
+            :key="option.key"
+            :to="{ name: option.key }"
+            class="menu-link"
+            :class="{ 'menu-link-active': (route.name as string ?? 'proxy') === option.key }"
+            @click="emits('menuItemClick')"
+          >
+            {{ option.label }}
+          </app-router-link>
+        </nav>
       </div>
     </div>
     <div class="h-1/8 flex flex-center flex-col">
@@ -117,24 +65,18 @@ window.$message = useMessage()
 </template>
 
 <style scoped lang="scss">
-:deep(.n-menu) {
-  .n-menu-item-content {
-    @apply flex justify-center items-center;
-    padding-left: 0 !important;
-    padding-right: 0 !important;
-    margin-bottom: 4px;
-    border-radius: 8px;
-    transition: all 0.2s ease;
+.menu-link {
+  @apply flex items-center justify-center rounded-lg px-3 py-2.5 text-base font-medium;
+  @apply text-text-secondary dark:text-text-secondary;
+  @apply transition-all duration-200;
 
-    .n-menu-item-content-header {
-      .router-link-active {
-        font-weight: 500;
-      }
-    }
-
-    &:hover {
-      @apply bg-bg-muted dark:bg-dark-bg-muted;
-    }
+  &:hover {
+    @apply bg-bg-card dark:bg-dark-bg;
+    @apply text-text-primary dark:text-text-primary;
   }
+}
+
+.menu-link-active {
+  @apply bg-primary text-white shadow-card;
 }
 </style>

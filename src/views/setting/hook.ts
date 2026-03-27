@@ -63,11 +63,6 @@ export function useConfig() {
     await invoke('update_base_config', { record: decamelizeKeys(toRaw(baseConfig)) })
   }
 
-  async function getLogLevel() {
-    const result = await invoke<string>('get_log_level')
-    return result.data
-  }
-
   async function setLogLevel(level: string) {
     await invoke('set_log_level', { log_level: level })
   }

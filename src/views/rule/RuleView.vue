@@ -1,13 +1,18 @@
 <script setup lang="ts">
+import PrimeButton from 'primevue/button'
+import PrimeInputText from 'primevue/inputtext'
+import PrimeSelect from 'primevue/select'
+import PrimeTag from 'primevue/tag'
 import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { NButton, NIcon, NInput, NSelect, NTag, useMessage } from 'naive-ui'
-import { VueDraggable } from 'vue-draggable-plus'
+import { VueDraggable as AppDraggable } from 'vue-draggable-plus'
 import CIDR from 'ip-cidr'
-import { createRule, deleteRule, getAllRules, updateRule, exportRules, importRules } from '@/apis/rule'
-import { save, open } from '@tauri-apps/plugin-dialog'
-import { writeTextFile, readTextFile } from '@tauri-apps/plugin-fs'
+import { open, save } from '@tauri-apps/plugin-dialog'
+import { readTextFile, writeTextFile } from '@tauri-apps/plugin-fs'
+import { deleteRule, exportRules, getAllRules, importRules, updateRule } from '@/apis/rule'
 import HeaderBar from '@/components/HeaderBar.vue'
+import type { ProxyRule, RuleAction, RuleType } from '@/types/rule'
+import { useMessage } from '@/utils/message'
 
 defineEmits<{
   toggleMobileMenu: []
@@ -18,14 +23,22 @@ const message = useMessage()
 
 interface RuleWithId {
   uuid: string
-  action: string
-  ruleType: string
+  action: RuleAction
+  ruleType: RuleType
   pattern: string
 }
 
 const rules = ref<RuleWithId[]>([])
 const editingRuleId = ref<string | null>(null)
 const isLoading = ref(false)
+
+function getRulePayload() {
+  return rules.value.map<ProxyRule>(rule => ({
+    action: rule.action,
+    ruleType: rule.ruleType,
+    pattern: rule.pattern,
+  }))
+}
 
 // Action options with color coding
 const actionOptions = computed(() => [
@@ -108,7 +121,7 @@ async function handleUpdateRule(rule: RuleWithId) {
 
   isLoading.value = true
   try {
-    await updateRule(rules.value.map(r => ({ action: r.action, ruleType: r.ruleType, pattern: r.pattern })))
+    await updateRule(getRulePayload())
     message.success(t('common.updateSuccess'))
     editingRuleId.value = null
   }
@@ -128,9 +141,9 @@ async function handleExport() {
     const filePath = await save({
       filters: [{
         name: 'JSON',
-        extensions: ['json']
+        extensions: ['json'],
       }],
-      defaultPath: 'custom_rules.json'
+      defaultPath: 'custom_rules.json',
     })
 
     if (filePath) {
@@ -150,8 +163,8 @@ async function handleImport() {
       multiple: false,
       filters: [{
         name: 'JSON',
-        extensions: ['json']
-      }]
+        extensions: ['json'],
+      }],
     })
 
     if (filePath) {
@@ -170,7 +183,7 @@ async function handleImport() {
 async function handleDragEnd() {
   // Save new order
   if (rules.value.length > 0) {
-    await updateRule(rules.value.map(r => ({ action: r.action, ruleType: r.ruleType, pattern: r.pattern })))
+    await updateRule(getRulePayload())
     message.success(t('common.updateSuccess'))
   }
 }
@@ -207,104 +220,92 @@ initRules()
   <div class="flex w-full h-full flex-col bg-gray-50 dark:bg-gray-900">
     <header-bar @toggle-mobile-menu="$emit('toggleMobileMenu')">
       <template #mobile-menu-button>
-        <n-icon size="24">
+        <span class="inline-flex h-6 w-6 items-center justify-center">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M3 12h18M3 6h18M3 18h18" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M3 12h18M3 6h18M3 18h18" stroke-linecap="round" stroke-linejoin="round" />
           </svg>
-        </n-icon>
+        </span>
       </template>
       <template #title>
         {{ t('menubar.rules') }}
       </template>
       <template #default>
-        <n-button size="small" secondary @click="handleAddRule">
+        <prime-button size="small" severity="secondary" variant="outlined" @click="handleAddRule">
           <template #icon>
-            <n-icon>
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M12 5v14M5 12h14" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-            </n-icon>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 5v14M5 12h14" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
           </template>
           {{ t('common.add') }}
-        </n-button>
-        <n-button size="small" secondary @click="handleImport" :title="t('common.import')">
+        </prime-button>
+        <prime-button size="small" severity="secondary" variant="outlined" :title="t('common.import')" @click="handleImport">
           <template #icon>
-            <n-icon>
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" stroke-linecap="round" stroke-linejoin="round"/>
-                <polyline points="7 10 12 15 17 10" stroke-linecap="round" stroke-linejoin="round"/>
-                <line x1="12" y1="15" x2="12" y2="3" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-            </n-icon>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" stroke-linecap="round" stroke-linejoin="round" />
+              <polyline points="7 10 12 15 17 10" stroke-linecap="round" stroke-linejoin="round" />
+              <line x1="12" y1="15" x2="12" y2="3" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
           </template>
-        </n-button>
-        <n-button size="small" secondary @click="handleExport" :title="t('rule.export')">
+        </prime-button>
+        <prime-button size="small" severity="secondary" variant="outlined" :title="t('rule.export')" @click="handleExport">
           <template #icon>
-            <n-icon>
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" stroke-linecap="round" stroke-linejoin="round"/>
-                <polyline points="17 8 12 3 7 8" stroke-linecap="round" stroke-linejoin="round"/>
-                <line x1="12" y1="3" x2="12" y2="15" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-            </n-icon>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" stroke-linecap="round" stroke-linejoin="round" />
+              <polyline points="17 8 12 3 7 8" stroke-linecap="round" stroke-linejoin="round" />
+              <line x1="12" y1="3" x2="12" y2="15" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
           </template>
-        </n-button>
+        </prime-button>
       </template>
       <template #mobile-actions>
-        <n-button size="small" @click="handleAddRule">
+        <prime-button size="small" @click="handleAddRule">
           <template #icon>
-            <n-icon>
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M12 5v14M5 12h14" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-            </n-icon>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 5v14M5 12h14" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
           </template>
-        </n-button>
-        <n-button size="small" @click="handleImport">
+        </prime-button>
+        <prime-button size="small" @click="handleImport">
           <template #icon>
-            <n-icon>
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" stroke-linecap="round" stroke-linejoin="round"/>
-                <polyline points="7 10 12 15 17 10" stroke-linecap="round" stroke-linejoin="round"/>
-                <line x1="12" y1="15" x2="12" y2="3" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-            </n-icon>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" stroke-linecap="round" stroke-linejoin="round" />
+              <polyline points="7 10 12 15 17 10" stroke-linecap="round" stroke-linejoin="round" />
+              <line x1="12" y1="15" x2="12" y2="3" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
           </template>
-        </n-button>
-        <n-button size="small" @click="handleExport">
+        </prime-button>
+        <prime-button size="small" @click="handleExport">
           <template #icon>
-            <n-icon>
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" stroke-linecap="round" stroke-linejoin="round"/>
-                <polyline points="17 8 12 3 7 8" stroke-linecap="round" stroke-linejoin="round"/>
-                <line x1="12" y1="3" x2="12" y2="15" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-            </n-icon>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" stroke-linecap="round" stroke-linejoin="round" />
+              <polyline points="17 8 12 3 7 8" stroke-linecap="round" stroke-linejoin="round" />
+              <line x1="12" y1="3" x2="12" y2="15" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
           </template>
-        </n-button>
+        </prime-button>
       </template>
     </header-bar>
 
     <!-- Rules Container -->
     <div class="flex-1 overflow-y-auto p-4 md:p-6">
       <div v-if="rules.length === 0" class="flex flex-col items-center justify-center h-full text-gray-500 dark:text-gray-400">
-        <n-icon size="64" class="mb-4 opacity-30">
+        <span class="mb-4 inline-flex h-16 w-16 items-center justify-center opacity-30">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-            <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5.586a1 1 0 0 1 .707.293l5.414 5.414a1 1 0 0 1 .293.707V19a2 2 0 0 1-2 2z" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5.586a1 1 0 0 1 .707.293l5.414 5.414a1 1 0 0 1 .293.707V19a2 2 0 0 1-2 2z" stroke-linecap="round" stroke-linejoin="round" />
           </svg>
-        </n-icon>
-        <p class="text-lg">{{ t('rule.noRules') }}</p>
-        <n-button size="small" class="mt-4" @click="handleAddRule">
-          {{ t('common.add') }}
-        </n-button>
+        </span>
+        <p class="text-lg">
+          {{ t('rule.noRules') }}
+        </p>
+        <prime-button size="small" class="mt-4" :label="t('common.add')" @click="handleAddRule" />
       </div>
 
-      <VueDraggable
+      <app-draggable
         v-else
         v-model="rules"
         class="space-y-3"
         handle=".drag-handle"
-        animation="200"
+        :animation="200"
         ghost-class="rule-card-ghost"
         @end="handleDragEnd"
       >
@@ -312,118 +313,100 @@ initRules()
           v-for="rule in rules"
           :key="rule.uuid"
           class="rule-card group"
-          :class="{ 'editing': editingRuleId === rule.uuid }"
+          :class="{ editing: editingRuleId === rule.uuid }"
         >
           <!-- View Mode -->
           <div v-if="editingRuleId !== rule.uuid" class="rule-card-content" @click="startEditing(rule.uuid)">
             <!-- Drag Handle -->
             <div class="drag-handle">
-              <n-icon size="16">
+              <span class="inline-flex h-4 w-4 items-center justify-center">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <circle cx="9" cy="5" r="1"/>
-                  <circle cx="9" cy="12" r="1"/>
-                  <circle cx="9" cy="19" r="1"/>
-                  <circle cx="15" cy="5" r="1"/>
-                  <circle cx="15" cy="12" r="1"/>
-                  <circle cx="15" cy="19" r="1"/>
+                  <circle cx="9" cy="5" r="1" />
+                  <circle cx="9" cy="12" r="1" />
+                  <circle cx="9" cy="19" r="1" />
+                  <circle cx="15" cy="5" r="1" />
+                  <circle cx="15" cy="12" r="1" />
+                  <circle cx="15" cy="19" r="1" />
                 </svg>
-              </n-icon>
+              </span>
             </div>
 
-            <!-- Action Badge -->
             <div class="rule-action-badge" :style="{ backgroundColor: getActionColor(rule.action) }">
-              <n-icon size="14">
+              <span class="inline-flex h-3.5 w-3.5 items-center justify-center">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
-                  <path :d="getActionIcon(rule.action)"/>
+                  <path :d="getActionIcon(rule.action)" />
                 </svg>
-              </n-icon>
+              </span>
               <span class="text-xs font-semibold">{{ rule.action.toUpperCase() }}</span>
             </div>
 
-            <!-- Rule Type -->
             <div class="rule-type">
-              <n-tag size="small" :bordered="false">
-                {{ ruleTypeOptions.find(opt => opt.value === rule.ruleType)?.label || rule.ruleType }}
-              </n-tag>
+              <prime-tag severity="secondary" :value="ruleTypeOptions.find(opt => opt.value === rule.ruleType)?.label || rule.ruleType" />
             </div>
 
-            <!-- Pattern -->
             <div class="rule-pattern">
               <code class="pattern-code">{{ rule.pattern || '<empty>' }}</code>
             </div>
 
-            <!-- Actions -->
             <div class="rule-actions">
-              <n-button text size="small" @click.stop="startEditing(rule.uuid)">
+              <prime-button size="small" variant="text" @click.stop="startEditing(rule.uuid)">
                 <template #icon>
-                  <n-icon>
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" stroke-linecap="round" stroke-linejoin="round"/>
-                      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
-                  </n-icon>
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" stroke-linecap="round" stroke-linejoin="round" />
+                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" stroke-linecap="round" stroke-linejoin="round" />
+                  </svg>
                 </template>
-              </n-button>
-              <n-button text size="small" @click.stop="handleRemoveRule(rule.uuid)">
+              </prime-button>
+              <prime-button size="small" variant="text" severity="danger" @click.stop="handleRemoveRule(rule.uuid)">
                 <template #icon>
-                  <n-icon>
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
-                  </n-icon>
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" stroke-linecap="round" stroke-linejoin="round" />
+                  </svg>
                 </template>
-              </n-button>
+              </prime-button>
             </div>
           </div>
 
-          <!-- Edit Mode -->
           <div v-else class="rule-card-edit">
             <div class="flex flex-col md:flex-row gap-3 flex-1 items-center w-full">
-              <!-- Action Select -->
-              <n-select
-                v-model:value="rule.action"
+              <prime-select
+                v-model="rule.action"
                 :options="actionOptions"
-                size="small"
+                option-label="label"
+                option-value="value"
                 class="flex-shrink-0 w-24"
               />
 
-              <!-- Rule Type Select -->
-              <n-select
-                v-model:value="rule.ruleType"
+              <prime-select
+                v-model="rule.ruleType"
                 :options="ruleTypeOptions"
-                size="small"
+                option-label="label"
+                option-value="value"
                 class="flex-shrink-0 w-40"
               />
 
-              <!-- Pattern Input -->
-              <n-input
-                v-model:value="rule.pattern"
-                size="small"
+              <prime-input-text
+                v-model="rule.pattern"
                 placeholder="Enter pattern..."
                 class="flex-1 min-w-0"
                 @keyup.enter="handleUpdateRule(rule)"
               />
             </div>
 
-            <!-- Edit Actions -->
             <div class="flex gap-2 mt-3 md:mt-0 flex-shrink-0">
-              <n-button size="small" secondary type="success" :loading="isLoading" @click="handleUpdateRule(rule)">
+              <prime-button size="small" severity="success" variant="outlined" :loading="isLoading" @click="handleUpdateRule(rule)">
                 <template #icon>
-                  <n-icon>
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <path d="M20 6L9 17l-5-5" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
-                  </n-icon>
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M20 6L9 17l-5-5" stroke-linecap="round" stroke-linejoin="round" />
+                  </svg>
                 </template>
                 {{ t('common.update') }}
-              </n-button>
-              <n-button size="small" @click="cancelEditing(rule.uuid)">
-                {{ t('common.cancel') }}
-              </n-button>
+              </prime-button>
+              <prime-button size="small" severity="secondary" variant="outlined" :label="t('common.cancel')" @click="cancelEditing(rule.uuid)" />
             </div>
           </div>
         </div>
-      </VueDraggable>
+      </app-draggable>
     </div>
   </div>
 </template>
@@ -510,14 +493,6 @@ initRules()
   @apply flex flex-col md:flex-row items-start md:items-center gap-3;
   @apply p-4;
   @apply w-full;
-
-  :deep(.n-select) {
-    @apply flex-shrink-0;
-  }
-
-  :deep(.n-input) {
-    @apply min-w-0;
-  }
 }
 
 // Loading state

@@ -45,8 +45,8 @@ export interface ProxyCard {
   name: string
   delay: number
   protocol: string
-  source: 'subscription' | 'manual'  // Node source: subscription or manual
-  isActive?: boolean          // Whether this proxy is currently active
+  source: 'subscription' | 'manual' // Node source: subscription or manual
+  isActive?: boolean // Whether this proxy is currently active
 }
 
 export interface ImportProxy {
@@ -65,5 +65,5 @@ export interface ProxyDelayInfo {
   id: number
   address: string
   port: number
-  proxy_type: 'Xray' | 'Hysteria2'  // Must match Rust enum variants
+  proxy_type: 'Xray' | 'Hysteria2' // Must match Rust enum variants
 }

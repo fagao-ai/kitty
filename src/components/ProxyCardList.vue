@@ -2,6 +2,7 @@
   setup
   lang="ts"
 >
+import PrimeScrollPanel from 'primevue/scrollpanel'
 import ProxyCard from '@/components/ProxyCard.vue'
 import Empty from '@/components/Empty.vue'
 import type { ProxyCard as Card, ProxyType } from '@/types/proxy'
@@ -22,7 +23,7 @@ const emits = defineEmits<Emits>()
 
 <template>
   <div class="w-full h-full">
-    <n-scrollbar>
+    <prime-scroll-panel class="proxy-scroll-panel h-full">
       <template v-if="data.length !== 0">
         <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 xxl:grid-cols-7 xxxl:grid-cols-8 tv:grid-cols-10 gap-2">
           <template
@@ -49,7 +50,7 @@ const emits = defineEmits<Emits>()
         v-else
         description="No Proxy Found"
       />
-    </n-scrollbar>
+    </prime-scroll-panel>
   </div>
 </template>
 
@@ -57,9 +58,7 @@ const emits = defineEmits<Emits>()
   lang="scss"
   scoped
 >
-:deep(.n-scrollbar) {
-  .n-scrollbar-content {
-    @apply pl-4 py-4;
-  }
+:deep(.proxy-scroll-panel .p-scrollpanel-content) {
+  @apply pl-4 py-4;
 }
 </style>

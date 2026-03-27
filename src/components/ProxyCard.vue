@@ -1,6 +1,7 @@
 <script setup lang="ts">
+import PrimeProgressSpinner from 'primevue/progressspinner'
+import PrimeTag from 'primevue/tag'
 import { computed } from 'vue'
-import { NTag, NSpin } from 'naive-ui'
 import type { ProxyCard, ProxyType } from '@/types/proxy'
 
 interface Emits {
@@ -18,9 +19,9 @@ const tagType = computed(() => {
     return 'success'
 
   if (props.delay <= 1000)
-    return 'warning'
+    return 'warn'
 
-  return 'error'
+  return 'danger'
 })
 
 function handleDblClick() {
@@ -44,49 +45,27 @@ function handleClick() {
     @dblclick="handleDblClick"
     @keydown.enter="handleClick"
   >
-    <!-- Loading overlay -->
     <div v-if="isSwitching" class="loading-overlay">
-      <n-spin size="small" />
+      <prime-progress-spinner style="width: 28px; height: 28px" stroke-width="6" />
     </div>
 
-    <!-- Subscription tag (top right) - only show for subscription nodes -->
     <div v-if="source === 'subscription'" class="absolute top-2 right-2 z-10">
-      <n-tag
-        size="small"
-        type="warning"
-        :bordered="false"
-      >
-        SUB
-      </n-tag>
+      <prime-tag severity="warn" value="SUB" />
     </div>
 
-    <!-- Delay status tag (top left) -->
     <div class="h-6">
-      <n-tag
-        :type="tagType"
-        size="small"
-        round
-      >
-        {{ tag }}
-      </n-tag>
+      <prime-tag :severity="tagType" :value="tag" />
     </div>
 
-    <!-- Node name -->
     <div class="flex-1 text-sm font-medium truncate text-text-primary dark:text-text-primary">
       {{ name }}
     </div>
 
-    <!-- Delay and transport protocol -->
-    <div class="h-6 flex justify-between items-center text-xs">
+    <div class="h-6 flex justify-between items-center text-xs gap-2">
       <span class="text-text-secondary dark:text-text-secondary font-mono">
         {{ delay }}ms
       </span>
-      <n-tag
-        size="small"
-        :bordered="false"
-      >
-        {{ protocol }}
-      </n-tag>
+      <prime-tag severity="secondary" :value="protocol" />
     </div>
   </div>
 </template>
@@ -116,7 +95,10 @@ function handleClick() {
   @apply rounded-lg;
 }
 
-// Add active state for keyboard users
+:deep(.p-tag) {
+  @apply text-[11px];
+}
+
 .card-wrapper:active {
   @apply scale-[0.98];
 }
