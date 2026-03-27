@@ -13,6 +13,7 @@ use entity::{
 use serde::Serialize;
 
 use tauri::{AppHandle, Manager, State};
+use tokio::time::{sleep, Duration};
 
 use crate::{
     config_converter::ShoesConfigConverter,
@@ -23,24 +24,50 @@ use crate::{
 
 pub mod common;
 pub mod proxy;
-pub mod utils;
 pub mod server;
 pub mod subscription;
+pub mod utils;
 
 // ============================================================================
 // System Proxy Commands (moved from tauri_apis.rs)
 // ============================================================================
 
-async fn init_state<'a>(
-    process_state: &State<'a, ProcessManagerState>,
-) -> Result<()> {
-    // Abort all running shoes servers
-    let mut running_servers = process_state.running_servers.lock().await;
-    for handle in running_servers.iter() {
-        handle.abort();
-    }
-    running_servers.clear();
+async fn init_state(process_state: &ProcessManagerState) -> Result<()> {
+    process_state.abort_running_servers().await;
     Ok(())
+}
+
+pub(crate) async fn wait_for_ports_available(
+    ports: &[u16],
+    retries: usize,
+    retry_delay_ms: u64,
+) -> Result<()> {
+    for attempt in 0..=retries {
+        let in_use: Vec<u16> = ports
+            .iter()
+            .copied()
+            .filter(|port| !is_port_available(*port))
+            .collect();
+
+        if in_use.is_empty() {
+            return Ok(());
+        }
+
+        if attempt == retries {
+            return Err(anyhow!(
+                "port(s) already in use: {}",
+                in_use
+                    .iter()
+                    .map(std::string::ToString::to_string)
+                    .collect::<Vec<_>>()
+                    .join(", ")
+            ));
+        }
+
+        sleep(Duration::from_millis(retry_delay_ms)).await;
+    }
+
+    unreachable!()
 }
 
 /// Start shoes proxy servers from YAML configuration
@@ -52,7 +79,8 @@ async fn start_shoes_servers(yaml_config: &str) -> Result<Vec<tokio::task::JoinH
     let mut all_handles = Vec::new();
     for config in configs {
         // Start each server using shoes library tcp_server API (now public)
-        let handles = start_servers_internal(config).await
+        let handles = start_servers_internal(config)
+            .await
             .map_err(|e| anyhow!("Failed to start shoes server: {e}"))?;
         all_handles.extend(handles);
     }
@@ -66,7 +94,8 @@ async fn start_shoes_servers(yaml_config: &str) -> Result<Vec<tokio::task::JoinH
 pub(super) async fn start_servers_internal(
     config: shoes::config::Config,
 ) -> std::io::Result<Vec<tokio::task::JoinHandle<()>>> {
-    let resolver = std::sync::Arc::new(shoes::resolver::CachingNativeResolver::new()) as std::sync::Arc<dyn shoes::resolver::Resolver>;
+    let resolver = std::sync::Arc::new(shoes::resolver::CachingNativeResolver::new())
+        as std::sync::Arc<dyn shoes::resolver::Resolver>;
     shoes::tcp::tcp_server::start_servers(config, resolver).await
 }
 
@@ -84,32 +113,28 @@ pub async fn start_all_servers<'a>(
     db_state: State<'a, DatabaseState>,
     xray_id: Option<i32>,
 ) -> CommandResult<KittyResponse<()>> {
-
-    let _ = init_state(&process_state).await?;
+    let _start_guard = process_state.server_start_lock.lock().await;
+    let _ = init_state(process_state.inner()).await?;
     let db = db_state.get_db();
     let mut all_server_handles = Vec::new();
     let mut start_cmd_flag = false;
 
     // Get the resource directory for geo files
-    let resource_dir = app_handle.path().resource_dir()
-        .map_err(|e| KittyCommandError::AnyHowError(anyhow!("Failed to get resource dir: {}", e)))?;
+    let resource_dir = app_handle.path().resource_dir().map_err(|e| {
+        KittyCommandError::AnyHowError(anyhow!("Failed to get resource dir: {}", e))
+    })?;
 
     // Get custom rules path
-    let custom_rules_path = app_handle.path().app_data_dir()
+    let custom_rules_path = app_handle
+        .path()
+        .app_data_dir()
         .map_err(|e| KittyCommandError::AnyHowError(anyhow!("Failed to get app data dir: {}", e)))?
         .join("custom_rules.json");
 
     let record: base_config::Model = base_config::Model::first(&db).await.unwrap().unwrap();
     let http_port = record.http_port;
     let socks_port = record.socks_port;
-    for port in vec![http_port, socks_port] {
-        if !is_port_available(port) {
-            return Err(KittyCommandError::AnyHowError(anyhow!(
-                "port {} already is used.",
-                port
-            )));
-        }
-    }
+    wait_for_ports_available(&[http_port, socks_port], 20, 100).await?;
 
     // Process hysteria record if exists
     let hysteria_record = hysteria_entity::Model::first(&db).await?;
@@ -121,11 +146,14 @@ pub async fn start_all_servers<'a>(
             &resource_dir,
             Some(&custom_rules_path),
         )
-        .map_err(|e| KittyCommandError::AnyHowError(anyhow!("Failed to convert hysteria config: {}", e)))?;
+        .map_err(|e| {
+            KittyCommandError::AnyHowError(anyhow!("Failed to convert hysteria config: {}", e))
+        })?;
 
         // Start shoes servers directly
-        let handles = start_shoes_servers(&yaml_config).await
-            .map_err(|e| KittyCommandError::AnyHowError(anyhow!("Failed to start hysteria: {}", e)))?;
+        let handles = start_shoes_servers(&yaml_config).await.map_err(|e| {
+            KittyCommandError::AnyHowError(anyhow!("Failed to start hysteria: {}", e))
+        })?;
         all_server_handles.extend(handles);
         start_cmd_flag = true;
     }
@@ -149,10 +177,13 @@ pub async fn start_all_servers<'a>(
             &resource_dir,
             Some(&custom_rules_path),
         )
-        .map_err(|e| KittyCommandError::AnyHowError(anyhow!("Failed to convert xray config: {}", e)))?;
+        .map_err(|e| {
+            KittyCommandError::AnyHowError(anyhow!("Failed to convert xray config: {}", e))
+        })?;
 
         // Start shoes servers directly
-        let handles = start_shoes_servers(&yaml_config).await
+        let handles = start_shoes_servers(&yaml_config)
+            .await
             .map_err(|e| KittyCommandError::AnyHowError(anyhow!("Failed to start xray: {}", e)))?;
         all_server_handles.extend(handles);
         start_cmd_flag = true;
@@ -189,7 +220,8 @@ pub async fn set_system_proxy_only<'a>(
     db_state: State<'a, DatabaseState>,
 ) -> CommandResult<KittyResponse<()>> {
     let db = db_state.get_db();
-    let record: base_config::Model = base_config::Model::first(&db).await?
+    let record: base_config::Model = base_config::Model::first(&db)
+        .await?
         .ok_or_else(|| anyhow::anyhow!("Base config not found"))?;
 
     set_system_proxy(&record.local_ip, record.socks_port, Some(record.http_port));
@@ -241,31 +273,34 @@ pub async fn switch_to_proxy<'a>(
     proxy_type: String,
 ) -> CommandResult<KittyResponse<()>> {
     let db = db_state.get_db();
+    let _start_guard = process_manager.server_start_lock.lock().await;
 
     // Get the resource directory for geo files
-    let resource_dir = app_handle.path().resource_dir()
-        .map_err(|e| KittyCommandError::AnyHowError(anyhow!("Failed to get resource dir: {}", e)))?;
+    let resource_dir = app_handle.path().resource_dir().map_err(|e| {
+        KittyCommandError::AnyHowError(anyhow!("Failed to get resource dir: {}", e))
+    })?;
 
     // Stop all running servers
-    let mut servers = process_manager.running_servers.lock().await;
-    for handle in servers.drain(..) {
-        handle.abort();
-    }
-    drop(servers);
+    process_manager.abort_running_servers().await;
 
     // Get ports from base config
-    let record = base_config::Model::first(&db).await?
+    let record = base_config::Model::first(&db)
+        .await?
         .ok_or_else(|| anyhow!("Base config not found"))?;
     let http_port = record.http_port;
     let socks_port = record.socks_port;
+    wait_for_ports_available(&[http_port, socks_port], 20, 100).await?;
 
     // Get custom rules path
-    let custom_rules_path = app_handle.path().app_data_dir()
+    let custom_rules_path = app_handle
+        .path()
+        .app_data_dir()
         .map_err(|e| KittyCommandError::AnyHowError(anyhow!("Failed to get app data dir: {}", e)))?
         .join("custom_rules.json");
 
     let yaml_config = if proxy_type == "hysteria" {
-        let hysteria_record = hysteria_entity::Model::get_by_id(&db, proxy_id as i32).await?
+        let hysteria_record = hysteria_entity::Model::get_by_id(&db, proxy_id as i32)
+            .await?
             .ok_or_else(|| anyhow!("Hysteria record {} not found", proxy_id))?;
 
         ShoesConfigConverter::hysteria_to_socks_http_yaml(
@@ -276,7 +311,8 @@ pub async fn switch_to_proxy<'a>(
             Some(&custom_rules_path),
         )?
     } else {
-        let xray_record = xray_entity::Model::get_by_id(&db, proxy_id as i32).await?
+        let xray_record = xray_entity::Model::get_by_id(&db, proxy_id as i32)
+            .await?
             .ok_or_else(|| anyhow!("Xray record {} not found", proxy_id))?;
 
         ShoesConfigConverter::xray_to_socks_http_yaml(

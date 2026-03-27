@@ -49,10 +49,7 @@ impl ServerManager {
     ///
     /// Note: This is a simplified version that starts both xray and hysteria
     /// servers if they exist in the database.
-    pub async fn start_servers_from_config(
-        &mut self,
-        db: &DatabaseConnection,
-    ) -> Result<()> {
+    pub async fn start_servers_from_config(&mut self, db: &DatabaseConnection) -> Result<()> {
         // Stop any existing servers first
         self.stop_all_servers().await;
 
@@ -82,7 +79,10 @@ impl ServerManager {
 
         // Generate shoes YAML config for xray
         log::info!("Custom rules path: {}", self.custom_rules_path.display());
-        log::info!("Custom rules file exists: {}", self.custom_rules_path.exists());
+        log::info!(
+            "Custom rules file exists: {}",
+            self.custom_rules_path.exists()
+        );
         let yaml_config = ShoesConfigConverter::xray_to_socks_http_yaml(
             &xray_record,
             http_port,
@@ -101,7 +101,8 @@ impl ServerManager {
         let configs: Vec<Config> = shoes::config::load_config_str(&yaml_config)?;
 
         for config in configs {
-            let resolver = std::sync::Arc::new(shoes::resolver::CachingNativeResolver::new()) as std::sync::Arc<dyn shoes::resolver::Resolver>;
+            let resolver = std::sync::Arc::new(shoes::resolver::CachingNativeResolver::new())
+                as std::sync::Arc<dyn shoes::resolver::Resolver>;
             let handles = start_servers(config, resolver).await?;
             self.running_servers.extend(handles);
         }
@@ -135,7 +136,8 @@ impl ServerManager {
         let configs: Vec<Config> = shoes::config::load_config_str(&yaml_config)?;
 
         for config in configs {
-            let resolver = std::sync::Arc::new(shoes::resolver::CachingNativeResolver::new()) as std::sync::Arc<dyn shoes::resolver::Resolver>;
+            let resolver = std::sync::Arc::new(shoes::resolver::CachingNativeResolver::new())
+                as std::sync::Arc<dyn shoes::resolver::Resolver>;
             let handles = start_servers(config, resolver).await?;
             self.running_servers.extend(handles);
         }
@@ -189,10 +191,12 @@ pub async fn start_servers_from_db(
     resource_dir: &std::path::Path,
     custom_rules_path: &std::path::Path,
 ) -> Result<()> {
-    let _manager = process_manager.running_servers.lock().await;
+    let _start_guard = process_manager.server_start_lock.lock().await;
+    process_manager.abort_running_servers().await;
 
     // Create a temporary server manager to handle the startup
-    let mut server_manager = ServerManager::new(resource_dir.to_path_buf(), custom_rules_path.to_path_buf());
+    let mut server_manager =
+        ServerManager::new(resource_dir.to_path_buf(), custom_rules_path.to_path_buf());
     server_manager.start_servers_from_config(db).await?;
 
     // Transfer the running servers to the process manager state
@@ -204,10 +208,7 @@ pub async fn start_servers_from_db(
 
 /// Stop all currently running servers.
 pub async fn stop_all_servers(process_manager: &ProcessManagerState) -> Result<()> {
-    let mut servers = process_manager.running_servers.lock().await;
-    for handle in servers.drain(..) {
-        handle.abort();
-    }
+    process_manager.abort_running_servers().await;
     println!("All servers stopped");
     Ok(())
 }
@@ -251,10 +252,18 @@ pub async fn start_proxy_server<'a>(
     process_manager: State<'a, ProcessManagerState>,
 ) -> CommandResult<KittyResponse<()>> {
     let db = state.get_db();
-    let resource_dir = app_handle.path().resource_dir()
-        .map_err(|e| crate::types::KittyCommandError::AnyHowError(anyhow!("Failed to get resource dir: {}", e)))?;
-    let custom_rules_path = app_handle.path().app_data_dir()
-        .map_err(|e| crate::types::KittyCommandError::AnyHowError(anyhow!("Failed to get app data dir: {}", e)))?
+    let resource_dir = app_handle.path().resource_dir().map_err(|e| {
+        crate::types::KittyCommandError::AnyHowError(anyhow!("Failed to get resource dir: {}", e))
+    })?;
+    let custom_rules_path = app_handle
+        .path()
+        .app_data_dir()
+        .map_err(|e| {
+            crate::types::KittyCommandError::AnyHowError(anyhow!(
+                "Failed to get app data dir: {}",
+                e
+            ))
+        })?
         .join("custom_rules.json");
     log::info!("Custom rules file path: {}", custom_rules_path.display());
     log::info!("Custom rules file exists: {}", custom_rules_path.exists());

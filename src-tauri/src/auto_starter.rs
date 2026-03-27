@@ -13,7 +13,7 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use crate::config_converter::ShoesConfigConverter;
 use crate::proxy::delay::{test_all_proxies_delay, ProxyType};
 use crate::state::ProcessManagerState;
-use crate::tauri_apis::start_servers_internal;
+use crate::tauri_apis::{start_servers_internal, wait_for_ports_available};
 
 /// Result of auto-start operation.
 #[derive(Debug, Clone)]
@@ -121,7 +121,8 @@ impl AutoStarter {
         );
 
         // Start the fastest server
-        self.start_server_by_id(fastest.id, fastest.proxy_type).await?;
+        self.start_server_by_id(fastest.id, fastest.proxy_type)
+            .await?;
 
         Ok(AutoStartResult::Success {
             proxy_id: fastest.id,
@@ -132,21 +133,32 @@ impl AutoStarter {
 
     /// Start a server by its ID and type.
     async fn start_server_by_id(&self, id: u32, proxy_type: ProxyType) -> Result<()> {
+        // Serialize with all other start/stop commands.
+        let _start_guard = self.process_manager.server_start_lock.lock().await;
+
+        // Stop existing servers first so we do not race with old listeners.
+        self.process_manager.abort_running_servers().await;
+
+        // Read ports once for both config generation and pre-bind checks.
+        let base_config = base_config::Model::first(&self.db)
+            .await?
+            .ok_or_else(|| anyhow!("Base config not found"))?;
+        let http_port = base_config.http_port;
+        let socks_port = base_config.socks_port;
+
+        // If another process is already using ports, fail gracefully instead of panicking in shoes.
+        wait_for_ports_available(&[http_port, socks_port], 20, 100).await?;
+
         let yaml_config = match proxy_type {
             ProxyType::Xray => {
                 let xray_record = xray::Model::get_by_id(&self.db, id as i32)
                     .await?
                     .ok_or_else(|| anyhow!("Xray record {} not found", id))?;
 
-                // Get ports from base config
-                let base_config = base_config::Model::first(&self.db)
-                    .await?
-                    .ok_or_else(|| anyhow!("Base config not found"))?;
-
                 let yaml_config = ShoesConfigConverter::xray_to_socks_http_yaml(
                     &xray_record,
-                    base_config.http_port,
-                    base_config.socks_port,
+                    http_port,
+                    socks_port,
                     &self.resource_dir,
                     Some(&self.custom_rules_path),
                 )?;
@@ -163,14 +175,10 @@ impl AutoStarter {
                     .await?
                     .ok_or_else(|| anyhow!("Hysteria record {} not found", id))?;
 
-                let base_config = base_config::Model::first(&self.db)
-                    .await?
-                    .ok_or_else(|| anyhow!("Base config not found"))?;
-
                 let yaml_config = ShoesConfigConverter::hysteria_to_socks_http_yaml(
                     &hysteria_record,
-                    base_config.http_port,
-                    base_config.socks_port,
+                    http_port,
+                    socks_port,
                     &self.resource_dir,
                     Some(&self.custom_rules_path),
                 )?;
@@ -197,7 +205,7 @@ impl AutoStarter {
 
         // Store handles in process manager
         let mut running_servers = self.process_manager.running_servers.lock().await;
-        running_servers.extend(all_handles);
+        *running_servers = all_handles;
 
         // Record active proxy info
         *self.process_manager.active_proxy_id.lock().await = Some(id);
